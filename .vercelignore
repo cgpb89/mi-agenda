@@ -1,0 +1,11 @@
+# Never upload local secrets or build output with `vercel deploy`
+.env
+.env.*
+!.env.example
+node_modules
+.next
+src/generated
+coverage
+playwright-report
+test-results
+*.tsbuildinfo
