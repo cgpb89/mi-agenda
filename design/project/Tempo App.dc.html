@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Tempo — Northside Barber Co.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#f6f4ef;color:#1c1a17;font-family:'Hanken Grotesk',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}a{color:#1c1a17}a:hover{color:#c4581f}button,select,input,textarea{font:inherit;color:inherit}button{white-space:nowrap}button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #e0773a;outline-offset:2px}@media (prefers-reduced-motion:reduce){*{transition:none!important}}</style>
+</helmet>
+<div style="display:flex;min-height:100vh">
+  <aside style="width:236px;flex:0 0 236px;background:#1c1a17;color:#e9e4da;display:{{ sideDisplay }};flex-direction:column;position:{{ sidePos }};top:0;left:0;bottom:0;height:100vh;z-index:40;padding:14px 12px;gap:4px;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:4px 8px 14px">
+      <a href="Tempo Landing.dc.html" style="text-decoration:none;color:#f4f0e8;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.04em">tempo<span style="color:#e0773a">.</span></a>
+      <sc-if value="{{ narrow }}"><button onClick="{{ closeNav }}" aria-label="Close menu" style="appearance:none;border:0;background:none;color:#e9e4da;font-size:20px;cursor:pointer">×</button></sc-if>
+    </div>
+    <div style="position:relative">
+      <button onClick="{{ toggleBiz }}" aria-expanded="{{ bizOpen }}" style="appearance:none;width:100%;border:1px solid #3a3731;background:#25231f;border-radius:10px;padding:10px;display:flex;align-items:center;gap:10px;cursor:pointer;text-align:left;color:#f4f0e8">
+        <span style="width:30px;height:30px;border-radius:7px;background:#d6a15c;color:#1b1714;display:grid;place-items:center;font-weight:800;font-size:13px">N</span>
+        <span style="display:flex;flex-direction:column;min-width:0;flex:1"><span style="font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ biz.name }}</span><span style="font-size:11px;color:#a29a8d">{{ biz.sub }}</span></span>
+        <span style="color:#a29a8d;font-size:11px">▾</span>
+      </button>
+      <sc-if value="{{ bizOpen }}">
+        <div style="position:absolute;left:0;right:0;top:calc(100% + 6px);background:#2b2925;border:1px solid #3a3731;border-radius:10px;padding:6px;z-index:5;display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ bizList }}" as="b">
+            <button onClick="{{ b.pick }}" style="appearance:none;border:0;background:{{ b.bg }};border-radius:7px;padding:9px 10px;text-align:left;cursor:pointer;color:#f4f0e8;display:flex;flex-direction:column;gap:2px"><span style="font-weight:600;font-size:13px">{{ b.name }}</span><span style="font-size:11px;color:#a29a8d">{{ b.sub }}</span></button>
+          </sc-for>
+        </div>
+      </sc-if>
+    </div>
+    <nav aria-label="Main" style="display:flex;flex-direction:column;gap:2px;margin-top:14px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="9">
+        <button onClick="{{ n.go }}" aria-current="{{ n.cur }}" style="appearance:none;border:0;background:{{ n.bg }};color:{{ n.color }};border-radius:8px;padding:9px 10px;text-align:left;cursor:pointer;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:14px">{{ n.label }}<span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#7d766a">{{ n.tag }}</span></button>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:2px;border-top:1px solid #34312c;padding-top:12px">
+      <a href="Booking Pages.dc.html?t=barber" style="text-decoration:none;color:#c9c2b6;padding:8px 10px;font-size:13px;font-weight:600">View booking page ↗</a>
+      <a href="Tempo Super Admin.dc.html" style="text-decoration:none;color:#c9c2b6;padding:8px 10px;font-size:13px;font-weight:600">Platform admin ↗</a>
+      <div style="display:flex;align-items:center;gap:10px;padding:10px">
+        <span style="width:30px;height:30px;border-radius:50%;background:#3a3731;display:grid;place-items:center;font-size:12px;font-weight:700">MR</span>
+        <span style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">Marcus Reed</span><span style="font-size:11px;color:#a29a8d">Owner</span></span>
+      </div>
+    </div>
+  </aside>
+  <sc-if value="{{ navOverlay }}"><div onClick="{{ closeNav }}" style="position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:30"></div></sc-if>
+
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="position:sticky;top:0;z-index:20;background:rgba(246,244,239,.92);backdrop-filter:blur(8px);border-bottom:1px solid #e7e2d9;padding:12px clamp(14px,2.4vw,28px);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <sc-if value="{{ narrow }}"><button onClick="{{ openNav }}" aria-label="Open menu" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:16px">☰</button></sc-if>
+      <div style="display:flex;flex-direction:column;flex:1;min-width:160px"><h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.025em">{{ pageTitle }}</h1><span style="font-size:12px;color:#6b6358">{{ pageSub }}</span></div>
+      <sc-if value="{{ pg.overview }}">
+        <div role="group" aria-label="Date range" style="display:flex;background:#ebe6dd;border-radius:9px;padding:3px;gap:2px;flex-wrap:wrap">
+          <sc-for list="{{ ranges }}" as="r"><button onClick="{{ r.pick }}" aria-pressed="{{ r.sel }}" style="appearance:none;border:0;border-radius:7px;padding:6px 10px;cursor:pointer;font-weight:600;font-size:13px;background:{{ r.bg }};box-shadow:{{ r.sh }}">{{ r.label }}</button></sc-for>
+        </div>
+      </sc-if>
+      <button onClick="{{ newAppt }}" style="appearance:none;border:0;background:#1c1a17;color:#fff;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700;font-size:13px;white-space:nowrap">+ New appointment</button>
+    </header>
+    <sc-if value="{{ showCustom }}">
+      <div style="padding:10px clamp(14px,2.4vw,28px);display:flex;gap:10px;align-items:center;border-bottom:1px solid #e7e2d9;background:#fff;flex-wrap:wrap;font-size:13px">
+        <span style="font-weight:600">Custom range</span>
+        <input type="date" value="{{ cFrom }}" onChange="{{ setCFrom }}" min="2026-07-11" max="2026-10-09" style="border:1px solid #d9d3c8;border-radius:7px;padding:6px 8px">
+        <span>to</span>
+        <input type="date" value="{{ cTo }}" onChange="{{ setCTo }}" min="2026-07-11" max="2026-10-09" style="border:1px solid #d9d3c8;border-radius:7px;padding:6px 8px">
+        <span style="color:#6b6358">Demo data covers Jul 11 – Oct 9, 2026.</span>
+      </div>
+    </sc-if>
+
+    <div style="padding:clamp(14px,2.4vw,28px);display:flex;flex-direction:column;gap:16px;flex:1">
+
+      <sc-if value="{{ pg.overview }}" hint-placeholder-val="{{ true }}">
+        <sc-if value="{{ isEmptyBiz }}">
+          <div style="background:#fff;border:1px dashed #cfc7b9;border-radius:14px;padding:48px 28px;display:flex;flex-direction:column;align-items:flex-start;gap:12px;max-width:640px">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#c4581f">NEW LOCATION · DRAFT</span>
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:28px;letter-spacing:-.03em">No appointments yet</span>
+            <span style="color:#5d564b;line-height:1.55">Northside Eastgate has no services or hours set up. Once its booking page is published, appointments and charts appear here.</span>
+            <div style="display:flex;gap:8px;flex-wrap:wrap"><button onClick="{{ goAvail }}" style="appearance:none;border:0;background:#1c1a17;color:#fff;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700;font-size:13px">Set working hours</button><button onClick="{{ backToMain }}" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:600;font-size:13px">Switch to Northside Barber Co.</button></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ hasData }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onClick="{{ newAppt }}" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:999px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:13px">New appointment</button>
+            <button onClick="{{ quickService }}" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:999px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:13px">Add service</button>
+            <button onClick="{{ goAvail }}" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:999px;padding:7px 12px;cursor:pointer;font-weight:600;font-size:13px">Edit availability</button>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">
+            <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="6">
+              <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+                <span style="font-size:12px;font-weight:600;color:#6b6358">{{ k.label }}</span>
+                <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:{{ k.size }};letter-spacing:-.03em;color:{{ k.color }}">{{ k.value }}</span>
+                <span style="font-size:12px;color:{{ k.noteColor }}">{{ k.note }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px">
+            <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;display:flex;flex-direction:column">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #efebe4"><span style="font-weight:700;white-space:nowrap">Today's schedule</span><button onClick="{{ goCalToday }}" style="appearance:none;border:0;background:none;cursor:pointer;font-weight:600;font-size:13px;color:#c4581f">Open calendar →</button></div>
+              <div style="display:flex;flex-direction:column;max-height:380px;overflow-y:auto">
+                <sc-for list="{{ today }}" as="a" hint-placeholder-count="6">
+                  <button onClick="{{ a.open }}" style="appearance:none;border:0;border-bottom:1px solid #f2efe9;background:{{ a.rowBg }};text-align:left;cursor:pointer;display:grid;grid-template-columns:64px 3px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 16px">
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:12px">{{ a.time }}</span>
+                    <span style="height:32px;border-radius:2px;background:{{ a.bar }}"></span>
+                    <span style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.customer }}</span><span style="font-size:12px;color:#6b6358;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.svc }} · {{ a.staff }}</span></span>
+                    <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ a.sbg }};color:{{ a.sink }};white-space:nowrap">{{ a.status }}</span>
+                  </button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;display:flex;flex-direction:column">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid #efebe4"><span style="font-weight:700">Coming up</span><button onClick="{{ goAppts }}" style="appearance:none;border:0;background:none;cursor:pointer;font-weight:600;font-size:13px;color:#c4581f">All appointments →</button></div>
+              <sc-for list="{{ upcomingList }}" as="a" hint-placeholder-count="6">
+                <button onClick="{{ a.open }}" style="appearance:none;border:0;border-bottom:1px solid #f2efe9;background:none;text-align:left;cursor:pointer;display:grid;grid-template-columns:96px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 16px">
+                  <span style="display:flex;flex-direction:column"><span style="font-size:12px;font-weight:700">{{ a.day }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">{{ a.time }}</span></span>
+                  <span style="display:flex;flex-direction:column;min-width:0"><span style="font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.customer }}</span><span style="font-size:12px;color:#6b6358">{{ a.svc }} · {{ a.staff }}</span></span>
+                  <span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ a.sbg }};color:{{ a.sink }}">{{ a.status }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:14px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap">
+              <div role="tablist" style="display:flex;gap:18px">
+                <button role="tab" aria-selected="{{ chartRev }}" onClick="{{ setChartRev }}" style="appearance:none;border:0;background:none;padding:0 0 6px;cursor:pointer;font-weight:700;border-bottom:2px solid {{ tabRevLine }};color:{{ tabRevInk }}">Estimated revenue</button>
+                <button role="tab" aria-selected="{{ chartVol }}" onClick="{{ setChartVol }}" style="appearance:none;border:0;background:none;padding:0 0 6px;cursor:pointer;font-weight:700;border-bottom:2px solid {{ tabVolLine }};color:{{ tabVolInk }}">Appointment volume</button>
+              </div>
+              <span style="font-size:12px;color:#6b6358">{{ chartNote }}</span>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:{{ chart.gap }};height:200px;border-bottom:1px solid #e7e2d9;padding-top:18px">
+              <sc-for list="{{ chart.bars }}" as="b" hint-placeholder-count="30">
+                <div title="{{ b.tip }}" style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;min-width:0">
+                  <span style="font-size:10px;color:#6b6358;white-space:nowrap">{{ b.top }}</span>
+                  <span style="width:100%;max-width:38px;height:{{ b.h }};background:{{ b.bg }};border-radius:4px 4px 0 0;min-height:2px"></span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display:flex;gap:{{ chart.gap }}">
+              <sc-for list="{{ chart.bars }}" as="b"><span style="flex:1;font-size:10px;color:#6b6358;text-align:center;font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden">{{ b.label }}</span></sc-for>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px">
+            <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+              <span style="font-weight:700">Popular services</span>
+              <sc-for list="{{ popular }}" as="p" hint-placeholder-count="6">
+                <div style="display:grid;grid-template-columns:120px minmax(0,1fr) 44px;gap:10px;align-items:center;font-size:13px"><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.name }}</span><span style="height:10px;background:#f0ece5;border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:{{ p.w }};background:#2f6e5a;border-radius:5px"></span></span><span style="text-align:right;font-family:'JetBrains Mono',monospace;font-size:12px">{{ p.n }}</span></div>
+              </sc-for>
+              <span style="font-size:12px;color:#6b6358">Booked appointments in range, excluding cancellations.</span>
+            </div>
+            <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+              <span style="font-weight:700">Peak booking hours</span>
+              <div style="display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px">
+                <sc-for list="{{ peak }}" as="h" hint-placeholder-count="10"><div title="{{ h.tip }}" style="display:flex;flex-direction:column;gap:4px;align-items:center"><span style="width:100%;height:56px;border-radius:5px;background:{{ h.bg }}"></span><span style="font-size:10px;color:#6b6358;font-family:'JetBrains Mono',monospace">{{ h.l }}</span></div></sc-for>
+              </div>
+              <span style="font-size:12px;color:#6b6358">{{ peakNote }}</span>
+            </div>
+            <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+              <span style="font-weight:700">Busiest days</span>
+              <div style="display:flex;align-items:flex-end;gap:8px;height:96px">
+                <sc-for list="{{ busy }}" as="d" hint-placeholder-count="7"><div title="{{ d.tip }}" style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px"><span style="width:100%;height:{{ d.h }};background:{{ d.bg }};border-radius:4px 4px 0 0;min-height:2px"></span><span style="font-size:11px;font-weight:600;color:#6b6358">{{ d.d }}</span></div></sc-for>
+              </div>
+              <span style="font-size:12px;color:#6b6358">{{ busyNote }}</span>
+            </div>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ pg.calendar }}">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <button onClick="{{ calToday }}" style="appearance:none;border:0;background:#1c1a17;color:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700;font-size:13px">Today</button>
+          <div style="display:flex;gap:4px"><button onClick="{{ calPrev }}" aria-label="Previous" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:8px;width:34px;height:34px;cursor:pointer">‹</button><button onClick="{{ calNext }}" aria-label="Next" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:8px;width:34px;height:34px;cursor:pointer">›</button></div>
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:18px;letter-spacing:-.02em;flex:1;min-width:160px">{{ cal.label }}</span>
+          <div role="group" aria-label="View" style="display:flex;background:#ebe6dd;border-radius:9px;padding:3px;gap:2px">
+            <sc-for list="{{ views }}" as="v"><button onClick="{{ v.pick }}" aria-pressed="{{ v.sel }}" style="appearance:none;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px;background:{{ v.bg }};box-shadow:{{ v.sh }}">{{ v.label }}</button></sc-for>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:600;color:#6b6358">Staff</span>
+          <sc-for list="{{ staffChips }}" as="s"><button onClick="{{ s.toggle }}" aria-pressed="{{ s.on }}" style="appearance:none;border:1px solid {{ s.border }};background:{{ s.bg }};color:{{ s.ink }};border-radius:999px;padding:5px 11px;cursor:pointer;font-weight:600;font-size:12px">{{ s.label }}</button></sc-for>
+          <span style="width:1px;height:20px;background:#d9d3c8;margin:0 4px"></span>
+          <select value="{{ svcF }}" onChange="{{ setSvcF }}" aria-label="Service filter" style="border:1px solid #d9d3c8;border-radius:8px;padding:6px 8px;background:#fff;font-size:13px">
+            <option value="all">All services</option>
+            <sc-for list="{{ serviceOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+          </select>
+          <select value="{{ statusF }}" onChange="{{ setStatusF }}" aria-label="Status filter" style="border:1px solid #d9d3c8;border-radius:8px;padding:6px 8px;background:#fff;font-size:13px">
+            <option value="active">Hide cancelled</option><option value="all">All statuses</option><option value="pending">Pending only</option><option value="confirmed">Confirmed only</option><option value="completed">Completed only</option><option value="noshow">No-shows only</option>
+          </select>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:#5d564b">
+          <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:3px;background:#fff;border:1px solid #d9d3c8"></span>Available</span>
+          <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:3px;background:#fbe6d8;border-left:3px solid #e0773a"></span>Booked</span>
+          <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(135deg,#f3f0ea 0 3px,#ddd6ca 3px 6px)"></span>Break</span>
+          <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:3px;background:repeating-linear-gradient(135deg,#f6e5e2 0 3px,#e5b9b2 3px 6px)"></span>Blocked</span>
+          <span style="display:flex;gap:6px;align-items:center"><span style="width:14px;height:14px;border-radius:3px;background:#ebe7e0"></span>Not working</span>
+          <span style="margin-left:auto">Click an open time to book it.</span>
+        </div>
+
+        <sc-if value="{{ cal.grid }}" hint-placeholder-val="{{ true }}">
+          <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;overflow:auto">
+            <div style="min-width:{{ cal.minW }}">
+              <div style="display:grid;grid-template-columns:{{ cal.cols }};border-bottom:1px solid #e7e2d9;position:sticky;top:0;background:#fff;z-index:3">
+                <span></span>
+                <sc-for list="{{ cal.days }}" as="d">
+                  <div style="border-left:1px solid #efebe4;padding:8px 6px;display:flex;flex-direction:column;gap:4px">
+                    <span style="font-size:12px;font-weight:700;color:{{ d.ink }}">{{ d.label }}</span>
+                    <div style="display:flex">
+                      <sc-for list="{{ d.lanes }}" as="ln"><span style="flex:1;font-size:10px;color:#6b6358;font-family:'JetBrains Mono',monospace;text-align:center;overflow:hidden;white-space:nowrap">{{ ln.head }}</span></sc-for>
+                    </div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display:grid;grid-template-columns:{{ cal.cols }}">
+                <div style="position:relative;height:{{ cal.h }}">
+                  <sc-for list="{{ cal.hours }}" as="h"><span style="position:absolute;right:8px;top:{{ h.top }};font-size:10px;color:#857d70;font-family:'JetBrains Mono',monospace;transform:translateY(-50%)">{{ h.l }}</span></sc-for>
+                </div>
+                <sc-for list="{{ cal.days }}" as="d">
+                  <div style="position:relative;height:{{ cal.h }};border-left:1px solid #efebe4;display:flex;background-image:repeating-linear-gradient(180deg,#f2efe9 0 1px,transparent 1px {{ cal.hh }})">
+                    <sc-for list="{{ d.lanes }}" as="ln">
+                      <div onClick="{{ ln.click }}" style="flex:1;position:relative;border-left:1px dotted #f0ece6;cursor:copy;min-width:0">
+                        <sc-for list="{{ ln.shades }}" as="sh"><div title="{{ sh.label }}" style="position:absolute;left:0;right:0;top:{{ sh.top }};height:{{ sh.h }};background:{{ sh.bg }};font-size:10px;color:#857d70;padding:2px 4px;overflow:hidden;pointer-events:none">{{ sh.text }}</div></sc-for>
+                        <sc-for list="{{ ln.items }}" as="it">
+                          <button onClick="{{ it.open }}" title="{{ it.tip }}" style="appearance:none;position:absolute;left:2px;right:2px;top:{{ it.top }};height:{{ it.h }};border:0;border-left:3px solid {{ it.bar }};background:{{ it.bg }};color:{{ it.ink }};border-radius:4px;padding:3px 5px;text-align:left;cursor:pointer;overflow:hidden;display:flex;flex-direction:column;gap:1px;text-decoration:{{ it.deco }};z-index:2">
+                            <span style="font-size:10px;font-family:'JetBrains Mono',monospace;white-space:nowrap">{{ it.time }}</span>
+                            <span style="font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.customer }}</span>
+                            <span style="font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.85">{{ it.svc }}</span>
+                          </button>
+                        </sc-for>
+                      </div>
+                    </sc-for>
+                    <sc-if value="{{ d.isToday }}"><div style="position:absolute;left:0;right:0;top:{{ cal.nowTop }};height:2px;background:#c4483a;z-index:4;pointer-events:none"><span style="position:absolute;left:-4px;top:-3px;width:8px;height:8px;border-radius:50%;background:#c4483a"></span></div></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ cal.month }}">
+          <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));border-bottom:1px solid #e7e2d9">
+              <sc-for list="{{ wdNames }}" as="w"><span style="padding:8px 10px;font-size:12px;font-weight:700;color:#6b6358">{{ w }}</span></sc-for>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr))">
+              <sc-for list="{{ cal.cells }}" as="c">
+                <button onClick="{{ c.open }}" style="appearance:none;border:0;border-right:1px solid #f0ece6;border-bottom:1px solid #f0ece6;background:{{ c.bg }};min-height:112px;padding:8px;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:3px;opacity:{{ c.op }}">
+                  <span style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:700;font-size:13px;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:{{ c.numBg }};color:{{ c.numInk }}">{{ c.num }}</span><span style="font-size:11px;color:#6b6358">{{ c.count }}</span></span>
+                  <sc-for list="{{ c.items }}" as="i"><span style="font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:2px 5px;border-radius:3px;background:{{ i.bg }};color:{{ i.ink }}">{{ i.t }}</span></sc-for>
+                  <span style="font-size:11px;color:#6b6358">{{ c.more }}</span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ pg.appointments }}">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input value="{{ q }}" onChange="{{ setQ }}" placeholder="Search customer, service or ID" aria-label="Search appointments" style="flex:1 1 240px;border:1px solid #d9d3c8;border-radius:8px;padding:9px 12px;background:#fff">
+          <div role="group" aria-label="When" style="display:flex;background:#ebe6dd;border-radius:9px;padding:3px;gap:2px">
+            <sc-for list="{{ scopes }}" as="s"><button onClick="{{ s.pick }}" aria-pressed="{{ s.sel }}" style="appearance:none;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px;background:{{ s.bg }};box-shadow:{{ s.sh }}">{{ s.label }}</button></sc-for>
+          </div>
+          <select value="{{ aStaff }}" onChange="{{ setAStaff }}" aria-label="Staff" style="border:1px solid #d9d3c8;border-radius:8px;padding:8px;background:#fff"><option value="all">All staff</option><sc-for list="{{ staffOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <sc-for list="{{ statusChips }}" as="s"><button onClick="{{ s.pick }}" aria-pressed="{{ s.sel }}" style="appearance:none;border:1px solid {{ s.border }};background:{{ s.bg }};color:{{ s.ink }};border-radius:999px;padding:5px 11px;cursor:pointer;font-weight:600;font-size:12px">{{ s.label }} <span style="opacity:.6">{{ s.n }}</span></button></sc-for>
+        </div>
+        <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:940px">
+            <thead><tr style="text-align:left;color:#6b6358;font-size:12px">
+              <th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">ID</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Customer</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Service</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Staff</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Date &amp; time</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Duration</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600;text-align:right">Price</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Status</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Source</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Payment</th>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="12">
+                <tr onClick="{{ r.open }}" style="cursor:pointer" style-hover="background:#faf8f4">
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9;font-family:'JetBrains Mono',monospace;font-size:12px">{{ r.id }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9;font-weight:600">{{ r.customer }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9">{{ r.svc }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9">{{ r.staff }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9;white-space:nowrap">{{ r.when }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9">{{ r.dur }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9;text-align:right">{{ r.price }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9"><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ r.sbg }};color:{{ r.sink }};white-space:nowrap">{{ r.status }}</span></td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9;color:#5d564b">{{ r.source }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f2efe9;color:#857d70">Not tracked</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <sc-if value="{{ noRows }}"><div style="padding:40px;text-align:center;color:#6b6358">No appointments match these filters. <button onClick="{{ clearFilters }}" style="appearance:none;border:0;background:none;color:#c4581f;font-weight:700;cursor:pointer">Clear filters</button></div></sc-if>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:#6b6358">
+          <span>Showing {{ shown }} of {{ total }} · Payment tracking is a planned integration</span>
+          <sc-if value="{{ hasMore }}"><button onClick="{{ more }}" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600">Show 30 more</button></sc-if>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pg.services }}">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span style="color:#5d564b">{{ svcSummary }}</span>
+          <button onClick="{{ addService }}" style="appearance:none;border:0;background:#1c1a17;color:#fff;border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:700;font-size:13px">+ Add service</button>
+        </div>
+        <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:820px">
+            <thead><tr style="text-align:left;color:#6b6358;font-size:12px"><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Service</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Duration</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Buffer</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600;text-align:right">Price</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Staff</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Booked, last 30 days</th><th style="padding:10px 14px;border-bottom:1px solid #e7e2d9;font-weight:600">Status</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ svcRows }}" as="s" hint-placeholder-count="7">
+                <tr onClick="{{ s.edit }}" style="cursor:pointer;opacity:{{ s.op }}" style-hover="background:#faf8f4">
+                  <td style="padding:12px 14px;border-bottom:1px solid #f2efe9"><div style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:700">{{ s.name }}</span><span style="font-size:12px;color:#6b6358">{{ s.desc }}</span></div></td>
+                  <td style="padding:12px 14px;border-bottom:1px solid #f2efe9">{{ s.dur }} min</td>
+                  <td style="padding:12px 14px;border-bottom:1px solid #f2efe9;color:#5d564b">{{ s.buf }}</td>
+                  <td style="padding:12px 14px;border-bottom:1px solid #f2efe9;text-align:right;font-weight:600">{{ s.price }}</td>
+                  <td style="padding:12px 14px;border-bottom:1px solid #f2efe9"><div style="display:flex;gap:3px"><sc-for list="{{ s.staff }}" as="p"><span title="{{ p.name }}" style="width:24px;height:24px;border-radius:50%;background:#efebe4;display:grid;place-items:center;font-size:10px;font-weight:700">{{ p.ini }}</span></sc-for></div></td>
+                  <td style="padding:12px 14px;border-bottom:1px solid #f2efe9;font-family:'JetBrains Mono',monospace">{{ s.count }}</td>
+                  <td style="padding:12px 14px;border-bottom:1px solid #f2efe9"><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ s.sbg }};color:{{ s.sink }}">{{ s.status }}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pg.availability }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px">
+          <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#c4581f">1 · BUSINESS HOURS</span><span style="font-weight:700">When the shop is open</span><span style="font-size:13px;color:#5d564b;line-height:1.5">The outer limit. Nobody can be booked outside these.</span></div>
+          <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#c4581f">2 · STAFF AVAILABILITY</span><span style="font-weight:700">When each person works</span><span style="font-size:13px;color:#5d564b;line-height:1.5">Inside business hours, with their own days, shifts and breaks.</span></div>
+          <div style="background:#1c1a17;color:#f4f0e8;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#e0773a">3 · BOOKABLE SLOTS</span><span style="font-weight:700">What customers see</span><span style="font-size:13px;color:#cfc8bc;line-height:1.5">Staff time minus existing appointments, buffers and the notice rules below.</span></div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,520px),1fr));gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;display:flex;flex-direction:column">
+            <div style="padding:14px 16px;border-bottom:1px solid #efebe4;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+              <span style="font-weight:700;flex:1">Weekly schedule</span>
+              <select value="{{ availTarget }}" onChange="{{ setAvailTarget }}" aria-label="Schedule for" style="border:1px solid #d9d3c8;border-radius:8px;padding:7px 8px;background:#fff;font-weight:600">
+                <option value="business">Business hours</option>
+                <sc-for list="{{ staffOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+              </select>
+            </div>
+            <div style="padding:6px 16px 14px;display:flex;flex-direction:column">
+              <sc-for list="{{ avDays }}" as="d" hint-placeholder-count="7">
+                <div style="display:grid;grid-template-columns:56px 92px minmax(0,1fr);gap:10px;align-items:start;padding:10px 0;border-bottom:1px solid #f2efe9">
+                  <span style="font-weight:700;padding-top:7px">{{ d.label }}</span>
+                  <button onClick="{{ d.toggle }}" aria-pressed="{{ d.open }}" style="appearance:none;border:1px solid {{ d.tBorder }};background:{{ d.tBg }};color:{{ d.tInk }};border-radius:999px;padding:6px 10px;cursor:pointer;font-weight:600;font-size:12px">{{ d.tLabel }}</button>
+                  <div style="display:flex;flex-direction:column;gap:6px;min-width:0">
+                    <sc-for list="{{ d.periods }}" as="p">
+                      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+                        <select value="{{ p.a }}" onChange="{{ p.setA }}" aria-label="Start" style="border:1px solid #d9d3c8;border-radius:7px;padding:5px 6px;background:#fff;font-size:13px"><sc-for list="{{ timeOpts }}" as="o"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+                        <span style="color:#857d70">–</span>
+                        <select value="{{ p.b }}" onChange="{{ p.setB }}" aria-label="End" style="border:1px solid #d9d3c8;border-radius:7px;padding:5px 6px;background:#fff;font-size:13px"><sc-for list="{{ timeOpts }}" as="o"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+                        <button onClick="{{ p.remove }}" aria-label="Remove period" style="appearance:none;border:0;background:none;color:#857d70;cursor:pointer;font-size:16px;padding:0 4px">×</button>
+                      </div>
+                    </sc-for>
+                    <sc-if value="{{ d.open }}"><button onClick="{{ d.add }}" style="appearance:none;border:0;background:none;color:#c4581f;cursor:pointer;font-weight:600;font-size:12px;text-align:left;padding:2px 0">+ Add period</button></sc-if>
+                    <sc-if value="{{ d.err }}"><span role="alert" style="font-size:12px;color:#b3261e;font-weight:600">{{ d.err }}</span></sc-if>
+                    <div style="position:relative;height:8px;background:#f0ece5;border-radius:4px;margin-top:2px">
+                      <sc-for list="{{ d.bars }}" as="b"><span style="position:absolute;top:0;bottom:0;left:{{ b.l }};width:{{ b.w }};background:{{ b.bg }};border-radius:4px"></span></sc-for>
+                    </div>
+                  </div>
+                </div>
+              </sc-for>
+              <span style="font-size:12px;color:#6b6358;padding-top:10px">{{ avHint }} Gaps between periods become breaks.</span>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:16px">
+            <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+              <span style="font-weight:700">Booking rules</span>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Slot interval<select value="{{ rules.interval }}" onChange="{{ setInterval }}" style="border:1px solid #d9d3c8;border-radius:7px;padding:7px;background:#fff;font-size:13px;color:#1c1a17"><option value="15">Every 15 min</option><option value="30">Every 30 min</option><option value="60">Every hour</option></select></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Minimum notice<select value="{{ rules.notice }}" onChange="{{ setNotice }}" style="border:1px solid #d9d3c8;border-radius:7px;padding:7px;background:#fff;font-size:13px;color:#1c1a17"><option value="0">None</option><option value="60">1 hour</option><option value="120">2 hours</option><option value="240">4 hours</option><option value="1440">1 day</option></select></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Book up to<select value="{{ rules.maxDays }}" onChange="{{ setMaxDays }}" style="border:1px solid #d9d3c8;border-radius:7px;padding:7px;background:#fff;font-size:13px;color:#1c1a17"><option value="14">2 weeks ahead</option><option value="30">30 days ahead</option><option value="60">60 days ahead</option><option value="90">90 days ahead</option></select></label>
+                <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Time zone<select value="{{ rules.tz }}" onChange="{{ setTz }}" style="border:1px solid #d9d3c8;border-radius:7px;padding:7px;background:#fff;font-size:13px;color:#1c1a17"><option value="America/New_York">Eastern (New York)</option><option value="America/Chicago">Central (Chicago)</option><option value="America/Denver">Mountain (Denver)</option><option value="America/Los_Angeles">Pacific (Los Angeles)</option><option value="Europe/London">London</option></select></label>
+              </div>
+            </div>
+            <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><span style="font-weight:700">What customers will see</span><select value="{{ prevStaff }}" onChange="{{ setPrevStaff }}" aria-label="Preview staff" style="border:1px solid #d9d3c8;border-radius:7px;padding:5px 6px;background:#fff;font-size:13px"><sc-for list="{{ staffOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select></div>
+              <div style="display:flex;gap:4px;overflow-x:auto">
+                <sc-for list="{{ prevDays }}" as="d"><button onClick="{{ d.pick }}" aria-pressed="{{ d.sel }}" style="appearance:none;border:1px solid {{ d.border }};background:{{ d.bg }};color:{{ d.ink }};border-radius:8px;padding:6px 10px;cursor:pointer;font-size:12px;font-weight:600;white-space:nowrap">{{ d.label }}</button></sc-for>
+              </div>
+              <span style="font-size:12px;color:#6b6358">Classic Cut (45 min + 5 min buffer), using your unsaved changes.</span>
+              <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(66px,1fr));gap:4px">
+                <sc-for list="{{ prevSlots }}" as="s"><span title="{{ s.why }}" style="padding:6px 0;text-align:center;font-size:11px;font-weight:600;border-radius:5px;background:{{ s.bg }};color:{{ s.ink }};text-decoration:{{ s.deco }}">{{ s.l }}</span></sc-for>
+              </div>
+              <sc-if value="{{ prevEmpty }}"><span style="font-size:13px;color:#5d564b">Not working this day, so nothing is bookable.</span></sc-if>
+              <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#5d564b"><span>■ <span style="color:#2f6e5a;font-weight:700">Bookable</span></span><span>Booked</span><span>Break</span><span>Too soon</span></div>
+            </div>
+            <div style="background:#fff;border:1px solid #e7e2d9;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px">
+              <span style="font-weight:700">Holidays and date overrides</span>
+              <sc-for list="{{ overrides }}" as="o">
+                <div style="display:grid;grid-template-columns:120px minmax(0,1fr) auto;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #f2efe9;font-size:13px"><span style="font-weight:700">{{ o.date }}</span><span><span style="font-weight:600">{{ o.what }}</span> <span style="color:#6b6358">{{ o.note }}</span></span><button onClick="{{ o.remove }}" style="appearance:none;border:0;background:none;color:#b3261e;cursor:pointer;font-weight:600;font-size:12px">Remove</button></div>
+              </sc-for>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;padding-top:4px">
+                <input type="date" value="{{ ov.date }}" onChange="{{ setOvDate }}" aria-label="Override date" style="border:1px solid #d9d3c8;border-radius:7px;padding:6px 8px;font-size:13px">
+                <select value="{{ ov.type }}" onChange="{{ setOvType }}" aria-label="Override type" style="border:1px solid #d9d3c8;border-radius:7px;padding:6px;font-size:13px;background:#fff"><option value="closed">Closed all day</option><option value="custom">Custom hours</option></select>
+                <sc-if value="{{ ovCustom }}">
+                  <select value="{{ ov.a }}" onChange="{{ setOvA }}" style="border:1px solid #d9d3c8;border-radius:7px;padding:6px;font-size:13px;background:#fff"><sc-for list="{{ timeOpts }}" as="o"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+                  <select value="{{ ov.b }}" onChange="{{ setOvB }}" style="border:1px solid #d9d3c8;border-radius:7px;padding:6px;font-size:13px;background:#fff"><sc-for list="{{ timeOpts }}" as="o"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+                </sc-if>
+                <input value="{{ ov.note }}" onChange="{{ setOvNote }}" placeholder="Note, e.g. Staff training" style="flex:1 1 140px;border:1px solid #d9d3c8;border-radius:7px;padding:6px 8px;font-size:13px">
+                <button onClick="{{ addOverride }}" style="appearance:none;border:1px solid #1c1a17;background:#fff;border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:700;font-size:13px">Add</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <sc-if value="{{ availDirty }}">
+          <div style="position:sticky;bottom:16px;align-self:center;background:#1c1a17;color:#f4f0e8;border-radius:12px;padding:10px 10px 10px 18px;display:flex;gap:14px;align-items:center;box-shadow:0 20px 40px -16px rgba(0,0,0,.5);z-index:10;flex-wrap:wrap">
+            <span style="font-weight:600">Unsaved availability changes</span>
+            <button onClick="{{ discardAvail }}" style="appearance:none;border:1px solid #4a463f;background:transparent;color:#f4f0e8;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:600">Discard</button>
+            <button onClick="{{ saveAvail }}" disabled="{{ availInvalid }}" style="appearance:none;border:0;background:{{ saveBg }};color:#1c1a17;border-radius:8px;padding:8px 14px;cursor:pointer;font-weight:700">Save changes</button>
+          </div>
+        </sc-if>
+      </sc-if>
+
+      <sc-if value="{{ pg.later }}">
+        <div style="background:#fff;border:1px dashed #cfc7b9;border-radius:14px;padding:40px 28px;display:flex;flex-direction:column;gap:12px;max-width:720px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#c4581f">DESIGNED IN THE NEXT PASS</span>
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;letter-spacing:-.03em">{{ later.title }}</span>
+          <span style="color:#5d564b;line-height:1.6">{{ later.body }}</span>
+          <sc-if value="{{ later.link }}"><a href="{{ later.link }}" style="font-weight:700;color:#c4581f">{{ later.linkLabel }}</a></sc-if>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+</div>
+
+<sc-if value="{{ drawer }}">
+  <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(28,26,23,.28);z-index:60"></div>
+  <aside role="dialog" aria-label="Appointment details" style="position:fixed;top:0;right:0;bottom:0;width:min(440px,100vw);background:#fff;z-index:61;display:flex;flex-direction:column;box-shadow:-20px 0 50px -20px rgba(0,0,0,.3)">
+    <div style="padding:16px 18px;border-bottom:1px solid #efebe4;display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#6b6358">{{ d.id }} · {{ d.source }}</span><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ d.sbg }};color:{{ d.sink }};align-self:flex-start">{{ d.status }}</span></div>
+      <button onClick="{{ closeDrawer }}" aria-label="Close" style="appearance:none;border:1px solid #e7e2d9;background:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer;font-size:16px">×</button>
+    </div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:18px;overflow-y:auto;flex:1">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:24px;letter-spacing:-.025em">{{ d.svc }}</span><span style="color:#5d564b">{{ d.when }} · {{ d.dur }} min · with {{ d.staff }}</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div style="background:#f7f5f0;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#6b6358">Price</span><span style="font-weight:700">{{ d.price }}</span></div>
+        <div style="background:#f7f5f0;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#6b6358">Payment</span><span style="font-weight:700">Not tracked</span></div>
+      </div>
+      <div style="border:1px solid #e7e2d9;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:12px;font-weight:700;color:#6b6358">CUSTOMER</span>
+        <span style="font-weight:700;font-size:16px">{{ d.customer }}</span>
+        <span style="font-size:13px;color:#5d564b">{{ d.email }} · {{ d.phone }}</span>
+        <span style="font-size:13px;color:#5d564b">{{ d.history }}</span>
+        <sc-if value="{{ d.notes }}"><span style="font-size:13px;background:#fbf6e9;border-radius:6px;padding:8px">“{{ d.notes }}”</span></sc-if>
+      </div>
+      <sc-if value="{{ resch }}">
+        <div style="border:1px solid #1c1a17;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+          <span style="font-weight:700">Pick a new time</span>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <select value="{{ resch.off }}" onChange="{{ setReschOff }}" aria-label="New date" style="border:1px solid #d9d3c8;border-radius:7px;padding:7px;background:#fff"><sc-for list="{{ dayOpts }}" as="o"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+            <select value="{{ resch.start }}" onChange="{{ setReschStart }}" aria-label="New time" style="border:1px solid #d9d3c8;border-radius:7px;padding:7px;background:#fff"><sc-for list="{{ reschTimes }}" as="o"><option value="{{ o.v }}" disabled="{{ o.dis }}">{{ o.l }}</option></sc-for></select>
+          </div>
+          <sc-if value="{{ reschErr }}"><span role="alert" style="font-size:12px;color:#b3261e;font-weight:600">{{ reschErr }}</span></sc-if>
+          <div style="display:flex;gap:8px"><button onClick="{{ saveResch }}" disabled="{{ reschBad }}" style="appearance:none;border:0;background:{{ reschBtn }};color:#fff;border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:700">Move appointment</button><button onClick="{{ cancelResch }}" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:600">Keep current time</button></div>
+        </div>
+      </sc-if>
+    </div>
+    <div style="padding:14px 18px;border-top:1px solid #efebe4;display:flex;gap:8px;flex-wrap:wrap">
+      <sc-for list="{{ d.actions }}" as="a"><button onClick="{{ a.run }}" style="appearance:none;border:1px solid {{ a.border }};background:{{ a.bg }};color:{{ a.ink }};border-radius:8px;padding:9px 14px;cursor:pointer;font-weight:700;font-size:13px">{{ a.label }}</button></sc-for>
+    </div>
+  </aside>
+</sc-if>
+
+<sc-if value="{{ createOpen }}">
+  <div style="position:fixed;inset:0;background:rgba(28,26,23,.4);z-index:70;display:grid;place-items:center;padding:16px">
+    <div role="dialog" aria-label="New appointment" style="background:#fff;border-radius:16px;width:min(560px,100%);max-height:92vh;overflow-y:auto;display:flex;flex-direction:column">
+      <div style="padding:18px 20px;border-bottom:1px solid #efebe4;display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:20px">{{ cr.title }}</span><button onClick="{{ closeCreate }}" aria-label="Close" style="appearance:none;border:1px solid #e7e2d9;background:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer">×</button></div>
+      <div style="padding:18px 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px">
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b;grid-column:1/-1">Customer
+          <select value="{{ cr.cust }}" onChange="{{ setCrCust }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><option value="new">+ New customer</option><sc-for list="{{ custOpts }}" as="o"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select>
+        </label>
+        <sc-if value="{{ cr.isNew }}">
+          <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Name<input value="{{ cr.name }}" onChange="{{ setCrName }}" placeholder="Full name" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;font-size:14px;color:#1c1a17"></label>
+          <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Phone or email<input value="{{ cr.contact }}" onChange="{{ setCrContact }}" placeholder="Optional for walk-ins" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;font-size:14px;color:#1c1a17"></label>
+        </sc-if>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Service<select value="{{ cr.svc }}" onChange="{{ setCrSvc }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><sc-for list="{{ activeSvcOpts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select></label>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Staff<select value="{{ cr.staff }}" onChange="{{ setCrStaff }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><sc-for list="{{ crStaffOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select></label>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Date<select value="{{ cr.off }}" onChange="{{ setCrOff }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><sc-for list="{{ dayOpts }}" as="o"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Start time<select value="{{ cr.start }}" onChange="{{ setCrStart }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><sc-for list="{{ quarterOpts }}" as="o"><option value="{{ o.v }}">{{ o.l }}</option></sc-for></select></label>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b;grid-column:1/-1">Notes<input value="{{ cr.notes }}" onChange="{{ setCrNotes }}" placeholder="Visible to staff only" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;font-size:14px;color:#1c1a17"></label>
+        <div style="grid-column:1/-1;border-radius:10px;padding:12px 14px;background:{{ crCheck.bg }};color:{{ crCheck.ink }};font-size:13px;font-weight:600" role="status">{{ crCheck.msg }}</div>
+      </div>
+      <div style="padding:14px 20px;border-top:1px solid #efebe4;display:flex;justify-content:flex-end;gap:8px"><button onClick="{{ closeCreate }}" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600">Cancel</button><button onClick="{{ saveCreate }}" disabled="{{ crBad }}" style="appearance:none;border:0;background:{{ crBtn }};color:#fff;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700">Create appointment</button></div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ svcOpen }}">
+  <div onClick="{{ closeSvc }}" style="position:fixed;inset:0;background:rgba(28,26,23,.28);z-index:60"></div>
+  <aside role="dialog" aria-label="Edit service" style="position:fixed;top:0;right:0;bottom:0;width:min(480px,100vw);background:#fff;z-index:61;display:flex;flex-direction:column">
+    <div style="padding:16px 18px;border-bottom:1px solid #efebe4;display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:20px">{{ se.title }}</span><button onClick="{{ closeSvc }}" aria-label="Close" style="appearance:none;border:1px solid #e7e2d9;background:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer">×</button></div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1">
+      <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Service name<input value="{{ se.name }}" onChange="{{ setSeName }}" style="border:1px solid {{ se.nameBorder }};border-radius:8px;padding:9px;font-size:14px;color:#1c1a17"></label>
+      <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Description<textarea value="{{ se.desc }}" onChange="{{ setSeDesc }}" rows="2" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;font-size:14px;color:#1c1a17;resize:vertical"></textarea></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Duration<select value="{{ se.dur }}" onChange="{{ setSeDur }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><sc-for list="{{ durOpts }}" as="o"><option value="{{ o }}">{{ o }} min</option></sc-for></select></label>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Price (USD)<input type="number" min="0" value="{{ se.price }}" onChange="{{ setSePrice }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;font-size:14px;color:#1c1a17"></label>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Buffer before<select value="{{ se.bufB }}" onChange="{{ setSeBufB }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><option value="0">None</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option></select></label>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Buffer after<select value="{{ se.bufA }}" onChange="{{ setSeBufA }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><option value="0">None</option><option value="5">5 min</option><option value="10">10 min</option><option value="15">15 min</option></select></label>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="font-size:12px;font-weight:600;color:#5d564b">Who offers it</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ se.staff }}" as="p"><button onClick="{{ p.toggle }}" aria-pressed="{{ p.on }}" style="appearance:none;border:1px solid {{ p.border }};background:{{ p.bg }};color:{{ p.ink }};border-radius:999px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px">{{ p.name }}</button></sc-for></div>
+        <sc-if value="{{ se.noStaff }}"><span style="font-size:12px;color:#b3261e;font-weight:600">Pick at least one person, or customers can't book it.</span></sc-if>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Available on<select value="{{ se.days }}" onChange="{{ setSeDays }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><option value="all">Any working day</option><option value="wkd">Weekdays only</option><option value="sat">Saturdays only</option></select></label>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Bookable up to<select value="{{ se.adv }}" onChange="{{ setSeAdv }}" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff;font-size:14px;color:#1c1a17"><option value="default">Business default</option><option value="7">7 days ahead</option><option value="14">14 days ahead</option><option value="30">30 days ahead</option></select></label>
+      </div>
+      <label style="display:flex;gap:10px;align-items:center;font-weight:600;cursor:pointer"><input type="checkbox" checked="{{ se.online }}" onChange="{{ setSeOnline }}" style="width:18px;height:18px;accent-color:#1c1a17">Show on the public booking page</label>
+    </div>
+    <div style="padding:14px 18px;border-top:1px solid #efebe4;display:flex;gap:8px;flex-wrap:wrap">
+      <button onClick="{{ saveSvc }}" disabled="{{ se.bad }}" style="appearance:none;border:0;background:{{ se.btn }};color:#fff;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700">Save service</button>
+      <sc-if value="{{ se.canToggle }}"><button onClick="{{ toggleSvcActive }}" style="appearance:none;border:1px solid {{ se.tBorder }};background:#fff;color:{{ se.tInk }};border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700">{{ se.tLabel }}</button></sc-if>
+    </div>
+  </aside>
+</sc-if>
+
+<sc-if value="{{ confirmOpen }}">
+  <div style="position:fixed;inset:0;background:rgba(28,26,23,.45);z-index:80;display:grid;place-items:center;padding:16px">
+    <div role="alertdialog" aria-label="{{ cf.title }}" style="background:#fff;border-radius:16px;width:min(440px,100%);padding:22px;display:flex;flex-direction:column;gap:12px">
+      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:20px">{{ cf.title }}</span>
+      <span style="color:#5d564b;line-height:1.5">{{ cf.body }}</span>
+      <sc-if value="{{ cf.reason }}"><select value="{{ cancelReason }}" onChange="{{ setCancelReason }}" aria-label="Reason" style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;background:#fff"><option>Customer asked to cancel</option><option>Staff unavailable</option><option>Booked by mistake</option><option>Other</option></select></sc-if>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:6px"><button onClick="{{ closeConfirm }}" style="appearance:none;border:1px solid #d9d3c8;background:#fff;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600">{{ cf.keep }}</button><button onClick="{{ cf.run }}" style="appearance:none;border:0;background:#b3261e;color:#fff;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700">{{ cf.go }}</button></div>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ toast }}">
+  <div role="status" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#1c1a17;color:#f4f0e8;padding:12px 18px;border-radius:10px;z-index:90;font-weight:600;box-shadow:0 14px 30px -10px rgba(0,0,0,.4)">{{ toast }}</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  static NOW = 680;
+  static STAFF = [{id:'mr',name:'Marcus Reed',ini:'MR'},{id:'ta',name:'Theo Alvarez',ini:'TA'},{id:'jp',name:'Jun Park',ini:'JP'},{id:'do',name:'Dana Okafor',ini:'DO'}];
+  static ST = {pending:{l:'Pending',bg:'#f6edd0',ink:'#6e5609',bar:'#c9a227'},confirmed:{l:'Confirmed',bg:'#fbe6d8',ink:'#8a3d12',bar:'#e0773a'},completed:{l:'Completed',bg:'#e3efe9',ink:'#1f5040',bar:'#2f6e5a'},cancelled:{l:'Cancelled',bg:'#eeebe6',ink:'#6b6358',bar:'#b9b1a4'},noshow:{l:'No-show',bg:'#f8dedb',ink:'#9b2c1f',bar:'#c4483a'}};
+  static CUST = ['Andre Wallace','Sam Whitfield','Luis Ortega','Ben Carter','Tom Nguyen','Jordan Lee','Malik Hassan','Chris Doyle','Ethan Brooks','Noah Kim','Daniel Fofana','Ryan Patel','Isaac Moreno','Kevin Osei','Aaron Schultz','Leo Martins','Owen Price','Jamal Reid','Victor Hale','Nate Romero','Eli Sandoval','Marco Bianchi','Henry Adeyemi','Felix Wong','Caleb Turner','Omar Saleh','Gabe Lindqvist','Diego Ramos','Paul Mensah','Simon Archer','Theo Grant','Miles Dunn','Ravi Kapoor','Jason Cole','Adam Novak','Hugo Laurent','Ken Ito','Zach Ferreira','Peter Quinn','Luca Romano'];
+  static BLOCKS = [{off:-1,staff:'mr',a:900,b:960,label:'Supplier visit'},{off:3,staff:'jp',a:540,b:660,label:'Colour training'},{off:1,staff:'do',a:960,b:1020,label:'Dentist'}];
+  defaultsSched(){
+    const s=(p)=>JSON.parse(JSON.stringify(p));
+    const bh={0:[],1:[[540,780],[810,1140]],2:[[540,780],[810,1140]],3:[[540,780],[810,1140]],4:[[540,780],[810,1140]],5:[[540,780],[810,1140]],6:[[540,780],[810,1080]]};
+    const mr=s(bh); mr[3]=[];
+    const ta={0:[],1:[[600,780],[810,1140]],2:[[600,780],[810,1140]],3:[[600,780],[810,1140]],4:[[600,780],[810,1140]],5:[[600,780],[810,1140]],6:[[600,780],[810,1080]]};
+    const jp={0:[],1:[],2:[[540,780],[810,1020]],3:[[540,780],[810,1020]],4:[[540,780],[810,1020]],5:[[540,780],[810,1020]],6:[[540,780],[810,1020]]};
+    const dk={0:[],1:[[720,930],[960,1140]],2:[[720,930],[960,1140]],3:[[720,930],[960,1140]],4:[],5:[[720,930],[960,1140]],6:[[720,1080]]};
+    return {business:bh,mr,ta,jp,do:dk};
+  }
+  defaultServices(){ return [
+    {id:'s1',name:'Classic Cut',desc:'Scissor and clipper cut, wash and style.',dur:45,price:38,bufB:0,bufA:5,staff:['mr','ta','jp','do'],active:true,online:true,days:'all',adv:'default',w:27},
+    {id:'s2',name:'Skin Fade',desc:'Tight fade blended to your length on top.',dur:60,price:45,bufB:0,bufA:5,staff:['mr','ta','jp','do'],active:true,online:true,days:'all',adv:'default',w:31},
+    {id:'s3',name:'Beard Trim',desc:'Shape, line-up and hot towel finish.',dur:30,price:22,bufB:0,bufA:0,staff:['mr','ta','jp','do'],active:true,online:true,days:'all',adv:'default',w:14},
+    {id:'s4',name:'Cut & Beard',desc:'Full cut with beard shaping.',dur:75,price:58,bufB:0,bufA:5,staff:['mr','ta','jp'],active:true,online:true,days:'all',adv:'default',w:19},
+    {id:'s5',name:'Hot Towel Shave',desc:'Straight razor shave, two towels.',dur:45,price:40,bufB:5,bufA:5,staff:['mr','ta'],active:true,online:true,days:'all',adv:'default',w:6},
+    {id:'s6',name:'Kids Cut',desc:'Under 12. Patient and quick.',dur:30,price:26,bufB:0,bufA:0,staff:['ta','do'],active:true,online:true,days:'all',adv:'default',w:5},
+    {id:'s7',name:'Colour Refresh',desc:'Grey blending or a single-process colour.',dur:90,price:85,bufB:0,bufA:10,staff:['jp'],active:false,online:false,days:'wkd',adv:'14',w:0}
+  ]; }
+  gen(services,sched){
+    let seed=11; const rnd=()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+    const out=[]; let id=10240; const N=Component.NOW;
+    for(let off=-90;off<=30;off++){
+      const wd=this.date(off).getDay(), busy=[0,.42,.48,.52,.6,.74,.86][wd]*(off>2?Math.max(.15,1-off/24):1);
+      Component.STAFF.forEach(st=>{
+        (sched[st.id][wd]||[]).forEach(([a,b])=>{ let t=a;
+          while(t<b){ if(rnd()<busy){ const el=services.filter(s=>s.w&&s.staff.includes(st.id)); let r=rnd()*el.reduce((x,s)=>x+s.w,0),sv=el[0]; for(const s of el){ r-=s.w; if(r<=0){sv=s;break;} }
+              if(t+sv.dur>b){ t+=15; continue; }
+              const end=t+sv.dur, past=off<0||(off===0&&end<=N), q=rnd(); let status;
+              if(past) status=q<.055?'cancelled':q<.085?'noshow':'completed'; else status=q<.05?'cancelled':q<.17?'pending':'confirmed';
+              const ci=Math.floor(Math.pow(rnd(),1.7)*40), sr=rnd();
+              out.push({id:'A-'+(id++),off,start:t,dur:sv.dur,svc:sv.id,staff:st.id,cust:ci,status,source:sr<.66?'Online':sr<.9?'Phone':'Walk-in',notes:rnd()<.08?['Keep length on top','Sensitive skin','Running 5 min late usually','Wants a #2 on the sides'][Math.floor(rnd()*4)]:''});
+              t=end+sv.bufA+(rnd()<.25?15:0);
+            } else t+=30; }
+        });
+      });
+    }
+    return out;
+  }
+  date(off){ return new Date(2026,9,9+off); }
+  fT(m){ const h=Math.floor(m/60),mm=m%60; return ((h+11)%12+1)+':'+String(mm).padStart(2,'0')+(h<12?' AM':' PM'); }
+  fTs(m){ const h=Math.floor(m/60),mm=m%60; return ((h+11)%12+1)+(mm?':'+String(mm).padStart(2,'0'):'')+(h<12?'a':'p'); }
+  fD(off,o){ return this.date(off).toLocaleDateString('en-US',o||{weekday:'short',month:'short',day:'numeric'}); }
+  offOf(v){ const [y,m,d]=v.split('-').map(Number); return Math.round((new Date(y,m-1,d)-new Date(2026,9,9))/864e5); }
+  isoOf(off){ const d=this.date(off); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+  constructor(p){ super(p); const sv=this.defaultServices(), sc=this.defaultsSched();
+    this.state={page:'overview',biz:0,bizOpen:false,range:'30d',cFrom:'2026-09-01',cTo:'2026-10-09',chart:'rev',view:'week',calOff:0,staffF:[],statusF:'active',svcF:'all',sel:null,resch:null,confirm:null,cancelReason:'Customer asked to cancel',create:null,toast:null,q:'',aStatus:'all',aStaff:'all',aScope:'upcoming',aLimit:30,services:sv,svcEdit:null,
+      avail:{sched:sc,rules:{interval:30,notice:60,maxDays:60,tz:'America/New_York'},overrides:[{date:'2026-11-26',type:'closed',note:'Thanksgiving'},{date:'2026-12-24',type:'custom',a:540,b:840,note:'Christmas Eve, short day'}]},
+      availTarget:'business',ov:{date:'2026-12-31',type:'custom',a:540,b:900,note:''},prevStaff:'mr',prevOff:1,navOpen:false,narrow:false,appts:this.gen(sv,sc)};
+    this.state.availSaved=JSON.stringify(this.state.avail);
+  }
+  componentDidMount(){ this.onR=()=>{ const n=innerWidth<900; if(n!==this.state.narrow) this.setState({narrow:n}); }; addEventListener('resize',this.onR); this.onR(); this.onK=e=>{ if(e.key==='Escape') this.setState({sel:null,resch:null,create:null,svcEdit:null,confirm:null,bizOpen:false}); }; addEventListener('keydown',this.onK); }
+  componentWillUnmount(){ removeEventListener('resize',this.onR); removeEventListener('keydown',this.onK); }
+  toast(msg){ clearTimeout(this.tt); this.setState({toast:msg}); this.tt=setTimeout(()=>this.setState({toast:null}),2600); }
+  savedSched(){ return JSON.parse(this.state.availSaved).sched; }
+  conflict(staff,off,start,dur,ignore){
+    const sched=this.savedSched(), wd=this.date(off).getDay(), per=sched[staff][wd]||[], end=start+dur;
+    const nm=Component.STAFF.find(s=>s.id===staff).name.split(' ')[0];
+    const hit=this.state.appts.find(a=>a.id!==ignore&&a.staff===staff&&a.off===off&&a.status!=='cancelled'&&a.status!=='noshow'&&start<a.start+a.dur&&end>a.start);
+    if(hit){ const s=this.svc(hit.svc); return {bad:true,msg:`Overlaps ${Component.CUST[hit.cust]}, ${this.fT(hit.start)}–${this.fT(hit.start+hit.dur)} (${s.name}) with ${nm}.`}; }
+    const bl=Component.BLOCKS.find(b=>b.staff===staff&&b.off===off&&start<b.b&&end>b.a); if(bl) return {bad:true,msg:`${nm} has blocked ${this.fT(bl.a)}–${this.fT(bl.b)}: ${bl.label}.`};
+    if(!per.length) return {bad:true,msg:`${nm} doesn't work on ${this.fD(off,{weekday:'long'})}s.`};
+    if(!per.some(([a,b])=>start>=a&&end<=b)){ const inGap=per.some(([a,b],i)=>i>0&&start<a&&end>per[i-1][1]); return {bad:true,msg:inGap?`That runs into ${nm}'s break.`:`Outside ${nm}'s working hours (${per.map(([a,b])=>this.fT(a)+'–'+this.fT(b)).join(', ')}).`}; }
+    return {bad:false,msg:`${this.fD(off,{weekday:'long',month:'short',day:'numeric'})}, ${this.fT(start)}–${this.fT(end)} is free for ${nm}.`};
+  }
+  svc(id){ return this.state.services.find(s=>s.id===id); }
+  setAppt(id,patch,msg){ this.setState(s=>({appts:s.appts.map(a=>a.id===id?Object.assign({},a,patch):a)})); if(msg) this.toast(msg); }
+  openCreate(o){ const st=o&&o.staff||'mr'; const sv=this.state.services.find(s=>s.active&&s.staff.includes(st))||this.state.services[0];
+    this.setState({create:Object.assign({cust:'new',name:'',contact:'',svc:sv.id,staff:st,off:0,start:780+30,notes:''},o||{}),sel:null}); }
+  bars(per){ return per.map(([a,b])=>({l:((a-360)/960*100)+'%',w:((b-a)/960*100)+'%',bg:'#2f6e5a'})); }
+  renderVals(){
+    const st=this.state, S=Component.STAFF, ST=Component.ST, N=Component.NOW, C=Component.CUST;
+    const sName=id=>(S.find(s=>s.id===id)||{}).name||'—';
+    const biz=st.biz===1?{name:'Northside Eastgate',sub:'Draft · not published'}:{name:'Northside Barber Co.',sub:'tempo.example.com/northside-barber'};
+    const appts=st.biz===1?[]:st.appts;
+    const pages=[['overview','Overview'],['calendar','Calendar'],['appointments','Appointments'],['services','Services'],['staff','Staff','next'],['customers','Customers','next'],['analytics','Analytics','next'],['booking','Booking page','next'],['availability','Availability'],['settings','Business settings','next']];
+    const go=p=>()=>this.setState({page:p,navOpen:false,bizOpen:false});
+    const pg={}; pages.forEach(p=>pg[p[0]]=st.page===p[0]); pg.later=pages.some(p=>p[0]===st.page&&p[2]);
+    const open=a=>()=>this.setState({sel:a.id,resch:null});
+    const row=a=>{const sv=this.svc(a.svc),m=ST[a.status];return {id:a.id,customer:C[a.cust],svc:sv.name,staff:sName(a.staff).split(' ')[0],time:this.fT(a.start),day:a.off===0?'Today':a.off===1?'Tomorrow':this.fD(a.off),status:m.l,sbg:m.bg,sink:m.ink,bar:m.bar,open:open(a)};};
+    // range
+    const rr={today:[0,0],'7d':[-6,0],'30d':[-29,0],'90d':[-89,0]}[st.range]||[Math.max(-90,this.offOf(st.cFrom)),Math.min(0,this.offOf(st.cTo))];
+    const [ra,rb]=rr, len=rb-ra+1;
+    const inR=appts.filter(a=>a.off>=ra&&a.off<=rb), prevR=appts.filter(a=>a.off>=ra-len&&a.off<=ra-1);
+    const done=x=>x.filter(a=>a.status==='completed'), val=x=>done(x).reduce((s,a)=>s+this.svc(a.svc).price,0);
+    const pct=(a,b)=>b?Math.round((a-b)/b*100):0, delta=(a,b)=>{ if(st.range==='today'||!b) return 'Range: '+this.rangeLabel(st,ra,rb); const p=pct(a,b); return (p>=0?'+':'')+p+'% vs previous '+len+' days'; };
+    const canc=inR.filter(a=>a.status==='cancelled').length, cRate=inR.length?canc/inR.length:0, pcr=prevR.length?prevR.filter(a=>a.status==='cancelled').length/prevR.length:0;
+    const todayA=appts.filter(a=>a.off===0).sort((x,y)=>x.start-y.start);
+    const upc=appts.filter(a=>(a.off>0||(a.off===0&&a.start>N))&&(a.status==='confirmed'||a.status==='pending')).sort((x,y)=>x.off-y.off||x.start-y.start);
+    const kpis=[
+      {label:"Today's appointments",value:String(todayA.filter(a=>a.status!=='cancelled').length),note:todayA.filter(a=>a.status==='completed').length+' done · '+todayA.filter(a=>a.off===0&&a.start>N&&a.status!=='cancelled').length+' still to come'},
+      {label:'Upcoming',value:String(upc.length),note:upc.filter(a=>a.status==='pending').length+' pending confirmation'},
+      {label:'Completed',value:done(inR).length.toLocaleString(),note:delta(done(inR).length,done(prevR).length)},
+      {label:'Estimated revenue',value:'$'+val(inR).toLocaleString(),note:'Price of completed appointments'},
+      {label:'Revenue collected',value:'Not set up',note:'Payment tracking is a planned integration',size:'20px',color:'#857d70'},
+      {label:'Cancellation rate',value:(cRate*100).toFixed(1)+'%',note:st.range==='today'?canc+' cancelled today':(cRate<=pcr?'Down':'Up')+' from '+(pcr*100).toFixed(1)+'% previous period'}
+    ].map(k=>Object.assign({size:'30px',color:'#1c1a17',noteColor:'#6b6358'},k));
+    // chart buckets
+    let buckets=[];
+    if(st.range==='today'){ for(let h=9;h<19;h++) buckets.push({label:this.fTs(h*60),items:inR.filter(a=>Math.floor(a.start/60)===h)}); }
+    else if(len<=31){ for(let o=ra;o<=rb;o++) buckets.push({label:len>14?(this.date(o).getDate()%5===0||o===rb?this.fD(o,{month:'numeric',day:'numeric'}):''):this.fD(o,{weekday:'narrow',day:'numeric'}),items:inR.filter(a=>a.off===o),tip:this.fD(o)}); }
+    else { for(let o=ra;o<=rb;o+=7){ const e=Math.min(rb,o+6); buckets.push({label:this.fD(o,{month:'numeric',day:'numeric'}),items:inR.filter(a=>a.off>=o&&a.off<=e),tip:'Week of '+this.fD(o)}); } }
+    const isRev=st.chart==='rev';
+    const bv=buckets.map(b=>isRev?val(b.items):b.items.filter(a=>a.status!=='cancelled').length), mx=Math.max(1,...bv);
+    const chart={gap:buckets.length>20?'3px':'8px',bars:buckets.map((b,i)=>({label:b.label,h:(bv[i]/mx*100)+'%',bg:i===buckets.length-1?'#e0773a':'#d9d1c3',top:buckets.length<=14?(isRev?'$'+bv[i]:bv[i]):'',tip:(b.tip||b.label)+': '+(isRev?'$'+bv[i]:bv[i]+' appointments')}))};
+    // popular, peak, busiest
+    const live=inR.filter(a=>a.status!=='cancelled');
+    const pc={}; live.forEach(a=>pc[a.svc]=(pc[a.svc]||0)+1); const pl=Object.keys(pc).map(k=>({name:this.svc(k).name,n:pc[k]})).sort((a,b)=>b.n-a.n), pmx=Math.max(1,...pl.map(p=>p.n));
+    const hc=[...Array(10)].map((_,i)=>live.filter(a=>Math.floor(a.start/60)===9+i).length), hmx=Math.max(1,...hc), hTop=hc.indexOf(Math.max(...hc));
+    const dc=[1,2,3,4,5,6,0].map(wd=>{ let n=0,c=0; for(let o=ra;o<=rb;o++){ if(this.date(o).getDay()===wd){ n++; c+=live.filter(a=>a.off===o).length; } } return n?c/n:0; }), dmx=Math.max(.1,...dc), dTop=dc.indexOf(Math.max(...dc));
+    const wdN=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+    // calendar
+    const sched=this.savedSched(), HH=56, H0=540, H1=1140, px=m=>((m-H0)/60*HH)+'px';
+    const vis=S.filter(s=>!st.staffF.length||st.staffF.includes(s.id));
+    const okStatus=a=>st.statusF==='all'?true:st.statusF==='active'?a.status!=='cancelled':a.status===st.statusF;
+    const okSvc=a=>st.svcF==='all'||a.svc===st.svcF;
+    const wdA=this.date(st.calOff).getDay(), wStart=st.calOff-((wdA+6)%7);
+    const dayOffs=st.view==='day'?[st.calOff]:[...Array(7)].map((_,i)=>wStart+i);
+    const days=dayOffs.map(off=>{ const wd=this.date(off).getDay();
+      return {label:this.fD(off,{weekday:'short',month:'short',day:'numeric'})+(off===0?' · Today':''),ink:off===0?'#c4581f':'#1c1a17',isToday:off===0,
+        lanes:vis.map(s=>{ const per=sched[s.id][wd]||[], shades=[];
+          if(!per.length) shades.push({top:'0px',h:px(H1),bg:'#ebe7e0',label:'Not working',text:st.view==='day'?'Not working':''});
+          else { if(per[0][0]>H0) shades.push({top:'0px',h:px(per[0][0]),bg:'#ebe7e0',label:'Not working',text:''});
+            per.forEach(([a,b],i)=>{ if(i>0) shades.push({top:px(per[i-1][1]),h:((a-per[i-1][1])/60*HH)+'px',bg:'repeating-linear-gradient(135deg,#f3f0ea 0 4px,#ddd6ca 4px 8px)',label:'Break',text:''}); });
+            const last=per[per.length-1][1]; if(last<H1) shades.push({top:px(last),h:((H1-last)/60*HH)+'px',bg:'#ebe7e0',label:'Not working',text:''}); }
+          Component.BLOCKS.filter(b=>b.staff===s.id&&b.off===off).forEach(b=>shades.push({top:px(b.a),h:((b.b-b.a)/60*HH)+'px',bg:'repeating-linear-gradient(135deg,#f6e5e2 0 4px,#e5b9b2 4px 8px)',label:'Blocked: '+b.label,text:'Blocked · '+b.label}));
+          const items=appts.filter(a=>a.off===off&&a.staff===s.id&&okStatus(a)&&okSvc(a)).map(a=>{const m=ST[a.status],sv=this.svc(a.svc);return {top:px(a.start),h:(a.dur/60*HH-2)+'px',bar:m.bar,bg:a.status==='cancelled'?'#f7f5f1':m.bg,ink:m.ink,deco:a.status==='cancelled'?'line-through':'none',time:this.fT(a.start),customer:C[a.cust],svc:sv.name,tip:`${C[a.cust]} · ${sv.name} · ${this.fT(a.start)}–${this.fT(a.start+a.dur)} · ${s.name} · ${m.l}`,open:e=>{e.stopPropagation();this.setState({sel:a.id,resch:null});}};});
+          return {head:st.view==='day'?s.name:s.ini,shades,items,click:e=>{ const r=e.currentTarget.getBoundingClientRect(); const m=H0+Math.floor((e.clientY-r.top)/HH*4)*15; this.openCreate({staff:s.id,off:Math.max(0,off),start:Math.min(H1-30,m)}); }};
+        })};
+    });
+    let cells=[];
+    if(st.view==='month'){ const d=this.date(st.calOff), first=new Date(d.getFullYear(),d.getMonth(),1), fo=Math.round((first-new Date(2026,9,9))/864e5), gs=fo-((first.getDay()+6)%7);
+      for(let i=0;i<42;i++){ const o=gs+i, its=appts.filter(a=>a.off===o&&okStatus(a)&&okSvc(a)&&vis.some(s=>s.id===a.staff)).sort((x,y)=>x.start-y.start), inM=this.date(o).getMonth()===d.getMonth();
+        cells.push({num:this.date(o).getDate(),count:its.length?its.length+' appts':'',bg:o===0?'#fdf6f1':'#fff',op:inM?1:.45,numBg:o===0?'#e0773a':'transparent',numInk:o===0?'#fff':'#1c1a17',items:its.slice(0,3).map(a=>({t:this.fTs(a.start)+' '+C[a.cust],bg:ST[a.status].bg,ink:ST[a.status].ink})),more:its.length>3?'+'+(its.length-3)+' more':'',open:()=>this.setState({view:'day',calOff:o})}); } }
+    const calLabel=st.view==='day'?this.fD(st.calOff,{weekday:'long',month:'long',day:'numeric',year:'numeric'}):st.view==='week'?this.fD(wStart,{month:'short',day:'numeric'})+' – '+this.fD(wStart+6,{month:'short',day:'numeric',year:'numeric'}):this.fD(st.calOff,{month:'long',year:'numeric'});
+    const step=st.view==='day'?1:st.view==='week'?7:30;
+    const cal={grid:st.view!=='month',month:st.view==='month',label:calLabel,days,cells,h:(10*HH)+'px',hh:HH+'px',cols:'56px repeat('+days.length+',minmax(0,1fr))',minW:st.view==='week'?(56+days.length*vis.length*44)+'px':(56+vis.length*160)+'px',nowTop:px(N),hours:[...Array(11)].map((_,i)=>({l:this.fTs(H0+i*60),top:(i*HH)+'px'}))};
+    // appointments table
+    const q=st.q.trim().toLowerCase();
+    let list=appts.filter(a=>st.aScope==='upcoming'?(a.off>0||(a.off===0&&a.start+a.dur>N)):st.aScope==='past'?(a.off<0||(a.off===0&&a.start+a.dur<=N)):true)
+      .filter(a=>st.aStaff==='all'||a.staff===st.aStaff)
+      .filter(a=>!q||(C[a.cust]+' '+this.svc(a.svc).name+' '+a.id).toLowerCase().includes(q));
+    const counts={all:list.length}; Object.keys(ST).forEach(k=>counts[k]=list.filter(a=>a.status===k).length);
+    list=list.filter(a=>st.aStatus==='all'||a.status===st.aStatus).sort((x,y)=>st.aScope==='upcoming'?(x.off-y.off||x.start-y.start):(y.off-x.off||y.start-x.start));
+    const rows=list.slice(0,st.aLimit).map(a=>{const r=row(a),sv=this.svc(a.svc);return Object.assign(r,{staff:sName(a.staff),when:this.fD(a.off)+' · '+this.fT(a.start),dur:a.dur+' min',price:'$'+sv.price,source:a.source});});
+    // drawer
+    const sel=st.sel&&st.appts.find(a=>a.id===st.sel);
+    let d=null;
+    if(sel){ const sv=this.svc(sel.svc), m=ST[sel.status], hist=st.appts.filter(a=>a.cust===sel.cust&&a.status==='completed'), name=C[sel.cust], fut=sel.off>0||(sel.off===0&&sel.start>N);
+      const btn=(label,run,kind)=>({label,run,border:kind==='p'?'#1c1a17':kind==='d'?'#e8c4bf':'#d9d3c8',bg:kind==='p'?'#1c1a17':'#fff',ink:kind==='p'?'#fff':kind==='d'?'#b3261e':'#1c1a17'});
+      const resch=()=>this.setState({resch:{off:Math.max(0,sel.off),start:sel.start}});
+      const askCancel=()=>this.setState({confirm:{type:'cancel',id:sel.id}});
+      const acts=[];
+      if(sel.status==='pending'){ acts.push(btn('Confirm',()=>this.setAppt(sel.id,{status:'confirmed'},'Appointment confirmed'),'p'),btn('Reschedule',resch),btn('Cancel',askCancel,'d')); }
+      else if(sel.status==='confirmed'&&fut){ acts.push(btn('Reschedule',resch,'p'),btn('Cancel',askCancel,'d')); }
+      else if(sel.status==='confirmed'){ acts.push(btn('Mark completed',()=>this.setAppt(sel.id,{status:'completed'},'Marked as completed'),'p'),btn('Mark no-show',()=>this.setState({confirm:{type:'noshow',id:sel.id}}),'d')); }
+      else acts.push(btn('Book again',()=>this.openCreate({cust:String(sel.cust),svc:sel.svc,staff:sel.staff,off:Math.max(1,sel.off+28>30?1:sel.off+28),start:sel.start}),'p'));
+      d={id:sel.id,source:sel.source==='Online'?'Booked online':sel.source==='Phone'?'Added by staff (phone)':'Walk-in',status:m.l,sbg:m.bg,sink:m.ink,svc:sv.name,when:this.fD(sel.off,{weekday:'long',month:'long',day:'numeric'})+', '+this.fT(sel.start)+'–'+this.fT(sel.start+sel.dur),dur:sel.dur,staff:sName(sel.staff),price:'$'+sv.price,customer:name,email:name.toLowerCase().replace(' ','.')+'@email.example',phone:'(555) 01'+(sel.cust%10)+'-'+String(2000+sel.cust*137).slice(0,4),history:hist.length+' completed visits'+(hist.length?' · customer since '+this.fD(Math.min(...hist.map(a=>a.off)),{month:'short',year:'numeric'}):' · first visit'),notes:sel.notes,actions:acts};
+    }
+    const dayOpts=[...Array(31)].map((_,i)=>({v:i,l:(i===0?'Today, ':i===1?'Tomorrow, ':'')+this.fD(i)}));
+    let reschTimes=[],reschErr='',reschBad=true;
+    if(sel&&st.resch){ for(let m=540;m<=1110;m+=15){ const c=this.conflict(sel.staff,st.resch.off,m,sel.dur,sel.id); reschTimes.push({v:m,l:this.fT(m)+(c.bad?' · unavailable':''),dis:c.bad}); }
+      const c=this.conflict(sel.staff,st.resch.off,st.resch.start,sel.dur,sel.id); reschBad=c.bad||(st.resch.off===0&&st.resch.start<=N); reschErr=c.bad?c.msg:(st.resch.off===0&&st.resch.start<=N?'That time has already passed.':''); }
+    // create
+    const crs=st.create; let crCheck={msg:'',bg:'#f7f5f0',ink:'#1c1a17'},crBad=true,cr=null,crStaffOpts=[];
+    if(crs){ const sv=this.svc(crs.svc); const c=this.conflict(crs.staff,crs.off,crs.start,sv.dur); const past=crs.off===0&&crs.start<=N; const noName=crs.cust==='new'&&!crs.name.trim(); const notElig=!sv.staff.includes(crs.staff);
+      crBad=c.bad||past||noName||notElig;
+      crCheck=c.bad?{msg:c.msg,bg:'#fbe9e7',ink:'#9b2c1f'}:past?{msg:'That time has already passed today.',bg:'#fbe9e7',ink:'#9b2c1f'}:notElig?{msg:sName(crs.staff)+" doesn't offer "+sv.name+'.',bg:'#fbe9e7',ink:'#9b2c1f'}:noName?{msg:'Add the customer’s name to continue.',bg:'#f6edd0',ink:'#6e5609'}:{msg:'✓ '+c.msg,bg:'#e3efe9',ink:'#1f5040'};
+      cr=Object.assign({},crs,{isNew:crs.cust==='new',title:'New appointment'}); crStaffOpts=S.filter(s=>sv.staff.includes(s.id)); }
+    // services
+    const se0=st.svcEdit; let se=null;
+    if(se0){ const bad=!se0.name.trim()||!se0.staff.length; const ex=st.services.find(s=>s.id===se0.id);
+      se=Object.assign({},se0,{title:ex?'Edit '+ex.name:'New service',nameBorder:se0.name.trim()?'#d9d3c8':'#b3261e',noStaff:!se0.staff.length,bad,btn:bad?'#bdb5a8':'#1c1a17',canToggle:!!ex,tLabel:se0.active?'Deactivate':'Reactivate',tBorder:se0.active?'#e8c4bf':'#d9d3c8',tInk:se0.active?'#b3261e':'#1c1a17',
+        staff:S.map(s=>{const on=se0.staff.includes(s.id);return {name:s.name,on,border:on?'#1c1a17':'#d9d3c8',bg:on?'#1c1a17':'#fff',ink:on?'#fff':'#1c1a17',toggle:()=>this.setState(x=>({svcEdit:Object.assign({},x.svcEdit,{staff:on?x.svcEdit.staff.filter(i=>i!==s.id):x.svcEdit.staff.concat(s.id)})}))};})}); }
+    const setSe=(k,num)=>e=>{ const v=e.target.type==='checkbox'?e.target.checked:(num?Number(e.target.value):e.target.value); this.setState(x=>({svcEdit:Object.assign({},x.svcEdit,{[k]:v})})); };
+    // availability
+    const av=st.avail, tgt=st.availTarget, tsched=av.sched[tgt];
+    const updSched=fn=>this.setState(x=>{ const a=JSON.parse(JSON.stringify(x.avail)); fn(a.sched[x.availTarget]); return {avail:a}; });
+    const avDays=[1,2,3,4,5,6,0].map(wd=>{ const per=tsched[wd]||[], open=per.length>0; let err='';
+      per.forEach(([a,b],i)=>{ if(b<=a) err='End time must be after start time.'; else if(i>0&&a<per[i-1][1]) err='Periods overlap.'; });
+      if(!err&&tgt!=='business'&&open){ const bh=av.sched.business[wd]||[]; if(per.some(([a,b])=>!bh.some(([x,y])=>a>=x&&b<=y))) err='Outside business hours. Customers won’t see the extra time.'; }
+      return {label:wdN[(wd+6)%7],open,tLabel:open?'Open':'Closed',tBorder:open?'#2f6e5a':'#d9d3c8',tBg:open?'#e3efe9':'#fff',tInk:open?'#1f5040':'#6b6358',err,bars:this.bars(per),
+        toggle:()=>updSched(s=>{ s[wd]=open?[]:[[540,780],[810,1080]]; }),
+        add:()=>updSched(s=>{ const l=s[wd][s[wd].length-1]; const a=Math.min(1290,l?l[1]+30:540); s[wd].push([a,Math.min(1320,a+120)]); }),
+        periods:per.map((p,i)=>({a:p[0],b:p[1],setA:e=>updSched(s=>{s[wd][i][0]=Number(e.target.value);}),setB:e=>updSched(s=>{s[wd][i][1]=Number(e.target.value);}),remove:()=>updSched(s=>{s[wd].splice(i,1);})}))};
+    });
+    const availInvalid=avDays.some(d=>d.err&&!d.err.startsWith('Outside'));
+    const timeOpts=[]; for(let m=360;m<=1320;m+=30) timeOpts.push({v:m,l:this.fT(m)});
+    const quarterOpts=[]; for(let m=540;m<=1125;m+=15) quarterOpts.push({v:m,l:this.fT(m)});
+    // slot preview
+    const pw=this.date(st.prevOff).getDay(), pper=(av.sched[st.prevStaff][pw]||[]).filter(([a,b])=>(av.sched.business[pw]||[]).some(([x,y])=>a<y&&b>x));
+    const prevSlots=[]; const iv=Number(av.rules.interval), nt=Number(av.rules.notice);
+    if(pper.length){ const lo=Math.min(...pper.map(p=>p[0])), hi=Math.max(...pper.map(p=>p[1]));
+      for(let m=lo;m+45<=hi;m+=iv){ const end=m+45; let why='Bookable',bg='#e3efe9',ink='#1f5040',deco='none';
+        const inP=pper.some(([a,b])=>m>=a&&end+5<=b+5&&end<=b);
+        const hit=st.appts.find(a=>a.staff===st.prevStaff&&a.off===st.prevOff&&a.status!=='cancelled'&&m<a.start+a.dur+5&&end+5>a.start);
+        const bl=Component.BLOCKS.find(b=>b.staff===st.prevStaff&&b.off===st.prevOff&&m<b.b&&end>b.a);
+        if(!inP){ why='Break or end of shift'; bg='repeating-linear-gradient(135deg,#f3f0ea 0 3px,#ddd6ca 3px 6px)'; ink='#857d70'; }
+        else if(hit||bl){ why=hit?'Booked':'Blocked'; bg='#f0ece5'; ink='#9a9184'; deco='line-through'; }
+        else if(st.prevOff*1440+m < N+nt){ why='Inside minimum notice'; bg='#f6edd0'; ink='#6e5609'; }
+        prevSlots.push({l:this.fTs(m),why,bg,ink,deco}); } }
+    const ovs=av.overrides.slice().sort((a,b)=>a.date<b.date?-1:1);
+    const setOv=(k,num)=>e=>this.setState(x=>({ov:Object.assign({},x.ov,{[k]:num?Number(e.target.value):e.target.value})}));
+    const setRule=k=>e=>this.setState(x=>({avail:Object.assign({},x.avail,{rules:Object.assign({},x.avail.rules,{[k]:e.target.value})})}));
+    const dirty=JSON.stringify(av)!==st.availSaved;
+    // confirm
+    let cf=null;
+    if(st.confirm){ const c=st.confirm;
+      if(c.type==='cancel'){ const a=st.appts.find(x=>x.id===c.id); cf={title:'Cancel this appointment?',body:`${C[a.cust]} · ${this.svc(a.svc).name}, ${this.fD(a.off)} at ${this.fT(a.start)}. The time becomes bookable again. In this prototype no message is sent.`,reason:true,keep:'Keep appointment',go:'Cancel appointment',run:()=>{ this.setAppt(a.id,{status:'cancelled'},'Appointment cancelled · '+a.id); this.setState({confirm:null}); }}; }
+      else if(c.type==='noshow'){ const a=st.appts.find(x=>x.id===c.id); cf={title:'Mark as no-show?',body:`${C[a.cust]} didn't arrive for ${this.fT(a.start)}. This counts toward the no-show rate.`,keep:'Go back',go:'Mark no-show',run:()=>{ this.setAppt(a.id,{status:'noshow'},'Marked as no-show'); this.setState({confirm:null}); }}; }
+      else if(c.type==='svc'){ const s=this.svc(c.id); const fut=st.appts.filter(a=>a.svc===c.id&&a.off>=0&&(a.status==='confirmed'||a.status==='pending')).length; cf={title:'Deactivate '+s.name+'?',body:`It disappears from your booking page. ${fut} upcoming appointment${fut===1?'':'s'} stay booked.`,keep:'Keep active',go:'Deactivate',run:()=>{ this.setState(x=>({services:x.services.map(v=>v.id===c.id?Object.assign({},v,{active:false,online:false}):v),svcEdit:null,confirm:null})); this.toast(s.name+' deactivated'); }}; }
+    }
+    const later={staff:{title:'Staff',body:'Profiles, roles and permissions, assigned services, per-person calendars and staff-level appointment and revenue figures. Schedules for each person already live in Availability.'},customers:{title:'Customers',body:'Directory with contact details, total and last appointment, upcoming visit and lifetime appointment value, plus a profile with history and notes. Customer details already appear in each appointment.'},analytics:{title:'Analytics',body:'Volume by day, week and month, estimated vs collected revenue, demand by weekday and hour, cancellation and no-show rates, repeat customers, staff utilisation, lead time and booking source, with filters for staff, service and status.'},booking:{title:'Booking page editor',body:'Template gallery, live desktop and mobile preview, brand settings, sections, service visibility, URL and publish controls. The five templates are already live as demos.',link:'Booking Pages.dc.html',linkLabel:'Open the template demos →'},settings:{title:'Business settings',body:'Profile, contact and address, time zone and currency, booking and cancellation policies, confirmation and notification preferences, subscription plan and team access.'}}[st.page]||{};
+    const mk=(arr,cur,set)=>arr.map(([k,l])=>({label:l,sel:cur===k,bg:cur===k?'#fff':'transparent',sh:cur===k?'0 1px 2px rgba(0,0,0,.08)':'none',pick:()=>set(k)}));
+    return {
+      narrow:st.narrow,sideDisplay:st.narrow&&!st.navOpen?'none':'flex',sidePos:st.narrow?'fixed':'sticky',navOverlay:st.narrow&&st.navOpen,openNav:()=>this.setState({navOpen:true}),closeNav:()=>this.setState({navOpen:false}),
+      biz,bizOpen:st.bizOpen,toggleBiz:()=>this.setState({bizOpen:!st.bizOpen}),
+      bizList:[{name:'Northside Barber Co.',sub:'Published · 4 staff',i:0},{name:'Northside Eastgate',sub:'Draft · second location',i:1}].map(b=>({...b,bg:b.i===st.biz?'#3a3731':'transparent',pick:()=>{ this.setState({biz:b.i,bizOpen:false,page:'overview'}); this.toast('Switched to '+b.name); }})),
+      nav:pages.map(p=>({label:p[1],tag:p[2]?'NEXT':'',cur:st.page===p[0]?'page':undefined,bg:st.page===p[0]?'#34312c':'transparent',color:st.page===p[0]?'#fff':(p[2]?'#8f887c':'#d6d0c5'),go:go(p[0])})),
+      pg,pageTitle:{overview:'Overview',calendar:'Calendar',appointments:'Appointments',services:'Services',availability:'Availability & working hours'}[st.page]||later.title,
+      pageSub:st.page==='overview'?'Friday, October 9 · '+biz.name+' · Demo data':biz.name+' · '+(av.rules.tz.split('/')[1]||'').replace('_',' ')+' time',
+      ranges:mk([['today','Today'],['7d','7 days'],['30d','30 days'],['90d','90 days'],['custom','Custom']],st.range,k=>this.setState({range:k})),
+      showCustom:pg.overview&&st.range==='custom',cFrom:st.cFrom,cTo:st.cTo,setCFrom:e=>this.setState({cFrom:e.target.value}),setCTo:e=>this.setState({cTo:e.target.value}),
+      isEmptyBiz:st.biz===1,hasData:st.biz===0,backToMain:()=>this.setState({biz:0}),
+      kpis,today:todayA.map(a=>Object.assign(row(a),{rowBg:a.start<=N&&a.start+a.dur>N?'#fdf6f1':'transparent'})),upcomingList:upc.slice(0,7).map(row),
+      chart,chartRev:isRev,chartVol:!isRev,setChartRev:()=>this.setState({chart:'rev'}),setChartVol:()=>this.setState({chart:'vol'}),tabRevLine:isRev?'#1c1a17':'transparent',tabVolLine:isRev?'transparent':'#1c1a17',tabRevInk:isRev?'#1c1a17':'#857d70',tabVolInk:isRev?'#857d70':'#1c1a17',
+      chartNote:isRev?'Price of completed appointments. Not collected payments.':'Booked appointments, excluding cancellations.',
+      popular:pl.map(p=>({name:p.name,n:p.n,w:(p.n/pmx*100)+'%'})),
+      peak:hc.map((v,i)=>({l:this.fTs((9+i)*60),bg:`oklch(${(0.96-v/hmx*0.5).toFixed(3)} ${(0.02+v/hmx*0.09).toFixed(3)} 160)`,tip:v+' appointments starting '+this.fT((9+i)*60)})),
+      peakNote:'Appointments by start hour. Busiest: '+this.fT((9+hTop)*60)+'.',
+      busy:dc.map((v,i)=>({d:wdN[i].slice(0,1),h:(v/dmx*100)+'%',bg:i===dTop?'#e0773a':'#d9d1c3',tip:wdN[i]+': '+v.toFixed(1)+' per day'})),
+      busyNote:'Average appointments per open day. '+wdN[dTop]+' leads with '+dc[dTop].toFixed(1)+'; Sunday is closed.',
+      newAppt:()=>this.openCreate(),quickService:()=>this.setState({page:'services',svcEdit:{id:null,name:'',desc:'',dur:45,price:30,bufB:0,bufA:5,staff:['mr'],active:true,online:true,days:'all',adv:'default'}}),
+      goAvail:()=>this.setState({page:'availability'}),goAppts:()=>this.setState({page:'appointments'}),goCalToday:()=>this.setState({page:'calendar',view:'day',calOff:0}),
+      cal,wdNames:wdN,views:mk([['day','Day'],['week','Week'],['month','Month']],st.view,k=>this.setState({view:k})),
+      calToday:()=>this.setState({calOff:0}),calPrev:()=>this.setState({calOff:Math.max(-90,st.calOff-step)}),calNext:()=>this.setState({calOff:Math.min(30,st.calOff+step)}),
+      staffChips:[{label:'Everyone',on:!st.staffF.length,toggle:()=>this.setState({staffF:[]})}].concat(S.map(s=>({label:s.name,on:st.staffF.includes(s.id),toggle:()=>this.setState(x=>({staffF:x.staffF.includes(s.id)?x.staffF.filter(i=>i!==s.id):x.staffF.concat(s.id)}))}))).map(c=>Object.assign(c,{border:c.on?'#1c1a17':'#d9d3c8',bg:c.on?'#1c1a17':'#fff',ink:c.on?'#fff':'#1c1a17'})),
+      serviceOpts:st.services,svcF:st.svcF,setSvcF:e=>this.setState({svcF:e.target.value}),statusF:st.statusF,setStatusF:e=>this.setState({statusF:e.target.value}),
+      q:st.q,setQ:e=>this.setState({q:e.target.value,aLimit:30}),aStaff:st.aStaff,setAStaff:e=>this.setState({aStaff:e.target.value}),staffOpts:S,
+      scopes:mk([['upcoming','Upcoming'],['past','Past'],['all','All']],st.aScope,k=>this.setState({aScope:k,aLimit:30})),
+      statusChips:[['all','All']].concat(Object.keys(ST).map(k=>[k,ST[k].l])).map(([k,l])=>({label:l,n:counts[k],sel:st.aStatus===k,border:st.aStatus===k?'#1c1a17':'#d9d3c8',bg:st.aStatus===k?'#1c1a17':'#fff',ink:st.aStatus===k?'#fff':'#1c1a17',pick:()=>this.setState({aStatus:k,aLimit:30})})),
+      rows,noRows:!rows.length,shown:rows.length,total:list.length,hasMore:list.length>st.aLimit,more:()=>this.setState({aLimit:st.aLimit+30}),clearFilters:()=>this.setState({q:'',aStatus:'all',aStaff:'all'}),
+      drawer:!!d,d:d||{},closeDrawer:()=>this.setState({sel:null,resch:null}),
+      resch:st.resch,dayOpts,reschTimes,reschErr,reschBad,reschBtn:reschBad?'#bdb5a8':'#1c1a17',
+      setReschOff:e=>this.setState({resch:Object.assign({},st.resch,{off:Number(e.target.value)})}),setReschStart:e=>this.setState({resch:Object.assign({},st.resch,{start:Number(e.target.value)})}),
+      saveResch:()=>{ if(reschBad) return; this.setAppt(sel.id,{off:st.resch.off,start:st.resch.start,status:sel.status==='pending'?'pending':'confirmed'},'Moved to '+this.fD(st.resch.off)+', '+this.fT(st.resch.start)); this.setState({resch:null}); },
+      cancelResch:()=>this.setState({resch:null}),
+      createOpen:!!cr,cr:cr||{},crCheck,crBad,crBtn:crBad?'#bdb5a8':'#1c1a17',crStaffOpts,closeCreate:()=>this.setState({create:null}),
+      custOpts:C.map((n,i)=>({v:String(i),l:n})).sort((a,b)=>a.l<b.l?-1:1),activeSvcOpts:st.services.filter(s=>s.active).map(s=>({id:s.id,label:s.name+' · '+s.dur+' min · $'+s.price})),quarterOpts,
+      setCrCust:e=>this.setState({create:Object.assign({},crs,{cust:e.target.value})}),setCrName:e=>this.setState({create:Object.assign({},crs,{name:e.target.value})}),setCrContact:e=>this.setState({create:Object.assign({},crs,{contact:e.target.value})}),
+      setCrSvc:e=>{ const sv=this.svc(e.target.value); this.setState({create:Object.assign({},crs,{svc:sv.id,staff:sv.staff.includes(crs.staff)?crs.staff:sv.staff[0]})}); },
+      setCrStaff:e=>this.setState({create:Object.assign({},crs,{staff:e.target.value})}),setCrOff:e=>this.setState({create:Object.assign({},crs,{off:Number(e.target.value)})}),setCrStart:e=>this.setState({create:Object.assign({},crs,{start:Number(e.target.value)})}),setCrNotes:e=>this.setState({create:Object.assign({},crs,{notes:e.target.value})}),
+      saveCreate:()=>{ if(crBad) return; let ci=Number(crs.cust); if(crs.cust==='new'){ Component.CUST.push(crs.name.trim()); ci=Component.CUST.length-1; } const sv=this.svc(crs.svc); const id='A-'+(10240+st.appts.length+1);
+        this.setState(x=>({appts:x.appts.concat({id,off:crs.off,start:crs.start,dur:sv.dur,svc:sv.id,staff:crs.staff,cust:ci,status:'confirmed',source:'Phone',notes:crs.notes}),create:null})); this.toast('Appointment created · '+id); },
+      svcSummary:st.services.filter(s=>s.active).length+' active · '+st.services.filter(s=>!s.active).length+' inactive · prices in USD',
+      svcRows:st.services.map(s=>{const n=st.appts.filter(a=>a.svc===s.id&&a.off>=-29&&a.off<=0&&a.status!=='cancelled').length;return {name:s.name,desc:s.desc,dur:s.dur,price:'$'+s.price,buf:(s.bufB||s.bufA)?[s.bufB?s.bufB+' before':'',s.bufA?s.bufA+' after':''].filter(Boolean).join(', '):'None',staff:S.filter(p=>s.staff.includes(p.id)),count:n,status:s.active?(s.online?'Active':'Active · hidden online'):'Inactive',sbg:s.active?'#e3efe9':'#eeebe6',sink:s.active?'#1f5040':'#6b6358',op:s.active?1:.6,edit:()=>this.setState({svcEdit:JSON.parse(JSON.stringify(s))})};}),
+      addService:()=>this.setState({svcEdit:{id:null,name:'',desc:'',dur:45,price:30,bufB:0,bufA:5,staff:['mr'],active:true,online:true,days:'all',adv:'default'}}),
+      svcOpen:!!se,se:se||{},closeSvc:()=>this.setState({svcEdit:null}),durOpts:[15,30,45,60,75,90,120,150,180],
+      setSeName:setSe('name'),setSeDesc:setSe('desc'),setSeDur:setSe('dur',1),setSePrice:setSe('price',1),setSeBufB:setSe('bufB',1),setSeBufA:setSe('bufA',1),setSeDays:setSe('days'),setSeAdv:setSe('adv'),setSeOnline:setSe('online'),
+      saveSvc:()=>{ if(!se||se.bad) return; const v=Object.assign({},st.svcEdit); if(!v.id){ v.id='s'+(st.services.length+1); v.w=0; this.setState(x=>({services:x.services.concat(v),svcEdit:null})); this.toast(v.name+' added'); } else { this.setState(x=>({services:x.services.map(s=>s.id===v.id?v:s),svcEdit:null})); this.toast(v.name+' saved'); } },
+      toggleSvcActive:()=>{ const v=st.svcEdit; if(v.active) this.setState({confirm:{type:'svc',id:v.id}}); else { this.setState(x=>({services:x.services.map(s=>s.id===v.id?Object.assign({},s,{active:true,online:true}):s),svcEdit:null})); this.toast(v.name+' reactivated'); } },
+      availTarget:tgt,setAvailTarget:e=>this.setState({availTarget:e.target.value}),avDays,timeOpts,
+      avHint:tgt==='business'?'Business hours limit everyone.':sName(tgt)+"'s hours, inside business hours.",
+      rules:av.rules,setInterval:setRule('interval'),setNotice:setRule('notice'),setMaxDays:setRule('maxDays'),setTz:setRule('tz'),
+      prevStaff:st.prevStaff,setPrevStaff:e=>this.setState({prevStaff:e.target.value}),
+      prevDays:[...Array(7)].map((_,i)=>({label:i===0?'Today':this.fD(i,{weekday:'short',day:'numeric'}),sel:st.prevOff===i,border:st.prevOff===i?'#1c1a17':'#d9d3c8',bg:st.prevOff===i?'#1c1a17':'#fff',ink:st.prevOff===i?'#fff':'#1c1a17',pick:()=>this.setState({prevOff:i})})),
+      prevSlots,prevEmpty:!prevSlots.length,
+      overrides:ovs.map(o=>({date:this.fD(this.offOf(o.date),{weekday:'short',month:'short',day:'numeric'}),what:o.type==='closed'?'Closed':this.fT(o.a)+'–'+this.fT(o.b),note:o.note,remove:()=>this.setState(x=>({avail:Object.assign({},x.avail,{overrides:x.avail.overrides.filter(v=>v!==o)})}))})),
+      ov:st.ov,ovCustom:st.ov.type==='custom',setOvDate:setOv('date'),setOvType:setOv('type'),setOvA:setOv('a',1),setOvB:setOv('b',1),setOvNote:setOv('note'),
+      addOverride:()=>{ if(!st.ov.date) return; this.setState(x=>({avail:Object.assign({},x.avail,{overrides:x.avail.overrides.concat(Object.assign({},x.ov))}),ov:Object.assign({},x.ov,{note:''})})); },
+      availDirty:dirty,availInvalid,saveBg:availInvalid?'#8f887c':'#e0773a',
+      saveAvail:()=>{ if(availInvalid) return; this.setState({availSaved:JSON.stringify(av)}); this.toast('Availability saved · calendar updated'); },
+      discardAvail:()=>{ this.setState({avail:JSON.parse(st.availSaved)}); this.toast('Changes discarded'); },
+      confirmOpen:!!cf,cf:cf||{},closeConfirm:()=>this.setState({confirm:null}),cancelReason:st.cancelReason,setCancelReason:e=>this.setState({cancelReason:e.target.value}),
+      later,toast:st.toast
+    };
+  }
+  rangeLabel(st,a,b){ return this.fD(a,{month:'short',day:'numeric'})+' – '+this.fD(b,{month:'short',day:'numeric'}); }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,66 @@
+@use 'tokens' as *;
+
+.group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  background: $segmented-track;
+  border-radius: 9px;
+  padding: 3px;
+}
+
+.item {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  border-radius: 7px;
+  padding: 6px 10px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  color: $ink;
+  text-decoration: none;
+  line-height: 1.3;
+
+  &:hover {
+    color: $ink;
+  }
+}
+
+.selected {
+  background: $white;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+.platform {
+  background: $sa-seg;
+}
+
+// Toggle chips (calendar staff filter, service editor staff picker)
+.chip {
+  appearance: none;
+  border: 1px solid $input-border;
+  background: $white;
+  border-radius: $radius-pill;
+  padding: 6px 12px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  color: $ink;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.chipOn {
+  background: $ink;
+  border-color: $ink;
+  color: $white;
+  &:hover {
+    color: $white;
+  }
+}
+
+.count {
+  opacity: 0.6;
+  margin-left: 4px;
+}

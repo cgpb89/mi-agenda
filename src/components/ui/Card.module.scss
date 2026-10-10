@@ -1,0 +1,123 @@
+@use 'tokens' as *;
+@use 'mixins' as *;
+
+.card {
+  @include card;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid $divider;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-weight: 700;
+  font-size: 14px;
+}
+
+.headLink {
+  font-size: 13px;
+  font-weight: 600;
+  color: $orange-deep;
+  text-decoration: none;
+  &:hover {
+    color: $ink;
+  }
+}
+
+.body {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.flush {
+  padding: 0;
+}
+
+.note {
+  font-size: 12px;
+  color: $muted;
+  line-height: 1.5;
+}
+
+// Dashed "empty / next pass" card
+.empty {
+  background: $white;
+  border: 1px dashed $dashed;
+  border-radius: 14px;
+  padding: 48px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 640px;
+}
+
+.eyebrow {
+  @include mono-label(11px, $orange-deep);
+}
+
+.emptyTitle {
+  @include display(28px, 700, -0.03em);
+}
+
+.emptyBody {
+  color: $text-secondary;
+  line-height: 1.55;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+// KPI tiles
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px;
+}
+
+.kpi {
+  @include card;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: $muted;
+}
+
+.kpiValue {
+  font-family: $font-display;
+  font-weight: 700;
+  font-size: 30px;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.kpiValueMuted {
+  font-size: 20px;
+  color: $faint;
+}
+
+.kpiNote {
+  font-size: 12px;
+  color: $muted;
+}

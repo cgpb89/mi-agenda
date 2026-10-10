@@ -1,0 +1,297 @@
+@use 'tokens' as *;
+@use 'mixins' as *;
+
+.explain {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.explainCard {
+  @include card;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  span:nth-child(1) {
+    @include mono-label(11px, $orange-deep);
+  }
+  span:nth-child(2) {
+    font-weight: 700;
+  }
+  span:nth-child(3) {
+    font-size: 13px;
+    color: $text-secondary;
+    line-height: 1.5;
+  }
+}
+
+.explainDark {
+  background: $ink;
+  color: $paper;
+  border-color: $ink;
+  span:nth-child(1) {
+    color: $tempo-orange;
+  }
+  span:nth-child(3) {
+    color: #cfc8bc;
+  }
+}
+
+.cols {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.side {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.sel {
+  border: 1px solid $input-border;
+  border-radius: 7px;
+  padding: 5px 6px;
+  background: $white;
+  font-size: 13px;
+}
+
+.dayRow {
+  display: grid;
+  grid-template-columns: 56px 92px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 10px 0;
+  border-bottom: 1px solid $row-divider;
+}
+
+.dayLabel {
+  font-weight: 700;
+  padding-top: 7px;
+}
+
+.toggle {
+  appearance: none;
+  border: 1px solid $input-border;
+  background: $white;
+  color: $muted;
+  border-radius: $radius-pill;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.toggleOn {
+  border-color: $evergreen;
+  background: #e3efe9;
+  color: #1f5040;
+}
+
+.periods {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.period {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.x {
+  @include reset-button;
+  color: $faint;
+  font-size: 16px;
+  padding: 0 4px;
+}
+
+.add {
+  @include reset-button;
+  color: $orange-deep;
+  font-weight: 600;
+  font-size: 12px;
+  text-align: left;
+  padding: 2px 0;
+}
+
+.err {
+  font-size: 12px;
+  color: $danger;
+  font-weight: 600;
+}
+
+.warn {
+  font-size: 12px;
+  color: $warning-ink;
+  font-weight: 600;
+}
+
+.timeline {
+  position: relative;
+  height: 8px;
+  background: $track;
+  border-radius: 4px;
+  margin-top: 2px;
+  span {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    background: $evergreen;
+    border-radius: 4px;
+  }
+}
+
+.hint {
+  font-size: 12px;
+  color: $muted;
+  padding-top: 10px;
+}
+
+.rulesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.dayPills {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+}
+
+.dayPill {
+  appearance: none;
+  border: 1px solid $input-border;
+  background: $white;
+  color: $ink;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dayPillOn {
+  background: $ink;
+  border-color: $ink;
+  color: $white;
+}
+
+.slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(66px, 1fr));
+  gap: 4px;
+}
+
+.slot {
+  padding: 6px 0;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 5px;
+}
+
+.ok {
+  background: #e3efe9;
+  color: #1f5040;
+}
+.taken {
+  background: $track;
+  color: $faint;
+  text-decoration: line-through;
+}
+.brk {
+  @include hatched(#f3f0ea, #ddd6ca, 4px);
+  color: $faint;
+}
+.soon {
+  background: $st-pending-bg;
+  color: $st-pending-ink;
+}
+
+.legend {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: $text-secondary;
+  span {
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+  }
+  i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+  }
+}
+
+.ovRow {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid $row-divider;
+  font-size: 13px;
+}
+
+.remove {
+  @include reset-button;
+  color: $danger;
+  font-weight: 600;
+  font-size: 12px;
+}
+
+.ovAdd {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  align-items: center;
+  padding-top: 4px;
+  input,
+  select {
+    border: 1px solid $input-border;
+    border-radius: 7px;
+    padding: 6px 8px;
+    font-size: 13px;
+    background: $white;
+  }
+}
+
+.saveBar {
+  position: sticky;
+  bottom: 16px;
+  align-self: center;
+  background: $ink;
+  color: $paper;
+  border-radius: 12px;
+  padding: 10px 10px 10px 18px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  box-shadow: 0 20px 40px -16px rgba(0, 0, 0, 0.5);
+  z-index: 10;
+  flex-wrap: wrap;
+}
+
+.discard {
+  appearance: none;
+  border: 1px solid #4a463f;
+  background: transparent;
+  color: $paper;
+  border-radius: 8px;
+  padding: 8px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}

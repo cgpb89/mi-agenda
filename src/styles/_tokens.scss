@@ -1,0 +1,117 @@
+// Design tokens — transcribed from design/project/Tempo.dc.html and the
+// app / super-admin / landing prototypes. Change values here, not in components.
+
+// ── Colour ────────────────────────────────────────────────────────────────
+$paper: #f4f0e8; // public ground
+$workspace: #f6f4ef; // app ground
+$ink: #1c1a17; // text, primary buttons
+$tempo-orange: #e0773a; // accent, confirmed
+$orange-deep: #c4581f; // links, eyebrows, hover
+$evergreen: #2f6e5a; // open, completed
+$platform: #12201b; // super-admin chrome
+$danger: #b3261e; // destructive only
+
+$white: #fff;
+$card-border: #e7e2d9;
+$line: #e3ddd2;
+$input-border: #d9d3c8;
+$divider: #efebe4;
+$row-divider: #f2efe9;
+$track: #f0ece5;
+$segmented-track: #ebe6dd;
+$tile: #f7f5f0;
+$row-hover: #faf8f4;
+$highlight: #fdf6f1;
+$note-bg: #fbf6e9;
+$dashed: #cfc7b9;
+
+$text-secondary: #5d564b;
+$muted: #6b6358;
+$faint: #857d70;
+$disabled: #bdb5a8;
+$body-marketing: #4a443c;
+
+// Sidebar (app)
+$side-bg: #1c1a17;
+$side-text: #e9e4da;
+$side-item: #d6d0c5;
+$side-item-next: #8f887c;
+$side-tag: #7d766a;
+$side-active: #34312c;
+$side-surface: #25231f;
+$side-border: #3a3731;
+$side-menu: #2b2925;
+$side-sub: #a29a8d;
+$side-link: #c9c2b6;
+
+// Status pills (bg, ink, bar)
+$st-pending-bg: #f6edd0;
+$st-pending-ink: #6e5609;
+$st-pending-bar: #c9a227;
+$st-confirmed-bg: #fbe6d8;
+$st-confirmed-ink: #8a3d12;
+$st-confirmed-bar: #e0773a;
+$st-completed-bg: #e3efe9;
+$st-completed-ink: #1f5040;
+$st-completed-bar: #2f6e5a;
+$st-cancelled-bg: #eeebe6;
+$st-cancelled-ink: #6b6358;
+$st-cancelled-bar: #b9b1a4;
+$st-noshow-bg: #f8dedb;
+$st-noshow-ink: #9b2c1f;
+$st-noshow-bar: #c4483a;
+
+$error-bg: #fbe9e7;
+$error-ink: #9b2c1f;
+$success-bg: #e3efe9;
+$success-ink: #1f5040;
+$warning-bg: #f6edd0;
+$warning-ink: #6e5609;
+$danger-border: #e8c4bf;
+$danger-disabled: #d8a9a4;
+
+// Super-admin neutrals
+$sa-bg: #f3f3f0;
+$sa-line: #e2e2dc;
+$sa-input: #d6d6cf;
+$sa-muted: #62666d;
+$sa-secondary: #4a4e55;
+$sa-disabled: #8a8e94;
+$sa-tile: #f6f6f2;
+$sa-seg: #e6e6e0;
+$sa-active: #23372f;
+
+// ── Type ──────────────────────────────────────────────────────────────────
+$font-display: var(--font-bricolage), 'Bricolage Grotesque', system-ui, sans-serif;
+$font-body: var(--font-hanken), 'Hanken Grotesk', system-ui, sans-serif;
+$font-mono: var(--font-mono), 'JetBrains Mono', ui-monospace, monospace;
+
+// ── Spacing & radius ──────────────────────────────────────────────────────
+$space-1: 4px;
+$space-2: 8px;
+$space-3: 12px;
+$space-4: 16px;
+$space-5: 24px;
+$space-6: 40px;
+$space-7: 64px;
+
+$radius-control: 8px;
+$radius-card: 12px;
+$radius-card-lg: 16px;
+$radius-pill: 999px;
+
+// ── Breakpoints ───────────────────────────────────────────────────────────
+$bp-app-drawer: 900px; // app sidebar becomes a drawer below this
+$bp-narrow: 820px;
+$bp-flat: 700px;
+
+// ── Layers ────────────────────────────────────────────────────────────────
+$z-header: 20;
+$z-nav-overlay: 30;
+$z-sidebar: 40;
+$z-drawer: 60;
+$z-modal: 70;
+$z-confirm: 80;
+$z-toast: 90;
+
+$page-pad: clamp(14px, 2.4vw, 28px);

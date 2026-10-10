@@ -1,0 +1,178 @@
+@use 'tokens' as *;
+
+.dialog {
+  border: 0;
+  padding: 0;
+  color: $ink;
+  background: $white;
+  max-height: 100dvh;
+  overflow: visible;
+
+  &::backdrop {
+    background: rgba(28, 26, 23, 0.28);
+  }
+}
+
+// Right-hand drawer (appointment details, service editor)
+.drawer {
+  margin: 0 0 0 auto;
+  height: 100dvh;
+  max-height: 100dvh;
+  width: min(440px, 100vw);
+  max-width: 100vw;
+  box-shadow: -20px 0 50px -20px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.18s ease-out;
+}
+
+.wide {
+  width: min(480px, 100vw);
+}
+
+.drawerHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 18px;
+  border-bottom: 1px solid $divider;
+}
+
+.drawerBody {
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.drawerFoot {
+  padding: 14px 18px;
+  border-top: 1px solid $divider;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.close {
+  appearance: none;
+  width: 32px;
+  height: 32px;
+  border: 1px solid $input-border;
+  background: $white;
+  border-radius: $radius-control;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  flex: 0 0 auto;
+}
+
+// Centered modal (new appointment)
+.modal {
+  margin: auto;
+  width: min(560px, calc(100vw - 24px));
+  max-height: 92dvh;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  &::backdrop {
+    background: rgba(28, 26, 23, 0.4);
+  }
+}
+
+.modalHead {
+  padding: 18px 20px;
+  border-bottom: 1px solid $divider;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.modalTitle {
+  font-family: $font-display;
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: -0.02em;
+}
+
+.modalBody {
+  padding: 18px 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modalFoot {
+  padding: 14px 20px 18px;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  border-top: 1px solid $divider;
+}
+
+// Alert dialog (destructive confirmations)
+.alert {
+  margin: auto;
+  width: min(440px, calc(100vw - 24px));
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  &::backdrop {
+    background: rgba(28, 26, 23, 0.45);
+  }
+}
+
+.alertBody {
+  color: $text-secondary;
+  line-height: 1.5;
+  font-size: 14px;
+}
+
+.alertActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(24px);
+    opacity: 0.6;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+// Toast
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: $ink;
+  color: $paper;
+  border-radius: 10px;
+  padding: 12px 18px;
+  font-weight: 600;
+  font-size: 13px;
+  z-index: $z-toast;
+  box-shadow: 0 14px 30px -10px rgba(0, 0, 0, 0.4);
+  max-width: calc(100vw - 32px);
+}
+
+.toastPlatform {
+  background: $platform;
+  color: #e3efe9;
+}

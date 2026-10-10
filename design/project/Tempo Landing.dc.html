@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Tempo — Your next appointment starts here</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..800&family=Hanken+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f4f0e8;color:#1c1a17;font-family:'Hanken Grotesk',sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+a{color:#1c1a17}a:hover{color:#c4581f}
+@keyframes pinbob{0%,100%{transform:translate(-50%,-100%)}50%{transform:translate(-50%,calc(-100% - 8px))}}
+@keyframes cue{0%{transform:scaleY(0);transform-origin:top}50%{transform:scaleY(1);transform-origin:top}51%{transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+</helmet>
+
+<div style="position:fixed;top:0;left:0;right:0;z-index:50;display:flex;align-items:center;gap:28px;padding:16px clamp(16px,3vw,40px);background:{{ navBg }};backdrop-filter:blur(10px);transition:background .3s">
+  <a href="#top" style="text-decoration:none;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.04em;color:{{ navInk }}">tempo<span style="color:#e0773a">.</span></a>
+  <div style="display:flex;gap:24px;font-size:14px;font-weight:600;flex:1;flex-wrap:wrap;white-space:nowrap;overflow:hidden;height:20px">
+    <a href="#journey" style="text-decoration:none;color:{{ navInk }}">How it works</a>
+    <a href="#templates" style="text-decoration:none;color:{{ navInk }}">Templates</a>
+    <a href="#pricing" style="text-decoration:none;color:{{ navInk }}">Pricing</a>
+  </div>
+  <a href="Tempo App.dc.html" style="text-decoration:none;font-size:14px;font-weight:600;color:{{ navInk }}">Log in</a>
+  <a href="Tempo App.dc.html" style="text-decoration:none;font-size:14px;font-weight:700;background:#1c1a17;color:#f4f0e8;padding:10px 18px;border-radius:999px;white-space:nowrap">Start free</a>
+</div>
+
+<section id="top" ref="{{ heroRef }}" data-screen-label="01 Hero" style="height:520vh;position:relative">
+  <div style="position:sticky;top:0;height:100vh;overflow:hidden;background:{{ sky }};transition:background 1.2s ease">
+    <div style="position:absolute;inset:0;perspective:3200px">
+      <div ref="{{ worldRef }}" style="position:absolute;left:{{ originX }};top:62%;width:0;height:0;transform-style:preserve-3d">{{ world }}</div>
+    </div>
+    <div ref="{{ heroTextRef }}" style="position:absolute;left:clamp(16px,4vw,64px);top:clamp(96px,16vh,160px);max-width:min(620px,88vw);display:flex;flex-direction:column;gap:22px;pointer-events:auto">
+      <h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(48px,7.2vw,112px);line-height:.92;letter-spacing:-.045em;text-wrap:balance">Your next appointment starts here.</h1>
+      <p style="margin:0;font-size:clamp(17px,1.5vw,21px);line-height:1.5;max-width:460px;color:#3f3a33;text-wrap:pretty">Give your customers an easier way to book, and give yourself more time to run your business.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a href="Tempo App.dc.html" style="text-decoration:none;background:#1c1a17;color:#f4f0e8;padding:15px 26px;border-radius:999px;font-weight:700;font-size:16px;white-space:nowrap">Start free</a>
+        <a href="#journey" style="text-decoration:none;background:rgba(255,255,255,.6);border:1px solid rgba(28,26,23,.15);padding:15px 26px;border-radius:999px;font-weight:700;font-size:16px;white-space:nowrap">See how it works</a>
+      </div>
+    </div>
+    <div style="position:absolute;left:clamp(16px,4vw,64px);bottom:clamp(20px,5vh,48px);display:flex;flex-direction:column;gap:6px;max-width:min(420px,80vw);background:rgba(250,247,241,.88);backdrop-filter:blur(8px);padding:16px 18px;border-radius:14px;border:1px solid rgba(28,26,23,.08);opacity:{{ capOp }};transition:opacity .5s">
+      <div style="display:flex;gap:10px;align-items:baseline;font-family:'JetBrains Mono',monospace;font-size:12px;color:#6b6358"><span style="color:#c4581f;font-weight:500">{{ cap.time }}</span><span>{{ cap.kind }}</span></div>
+      <div style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:20px;letter-spacing:-.02em">{{ cap.name }}</div>
+      <div style="font-size:14px;color:#4a443c;line-height:1.45">{{ cap.line }}</div>
+    </div>
+    <div aria-hidden="true" style="position:absolute;right:clamp(14px,3vw,40px);top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px">
+      <sc-for list="{{ sceneDots }}" as="d" hint-placeholder-count="5">
+        <span style="width:8px;height:{{ d.h }};border-radius:4px;background:{{ d.bg }};transition:all .4s"></span>
+      </sc-for>
+    </div>
+    <div style="position:absolute;left:50%;bottom:22px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:8px;opacity:{{ cueOp }};transition:opacity .4s;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">
+      <span>Scroll to walk the street</span>
+      <span style="width:1px;height:36px;background:#1c1a17;animation:cue 1.8s ease-in-out infinite"></span>
+    </div>
+  </div>
+</section>
+
+<section id="journey" ref="{{ bRef }}" data-screen-label="02 Booking journey" style="height:{{ bH }};position:relative;background:#f4f0e8">
+  <div style="position:{{ stickPos }};top:0;height:{{ stickH }};overflow:hidden;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:center;gap:clamp(20px,4vw,72px);padding:80px clamp(16px,5vw,96px) 40px">
+    <div style="display:flex;flex-direction:column;gap:28px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#c4581f;letter-spacing:.08em">THE CUSTOMER'S SIDE</span>
+      <sc-for list="{{ bSteps }}" as="s" hint-placeholder-count="3">
+        <div style="display:flex;flex-direction:column;gap:8px;opacity:{{ s.op }};transition:opacity .5s">
+          <div style="display:flex;gap:14px;align-items:baseline"><span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#c4581f">{{ s.n }}</span><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(26px,3vw,44px);letter-spacing:-.035em;line-height:1">{{ s.title }}</span></div>
+          <p style="margin:0 0 0 34px;font-size:17px;line-height:1.5;color:#4a443c;max-width:440px">{{ s.body }}</p>
+        </div>
+      </sc-for>
+    </div>
+    <div style="display:flex;justify-content:center;align-items:center;position:relative;height:min(640px,72vh)">
+      <div aria-hidden="true" style="display:{{ bigDisp }};position:absolute;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:min(46vh,520px);line-height:1;color:#ebe4d7;letter-spacing:-.06em">{{ bBig }}</div>
+      <div style="position:relative;width:min(320px,72vw);height:min(640px,72vh);border-radius:44px;background:#1c1a17;padding:10px;box-shadow:0 40px 80px -30px rgba(60,40,20,.45)">
+        <div style="position:relative;width:100%;height:100%;border-radius:36px;overflow:hidden;background:#1f1a16;color:#f3ece2;font-family:'Hanken Grotesk',sans-serif">
+          <div style="position:absolute;inset:0;padding:44px 18px 18px;display:flex;flex-direction:column;gap:12px;opacity:{{ bs0.op }};transform:{{ bs0.tf }};transition:all .6s cubic-bezier(.2,.7,.2,1)">
+            <div style="height:150px;border-radius:4px;background:repeating-linear-gradient(135deg,#2a231d 0 10px,#221c17 10px 20px);display:flex;align-items:flex-end;padding:10px"><span style="font-family:'Anton',Impact,sans-serif;font-size:30px;line-height:.9;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;letter-spacing:-.02em">NORTHSIDE<br>BARBER CO.</span></div>
+            <sc-for list="{{ phoneServices }}" as="s" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;padding:11px 12px;border:1px solid {{ s.border }};background:{{ s.bg }};border-radius:3px;font-size:13px"><span style="font-weight:600">{{ s.name }}</span><span style="color:#d6a15c;font-weight:600">{{ s.price }}</span></div>
+            </sc-for>
+          </div>
+          <div style="position:absolute;inset:0;padding:44px 18px 18px;display:flex;flex-direction:column;gap:12px;opacity:{{ bs1.op }};transform:{{ bs1.tf }};transition:all .6s cubic-bezier(.2,.7,.2,1)">
+            <span style="font-size:12px;color:#b0a393">Skin Fade · 60 min · Marcus</span>
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px">Saturday, Oct 10</span>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+              <sc-for list="{{ phoneSlots }}" as="s" hint-placeholder-count="12">
+                <span style="padding:10px 0;text-align:center;font-size:12px;font-weight:600;border-radius:3px;border:1px solid {{ s.border }};background:{{ s.bg }};color:{{ s.color }};text-decoration:{{ s.deco }}">{{ s.t }}</span>
+              </sc-for>
+            </div>
+            <span style="font-size:11px;color:#8c7f70">Struck-through times are taken</span>
+          </div>
+          <div style="position:absolute;inset:0;padding:60px 20px 20px;display:flex;flex-direction:column;gap:14px;opacity:{{ bs2.op }};transform:{{ bs2.tf }};transition:all .6s cubic-bezier(.2,.7,.2,1)">
+            <span style="width:52px;height:52px;border-radius:50%;background:#d6a15c;color:#1b1714;display:grid;place-items:center;font-size:26px;font-weight:700">✓</span>
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:30px;letter-spacing:-.03em;line-height:1">You're booked.</span>
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#b0a393">TMP-4821-K</span>
+            <div style="display:flex;flex-direction:column;border-top:1px solid rgba(243,236,226,.14);font-size:13px">
+              <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(243,236,226,.14)"><span style="color:#b0a393">Service</span><span>Skin Fade</span></div>
+              <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(243,236,226,.14)"><span style="color:#b0a393">With</span><span>Marcus Reed</span></div>
+              <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(243,236,226,.14)"><span style="color:#b0a393">When</span><span>Sat, Oct 10 · 2:30 PM</span></div>
+            </div>
+            <span style="margin-top:auto;padding:12px;text-align:center;background:#d6a15c;color:#1b1714;font-weight:700;font-size:14px;border-radius:3px">Add to calendar</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section ref="{{ oRef }}" data-screen-label="03 Owner journey" style="height:{{ oH }};position:relative;background:#16150f;color:#f1ece2">
+  <div style="position:{{ stickPos }};top:0;height:{{ stickH }};overflow:hidden;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));align-items:center;gap:clamp(20px,4vw,64px);padding:80px clamp(16px,5vw,96px) 40px">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#e0773a;letter-spacing:.08em">AFTER HOURS, THE OWNER'S SIDE</span>
+      <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(34px,4vw,60px);line-height:.98;letter-spacing:-.04em">Set it up once. Tempo keeps the diary honest.</h2>
+      <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px">
+        <sc-for list="{{ oSteps }}" as="s" hint-placeholder-count="5">
+          <div style="display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;padding:12px 0;border-top:1px solid rgba(241,236,226,.12);opacity:{{ s.op }};transition:opacity .4s">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:{{ s.numColor }};padding-top:4px">{{ s.n }}</span>
+            <div style="display:flex;flex-direction:column;gap:4px"><span style="font-weight:700;font-size:18px">{{ s.title }}</span><sc-if value="{{ s.active }}"><span style="font-size:15px;color:#bdb5a8;line-height:1.5">{{ s.body }}</span></sc-if></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="background:#f7f5f0;color:#1c1a17;border-radius:14px;overflow:hidden;box-shadow:0 50px 100px -40px rgba(0,0,0,.7);min-height:420px;display:flex;flex-direction:column">
+      <div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #e6e1d8;background:#fff">
+        <span style="width:10px;height:10px;border-radius:50%;background:#e6e1d8"></span><span style="width:10px;height:10px;border-radius:50%;background:#e6e1d8"></span><span style="width:10px;height:10px;border-radius:50%;background:#e6e1d8"></span>
+        <span style="margin-left:10px;font-size:12px;font-weight:700">Northside Barber Co.</span><span style="font-size:12px;color:#857d70">/ {{ oPanelTitle }}</span>
+      </div>
+      <div style="padding:20px;flex:1;display:flex;flex-direction:column;gap:10px">
+        <sc-if value="{{ o0 }}" hint-placeholder-val="{{ true }}">
+          <sc-for list="{{ hoursRows }}" as="r" hint-placeholder-count="7">
+            <div style="display:grid;grid-template-columns:44px minmax(0,1fr) 110px;gap:12px;align-items:center;font-size:13px">
+              <span style="font-weight:700">{{ r.d }}</span>
+              <div style="position:relative;height:22px;background:#efebe4;border-radius:4px">
+                <sc-if value="{{ r.open }}"><span style="position:absolute;top:0;bottom:0;left:{{ r.l }};width:{{ r.w }};background:#2f6e5a;border-radius:4px"></span><span style="position:absolute;top:0;bottom:0;left:{{ r.bl }};width:{{ r.bw }};background:repeating-linear-gradient(135deg,#efebe4 0 4px,#cfc8bb 4px 8px)"></span></sc-if>
+              </div>
+              <span style="color:#5d564b;font-family:'JetBrains Mono',monospace;font-size:11px">{{ r.label }}</span>
+            </div>
+          </sc-for>
+          <div style="display:flex;gap:16px;font-size:12px;color:#5d564b;margin-top:8px"><span style="display:flex;gap:6px;align-items:center"><span style="width:12px;height:12px;background:#2f6e5a;border-radius:3px"></span>Open</span><span style="display:flex;gap:6px;align-items:center"><span style="width:12px;height:12px;background:repeating-linear-gradient(135deg,#efebe4 0 3px,#cfc8bb 3px 6px);border-radius:3px"></span>Break</span></div>
+        </sc-if>
+        <sc-if value="{{ o1 }}">
+          <sc-for list="{{ oServices }}" as="s" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 70px 60px 34px;gap:10px;align-items:center;padding:11px 12px;background:#fff;border:1px solid #e6e1d8;border-radius:8px;font-size:14px">
+              <span style="font-weight:600">{{ s.name }}</span><span style="color:#5d564b;font-size:13px">{{ s.dur }} min</span><span style="font-weight:600">${{ s.price }}</span>
+              <span style="width:30px;height:18px;border-radius:9px;background:#2f6e5a;position:relative"><span style="position:absolute;right:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#fff"></span></span>
+            </div>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ o2 }}">
+          <div style="display:grid;grid-template-columns:120px repeat(7,minmax(0,1fr));gap:4px;font-size:11px;color:#5d564b;font-weight:600"><span></span><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <sc-for list="{{ oStaff }}" as="p" hint-placeholder-count="4">
+            <div style="display:grid;grid-template-columns:120px repeat(7,minmax(0,1fr));gap:4px;align-items:center">
+              <span style="font-size:13px;font-weight:600">{{ p.name }}</span>
+              <sc-for list="{{ p.days }}" as="d"><span style="height:26px;border-radius:4px;background:{{ d }}"></span></sc-for>
+            </div>
+          </sc-for>
+          <span style="font-size:12px;color:#5d564b;margin-top:6px">Each barber's own week. Darker means a longer shift.</span>
+        </sc-if>
+        <sc-if value="{{ o3 }}">
+          <sc-for list="{{ oAppts }}" as="a" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:62px 4px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;background:#fff;border:1px solid #e6e1d8;border-radius:8px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px">{{ a.t }}</span><span style="height:30px;border-radius:2px;background:{{ a.color }}"></span>
+              <span style="display:flex;flex-direction:column"><span style="font-weight:600;font-size:14px">{{ a.c }}</span><span style="font-size:12px;color:#5d564b">{{ a.s }}</span></span>
+              <span style="font-size:11px;font-weight:700;padding:4px 8px;border-radius:999px;background:{{ a.bbg }};color:{{ a.bink }}">{{ a.status }}</span>
+            </div>
+          </sc-for>
+        </sc-if>
+        <sc-if value="{{ o4 }}">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px"><span style="font-size:13px;color:#5d564b">Estimated appointment value · last 12 weeks</span><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:28px">$43,860</span></div>
+          <div style="flex:1;display:flex;align-items:flex-end;gap:6px;min-height:200px">
+            <sc-for list="{{ revBars }}" as="b" hint-placeholder-count="12"><span style="flex:1;height:{{ b.h }};background:{{ b.bg }};border-radius:4px 4px 0 0"></span></sc-for>
+          </div>
+          <span style="font-size:12px;color:#5d564b">Based on booked appointments. Collected payments appear once payment tracking is connected.</span>
+        </sc-if>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="templates" data-screen-label="04 Templates" style="background:{{ tplBg }};color:{{ tplInk }};transition:background .6s,color .6s;padding:clamp(72px,10vw,140px) clamp(16px,5vw,96px)">
+  <div style="max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:40px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap">
+      <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(38px,5vw,76px);line-height:.95;letter-spacing:-.045em;max-width:760px">Five booking pages. One booking engine.</h2>
+      <p style="margin:0;max-width:380px;font-size:17px;line-height:1.5;opacity:.8">Each template changes the layout, type and mood. Services, staff and availability work the same underneath. Try one.</p>
+    </div>
+    <div role="tablist" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px">
+      <sc-for list="{{ tplTabs }}" as="t" hint-placeholder-count="5">
+        <button role="tab" aria-selected="{{ t.sel }}" onClick="{{ t.pick }}" style="appearance:none;font:inherit;color:inherit;text-align:left;cursor:pointer;padding:16px;border-radius:12px;border:1px solid {{ t.border }};background:{{ t.bg }};display:flex;flex-direction:column;gap:6px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;opacity:.7">{{ t.n }}</span>
+          <span style="font-weight:700;font-size:16px">{{ t.label }}</span>
+          <span style="font-size:13px;opacity:.75">{{ t.biz }}</span>
+        </button>
+      </sc-for>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:clamp(24px,4vw,56px);align-items:start">
+      <div style="display:flex;flex-direction:column;gap:20px">
+        <span style="font-family:{{ tpl.font }};font-size:clamp(46px,6vw,92px);line-height:.9;font-weight:{{ tpl.weight }};font-style:{{ tpl.style }};font-stretch:{{ tpl.stretch }};text-transform:{{ tpl.upper }};letter-spacing:-.02em">{{ tpl.headline }}</span>
+        <p style="margin:0;font-size:17px;line-height:1.55;max-width:460px;opacity:.85">{{ tpl.desc }}</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <a href="{{ tpl.href }}" style="text-decoration:none;color:{{ tpl.btnInk }};background:{{ tpl.btn }};padding:13px 20px;border-radius:999px;font-weight:700;font-size:15px">Open the full demo page</a>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;opacity:.65">tempo.example.com/{{ tpl.slug }}</span>
+      </div>
+      <dc-import name="Booking Flow" template="{{ tplKey }}" hint-size="100%,640px"></dc-import>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="05 Analytics" style="padding:clamp(72px,10vw,140px) clamp(16px,5vw,96px);background:#f4f0e8">
+  <div style="max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:40px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));gap:24px;align-items:end">
+      <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(38px,5vw,76px);line-height:.95;letter-spacing:-.045em">See which hours earn their keep.</h2>
+      <p style="margin:0;font-size:17px;line-height:1.55;color:#4a443c;max-width:480px">Demand by day and hour, popular services, cancellations and estimated revenue, each with a plain label for what it counts.</p>
+    </div>
+    <div style="background:#fff;border:1px solid #e3ddd2;border-radius:18px;padding:clamp(16px,2.4vw,28px);display:flex;flex-direction:column;gap:18px;box-shadow:0 30px 60px -40px rgba(60,40,20,.3)">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:center"><span style="font-weight:700">Northside Barber Co. · Last 90 days</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#857d70;border:1px solid #e3ddd2;padding:4px 8px;border-radius:6px">DEMO DATA</span></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4">
+          <div style="padding:16px;border-radius:12px;background:#f7f5f0;display:flex;flex-direction:column;gap:6px">
+            <span style="font-size:12px;color:#5d564b;font-weight:600">{{ k.label }}</span>
+            <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:32px;letter-spacing:-.03em">{{ k.value }}</span>
+            <span style="font-size:12px;color:#5d564b">{{ k.note }}</span>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px">
+        <div style="padding:16px;border:1px solid #ece7de;border-radius:12px;display:flex;flex-direction:column;gap:10px;grid-column:span 2;min-width:0">
+          <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span style="font-weight:700;font-size:14px">Estimated appointment value, weekly</span><span style="font-size:12px;color:#5d564b">Not collected payments</span></div>
+          <svg viewBox="0 0 600 180" preserveAspectRatio="none" style="width:100%;height:180px;display:block">
+            <line x1="0" y1="45" x2="600" y2="45" stroke="#efebe4"></line><line x1="0" y1="90" x2="600" y2="90" stroke="#efebe4"></line><line x1="0" y1="135" x2="600" y2="135" stroke="#efebe4"></line>
+            <polygon points="{{ revArea }}" fill="#f6dccb"></polygon>
+            <polyline points="{{ revLine }}" fill="none" stroke="#e0773a" stroke-width="2.5" vector-effect="non-scaling-stroke"></polyline>
+          </svg>
+          <div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:10px;color:#857d70"><span>Jul 13</span><span>Aug 10</span><span>Sep 7</span><span>Oct 5</span></div>
+        </div>
+        <div style="padding:16px;border:1px solid #ece7de;border-radius:12px;display:flex;flex-direction:column;gap:10px">
+          <span style="font-weight:700;font-size:14px">Busiest days</span>
+          <div style="display:flex;align-items:flex-end;gap:8px;height:150px">
+            <sc-for list="{{ days }}" as="d" hint-placeholder-count="7">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;height:100%;justify-content:flex-end"><span style="width:100%;height:{{ d.h }};background:{{ d.bg }};border-radius:4px 4px 0 0"></span><span style="font-size:11px;color:#5d564b;font-weight:600">{{ d.d }}</span></div>
+            </sc-for>
+          </div>
+        </div>
+        <div style="padding:16px;border:1px solid #ece7de;border-radius:12px;display:flex;flex-direction:column;gap:10px">
+          <span style="font-weight:700;font-size:14px">Peak booking hours</span>
+          <div style="display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:3px">
+            <sc-for list="{{ hours }}" as="h" hint-placeholder-count="10"><div style="display:flex;flex-direction:column;gap:4px;align-items:center"><span style="width:100%;aspect-ratio:1/1.6;border-radius:4px;background:{{ h.bg }}"></span><span style="font-size:10px;color:#5d564b">{{ h.l }}</span></div></sc-for>
+          </div>
+          <span style="font-size:12px;color:#5d564b">Appointments starting each hour. 5 PM is the fullest.</span>
+        </div>
+        <div style="padding:16px;border:1px solid #ece7de;border-radius:12px;display:flex;flex-direction:column;gap:10px">
+          <span style="font-weight:700;font-size:14px">Most popular services</span>
+          <sc-for list="{{ popular }}" as="p" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:110px minmax(0,1fr) 36px;gap:8px;align-items:center;font-size:13px"><span>{{ p.name }}</span><span style="height:10px;background:#efebe4;border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:{{ p.w }};background:#2f6e5a"></span></span><span style="text-align:right;color:#5d564b">{{ p.v }}</span></div>
+          </sc-for>
+        </div>
+        <div style="padding:16px;border-radius:12px;background:#1c1a17;color:#f4f0e8;display:flex;flex-direction:column;gap:10px;justify-content:space-between">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#e0773a">WHAT THE NUMBERS SUGGEST</span>
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:600;font-size:22px;line-height:1.2;letter-spacing:-.02em">Saturday 2–6 PM is 94% booked. Hot Towel Shave is chosen least.</span>
+          <span style="font-size:13px;color:#bdb5a8">Worth testing: an extra Saturday chair, and featuring the shave on your booking page.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section data-screen-label="06 Benefits" style="padding:clamp(72px,10vw,140px) clamp(16px,5vw,96px);background:#ebe5da">
+  <div style="max-width:1320px;margin:0 auto;display:flex;flex-direction:column;gap:48px">
+    <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(38px,5vw,76px);line-height:.95;letter-spacing:-.045em;max-width:900px">Less time on the phone. More time with the people in the chair.</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:0;border-top:1px solid #d3cbbd">
+      <sc-for list="{{ benefits }}" as="b" hint-placeholder-count="6">
+        <div style="padding:28px 28px 32px 0;border-bottom:1px solid #d3cbbd;display:flex;flex-direction:column;gap:10px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#c4581f">{{ b.n }}</span>
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:24px;letter-spacing:-.025em;line-height:1.1">{{ b.t }}</span>
+          <span style="font-size:15px;line-height:1.55;color:#4a443c;max-width:360px">{{ b.d }}</span>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" data-screen-label="07 Pricing" style="padding:clamp(72px,10vw,140px) clamp(16px,5vw,96px);background:#f4f0e8">
+  <div style="max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:36px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:20px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:12px"><h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(38px,5vw,76px);line-height:.95;letter-spacing:-.045em">Start free. Grow into it.</h2><span style="font-size:15px;color:#5d564b">Sample plans. Final prices are set at launch.</span></div>
+      <div role="group" aria-label="Billing" style="display:flex;background:#e8e2d7;padding:4px;border-radius:999px">
+        <button onClick="{{ setMonthly }}" aria-pressed="{{ monthly }}" style="appearance:none;border:0;font:inherit;font-weight:700;font-size:14px;padding:9px 16px;border-radius:999px;cursor:pointer;background:{{ mBg }};color:#1c1a17">Monthly</button>
+        <button onClick="{{ setAnnual }}" aria-pressed="{{ annual }}" style="appearance:none;border:0;font:inherit;font-weight:700;font-size:14px;padding:9px 16px;border-radius:999px;cursor:pointer;background:{{ aBg }};color:#1c1a17">Annual</button>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px">
+      <sc-for list="{{ plans }}" as="p" hint-placeholder-count="3">
+        <button onClick="{{ p.pick }}" aria-pressed="{{ p.sel }}" style="appearance:none;font:inherit;text-align:left;cursor:pointer;padding:26px;border-radius:18px;border:2px solid {{ p.border }};background:{{ p.bg }};color:{{ p.ink }};display:flex;flex-direction:column;gap:18px;transition:all .25s">
+          <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:800;font-size:20px">{{ p.name }}</span><span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:{{ p.tagBg }};opacity:{{ p.tagOp }}">Selected</span></div>
+          <div style="display:flex;align-items:baseline;gap:6px"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:48px;letter-spacing:-.04em">$ —</span><span style="font-size:14px;opacity:.7">{{ per }}</span></div>
+          <span style="font-size:15px;opacity:.8;line-height:1.45">{{ p.for }}</span>
+          <div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid {{ p.line }};padding-top:16px">
+            <sc-for list="{{ p.feats }}" as="f"><span style="font-size:14px;display:flex;gap:10px"><span style="color:#e0773a">●</span>{{ f }}</span></sc-for>
+          </div>
+        </button>
+      </sc-for>
+    </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap">
+      <button onClick="{{ toggleCompare }}" aria-expanded="{{ compare }}" style="appearance:none;border:1px solid #cfc7b9;background:transparent;font:inherit;font-weight:700;font-size:14px;padding:11px 18px;border-radius:999px;cursor:pointer;color:#1c1a17">{{ compareLabel }}</button>
+      <a href="Tempo App.dc.html" style="text-decoration:none;background:#e0773a;color:#1c1a17;padding:14px 24px;border-radius:999px;font-weight:800;font-size:15px">Start free with {{ planName }}</a>
+    </div>
+    <sc-if value="{{ compare }}">
+      <div style="overflow-x:auto;border:1px solid #e3ddd2;border-radius:14px;background:#fff">
+        <table style="width:100%;border-collapse:collapse;font-size:14px;min-width:560px">
+          <thead><tr style="text-align:left"><th style="padding:14px 16px;border-bottom:1px solid #e3ddd2">Feature</th><th style="padding:14px 16px;border-bottom:1px solid #e3ddd2">Starter</th><th style="padding:14px 16px;border-bottom:1px solid #e3ddd2">Growth</th><th style="padding:14px 16px;border-bottom:1px solid #e3ddd2">Business</th></tr></thead>
+          <tbody>
+            <sc-for list="{{ compareRows }}" as="r" hint-placeholder-count="8">
+              <tr><td style="padding:12px 16px;border-bottom:1px solid #f0ebe3">{{ r.f }}</td><td style="padding:12px 16px;border-bottom:1px solid #f0ebe3">{{ r.a }}</td><td style="padding:12px 16px;border-bottom:1px solid #f0ebe3">{{ r.b }}</td><td style="padding:12px 16px;border-bottom:1px solid #f0ebe3">{{ r.c }}</td></tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
+  </div>
+</section>
+
+<section data-screen-label="08 Final CTA" style="background:#e0773a;color:#1c1a17;padding:clamp(80px,12vw,180px) clamp(16px,5vw,96px);display:flex;flex-direction:column;align-items:flex-start;gap:32px">
+  <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(48px,8vw,140px);line-height:.88;letter-spacing:-.05em;max-width:1200px;text-wrap:balance">Make room for more of what matters.</h2>
+  <a href="Tempo App.dc.html" style="text-decoration:none;background:#1c1a17;color:#f4f0e8;padding:18px 30px;border-radius:999px;font-weight:700;font-size:18px">Create your booking page</a>
+</section>
+
+<footer style="background:#16150f;color:#bdb5a8;padding:56px clamp(16px,5vw,96px) 32px;display:flex;flex-direction:column;gap:40px;font-size:14px">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:28px">
+    <div style="display:flex;flex-direction:column;gap:10px"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;color:#f1ece2;letter-spacing:-.04em">tempo<span style="color:#e0773a">.</span></span><span>Your time. Your business. Your way.</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="color:#f1ece2;font-weight:700">Product</span><a href="#journey" style="color:#bdb5a8;text-decoration:none">How it works</a><a href="#pricing" style="color:#bdb5a8;text-decoration:none">Pricing</a><a href="Tempo App.dc.html" style="color:#bdb5a8;text-decoration:none">Dashboard demo</a></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="color:#f1ece2;font-weight:700">Templates</span><a href="Booking Pages.dc.html?t=barber" style="color:#bdb5a8;text-decoration:none">Barber &amp; hair</a><a href="Booking Pages.dc.html?t=wellness" style="color:#bdb5a8;text-decoration:none">Beauty &amp; wellness</a><a href="Booking Pages.dc.html?t=consult" style="color:#bdb5a8;text-decoration:none">Consultations</a><a href="Booking Pages.dc.html?t=fitness" style="color:#bdb5a8;text-decoration:none">Fitness</a><a href="Booking Pages.dc.html?t=services" style="color:#bdb5a8;text-decoration:none">General services</a></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="color:#f1ece2;font-weight:700">Help</span><span>Help centre (planned)</span><span>Contact (planned)</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="color:#f1ece2;font-weight:700">Legal</span><span>Terms (planned)</span><span>Privacy (planned)</span></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;font-size:12px;border-top:1px solid #2b2924;padding-top:20px"><span>© 2026 Tempo (working name). Prototype.</span><a href="Tempo Super Admin.dc.html" style="color:#7d766a;text-decoration:none">Platform admin</a></div>
+</footer>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  static S = 440;
+  static OFF = [150,-150,150,-150,150];
+  static SCENES = [
+    {time:'08:40',kind:'Barbershop',name:'Northside Barber Co.',line:'The first chair of the day was booked last night.',sky:'#f2e6d5'},
+    {time:'11:15',kind:'Beauty studio',name:'Sable & Sage Studio',line:'Treatments, practitioners and prep notes on one page.',sky:'#f1ebe3'},
+    {time:'13:30',kind:'Physio clinic',name:'Harbor Physio & Consulting',line:'Consultation types, in person or by video.',sky:'#e6ece8'},
+    {time:'17:45',kind:'Fitness studio',name:'Forge Training Lab',line:'One-to-one, partner and small-group sessions.',sky:'#f0dfcc'},
+    {time:'19:20',kind:'Repair & advisory',name:'Mendwell Repair & Advisory',line:'Any business that runs on appointments.',sky:'#dcd8e0'}
+  ];
+  static BUILD = [
+    {w:200,d:150,h:120,c:['#efe4d4','#c26a43','#9a5134'],sign:'NORTHSIDE BARBER',sb:'#1b1714',si:'#f3ece2',win:'repeating-linear-gradient(90deg,#3a2a22 0 38px,#c26a43 38px 50px)',sw:'repeating-linear-gradient(90deg,#9a5134 0 30px,#7f4029 30px 36px)',pin:['08:40','Skin Fade · Marcus'],ex:[[-122,30,14,14,72,0,['#f3ece2','repeating-linear-gradient(0deg,#c0392b 0 8px,#f3ece2 8px 16px)','#c9c0b3']],[-90,75,180,16,6,78,['#f3ece2','repeating-linear-gradient(90deg,#1b1714 0 14px,#f3ece2 14px 28px)','#1b1714']]]},
+    {w:180,d:170,h:100,c:['#f4ece6','#e2bfb3','#c49c8f'],sign:'SABLE & SAGE',sb:'#fbf8f2',si:'#5c4a3a',win:'repeating-linear-gradient(90deg,#f7efe8 0 44px,#e2bfb3 44px 56px)',sw:'repeating-linear-gradient(90deg,#c49c8f 0 26px,#b38a7d 26px 30px)',pin:['11:15','Signature Facial · Amara'],ex:[[-80,85,160,18,6,66,['#a9bb9d','#8aa07e','#71866a']],[100,40,30,30,30,0,['#93ad7f','#7d9a62','#627f4a']]]},
+    {w:230,d:160,h:150,c:['#f4f5f2','#e3e6e2','#c3c8c4'],sign:'HARBOR PHYSIO',sb:'#1f5fbf',si:'#ffffff',win:'repeating-linear-gradient(90deg,#9fb8d9 0 34px,#e3e6e2 34px 44px)',sw:'repeating-linear-gradient(90deg,#c3c8c4 0 10px,#8ea4c2 10px 34px)',pin:['13:30','Initial assessment · Dr. Ruiz'],ex:[[-150,-60,26,26,34,0,['#93ad7f','#7d9a62','#627f4a']],[-150,0,26,26,26,0,['#93ad7f','#7d9a62','#627f4a']]]},
+    {w:260,d:170,h:110,c:['#45463f','#2a2b26','#1e1f1b'],sign:'FORGE / LAB',sb:'#c8f542',si:'#0e0f0c',win:'repeating-linear-gradient(90deg,#55594a 0 70px,#2a2b26 70px 78px)',sw:'repeating-linear-gradient(90deg,#1e1f1b 0 40px,#c8f542 40px 44px)',pin:['17:45','Small Group HIIT · 4 of 6'],ex:[[-130,95,260,6,10,0,['#c8f542','#a9d12f','#86a823']]]},
+    {w:170,d:170,h:260,c:['#d8dbe0','#b4bbc5','#8f97a3'],sign:'MENDWELL',sb:'#d9532a',si:'#ffffff',win:'repeating-linear-gradient(180deg,#b4bbc5 0 10px,#6f7a8a 10px 34px)',sw:'repeating-linear-gradient(90deg,#8f97a3 0 10px,#5e6877 10px 34px)',pin:['19:20','Laptop diagnostic · Ravi'],ex:[[110,-40,34,34,40,0,['#93ad7f','#7d9a62','#627f4a']]]}
+  ];
+  heroRef = React.createRef(); worldRef = React.createRef(); heroTextRef = React.createRef(); bRef = React.createRef(); oRef = React.createRef();
+  state = { scene:0, dotP:0, b:0, o:0, scrolled:false, tpl:'barber', annual:false, plan:1, compare:false, narrow:false };
+  componentDidMount(){
+    this.onScroll=()=>{ if(this.raf) return; this.raf=requestAnimationFrame(()=>{ this.raf=null; this.tick(); }); };
+    window.addEventListener('scroll',this.onScroll,{passive:true}); window.addEventListener('resize',this.onScroll); this.tick();
+  }
+  componentWillUnmount(){ window.removeEventListener('scroll',this.onScroll); window.removeEventListener('resize',this.onScroll); }
+  target(i){ const S=Component.S,o=Component.OFF[i]*0.55; return [i*S+o,i*S-o]; }
+  tick(){
+    const vh=innerHeight, narrow=innerWidth<820, flat=innerWidth<700||vh<480;
+    const prog=r=>{ const el=r.current; if(!el) return 0; const b=el.getBoundingClientRect(); return Math.min(1,Math.max(0,-b.top/Math.max(1,b.height-vh))); };
+    const p=prog(this.heroRef), s=Math.min(4,p*4.6), i=Math.min(3,Math.floor(s)), f=s-i;
+    const e=f<.3?0:f>.75?1:(t=>t*t*(3-2*t))((f-.3)/.45);
+    const sf=s>=4?4:i+e, a=this.target(i), b=this.target(Math.min(4,i+1));
+    const cx=s>=4?this.target(4)[0]:a[0]+(b[0]-a[0])*e, cy=s>=4?this.target(4)[1]:a[1]+(b[1]-a[1])*e;
+    const z=(narrow?.55:.95)*(0.82+0.18*Math.min(1,p*6));
+    if(this.worldRef.current) this.worldRef.current.style.transform=`scale(${z}) rotateX(58deg) rotateZ(-45deg) translate3d(${-cx}px,${-cy}px,0)`;
+    if(this.heroTextRef.current){ const op=1-Math.min(1,Math.max(0,(p-.03)/.07)); this.heroTextRef.current.style.opacity=op; this.heroTextRef.current.style.transform=`translateY(${(1-op)*-30}px)`; this.heroTextRef.current.style.pointerEvents=op<.1?'none':'auto'; }
+    const ns={scene:Math.round(sf),dotP:Math.round(sf*10)/10,b:Math.min(2,Math.floor(prog(this.bRef)*3)),o:Math.min(4,Math.floor(prog(this.oRef)*5)),scrolled:scrollY>40,narrow,flat};
+    if(Object.keys(ns).some(k=>ns[k]!==this.state[k])) this.setState(ns);
+  }
+  buildWorld(active,dotP){
+    const h=React.createElement,S=Component.S;
+    const face=(key,st,ch)=>h('div',{key,style:Object.assign({position:'absolute',boxSizing:'border-box'},st)},ch);
+    const box=(key,x,y,w,d,ht,c,z,front,side)=>h('div',{key,style:{position:'absolute',left:0,top:0,transformStyle:'preserve-3d',transform:`translateZ(${z||0}px)`}},[
+      face('t',{left:x,top:y,width:w,height:d,background:c[0],transform:`translateZ(${ht}px)`}),
+      face('f',{left:x,top:y+d-ht,width:w,height:ht,background:c[1],transformOrigin:'50% 100%',transform:'rotateX(-90deg)',display:'flex',flexDirection:'column',overflow:'hidden'},front),
+      face('s',{left:x,top:y,width:ht,height:d,background:side||c[2],transformOrigin:'0 50%',transform:'rotateY(-90deg)'})
+    ]);
+    const kids=[];
+    kids.push(face('ground',{left:-1400,top:-1400,width:4600,height:4600,background:'#e4dccd',backgroundImage:'linear-gradient(#dcd3c2 1px,transparent 1px),linear-gradient(90deg,#dcd3c2 1px,transparent 1px)',backgroundSize:'80px 80px'}));
+    const L=(4*S+900)*Math.SQRT2;
+    kids.push(face('road',{left:-450,top:-450-36,width:L,height:72,background:'#cfc5b3',transformOrigin:'0 50%',transform:'rotateZ(45deg) translateZ(1px)'}));
+    for(let k=0;k<=40;k++){ const t=k/10,on=t<=dotP+0.001; kids.push(face('d'+k,{left:t*S-5,top:t*S-5,width:10,height:10,borderRadius:'50%',background:on?'#e0773a':'#b9ae9a',transform:'translateZ(2px)',transition:'background .3s'})); }
+    Component.BUILD.forEach((b,i)=>{
+      const o=Component.OFF[i],lx=i*S+o,ly=i*S-o,x=-b.w/2,y=-b.d/2;
+      const front=[h('div',{key:'sg',style:{margin:'12px 12px 0',padding:'5px 6px',background:b.sb,color:b.si,font:"800 11px/1 'Hanken Grotesk',sans-serif",letterSpacing:'.1em',textAlign:'center',whiteSpace:'nowrap'}},b.sign),h('div',{key:'wn',style:{flex:1,margin:'10px 12px 0',background:b.win}}),h('div',{key:'dr',style:{alignSelf:'center',width:34,height:Math.min(52,b.h*.4),background:'rgba(0,0,0,.35)',marginTop:-Math.min(52,b.h*.4)}})];
+      const g=[face('lot',{left:-170,top:-170,width:340,height:340,background:'#efe9de',border:'1px solid #d8cfbf',transform:'translateZ(1.5px)'}),box('main',x,y,b.w,b.d,b.h,b.c,0,front,b.sw)];
+      b.ex.forEach((e,k)=>g.push(box('ex'+k,e[0],e[1],e[2],e[3],e[4],e[6],e[5])));
+      const on=i===active;
+      g.push(h('div',{key:'pin',style:{position:'absolute',left:0,top:0,transformStyle:'preserve-3d',transform:`translateZ(${b.h+60}px) rotateZ(45deg) rotateX(-58deg)`}},
+        h('div',{style:{position:'absolute',left:0,top:0,transform:'translate(-50%,-100%)',animation:on?'pinbob 3s ease-in-out infinite':'none',opacity:on?1:0,transition:'opacity .5s'}},
+          h('div',{style:{background:'#fff',borderRadius:12,padding:'10px 14px',boxShadow:'0 14px 30px -10px rgba(40,30,20,.35)',whiteSpace:'nowrap',display:'flex',flexDirection:'column',gap:3,font:"500 13px 'Hanken Grotesk',sans-serif",color:'#1c1a17'}},
+            h('span',{style:{fontFamily:"'JetBrains Mono',monospace",fontSize:11,color:'#c4581f'}},'BOOKED · '+b.pin[0]),
+            h('span',{style:{fontWeight:700,fontSize:15}},b.pin[1])))));
+      kids.push(h('div',{key:'b'+i,style:{position:'absolute',left:lx,top:ly,transformStyle:'preserve-3d'}},g));
+    });
+    return kids;
+  }
+  renderVals(){
+    const st=this.state, sc=Component.SCENES[st.scene];
+    const T={
+      barber:{label:'Barber & hair',biz:'Northside Barber Co.',slug:'northside-barber',headline:'NORTHSIDE BARBER CO.',font:"'Anton',sans-serif",weight:400,style:'normal',stretch:'normal',upper:'uppercase',bg:'#16120f',ink:'#f3ece2',btn:'#d6a15c',btnInk:'#16120f',desc:'Dark, editorial and photo-led. Barber profiles up front, prices with dotted leaders.'},
+      wellness:{label:'Beauty & wellness',biz:'Sable & Sage Studio',slug:'sable-and-sage',headline:'A quieter hour, set aside for you.',font:"'Cormorant Garamond',serif",weight:400,style:'italic',stretch:'normal',upper:'none',bg:'#f4efe6',ink:'#3a3128',btn:'#7f6545',btnInk:'#fbf8f2',desc:'Calm, centred and airy. Treatment categories, practitioners and preparation notes.'},
+      consult:{label:'Consultations',biz:'Harbor Physio & Consulting',slug:'harbor-physio',headline:'Book a consultation',font:"'Public Sans',sans-serif",weight:700,style:'normal',stretch:'normal',upper:'none',bg:'#eef3f9',ink:'#14233a',btn:'#1f5fbf',btnInk:'#ffffff',desc:'Clear and accessible. Practitioner profiles, in-person or video, and visible policies. Only contact details are collected.'},
+      fitness:{label:'Fitness & coaching',biz:'Forge Training Lab',slug:'forge-training-lab',headline:'TRAIN WITH INTENT.',font:"'Archivo',sans-serif",weight:900,style:'italic',stretch:'62%',upper:'uppercase',bg:'#0e0f0c',ink:'#f2f5ea',btn:'#c8f542',btnInk:'#0e0f0c',desc:'Loud and kinetic. Session types, group sizes and coaches.'},
+      services:{label:'General services',biz:'Mendwell Repair & Advisory',slug:'mendwell',headline:'Repairs and advice, by appointment.',font:"'Schibsted Grotesk',sans-serif",weight:800,style:'normal',stretch:'normal',upper:'none',bg:'#efefec',ink:'#1d1f22',btn:'#d9532a',btnInk:'#ffffff',desc:'Neutral and modular. Fits consultants, repair shops, tutors and photographers.'}
+    };
+    const tp=T[st.tpl];
+    const rev=[2.9,3.1,3.0,3.4,3.3,3.6,3.5,3.9,3.8,4.1,4.0,4.3];
+    const pts=rev.map((v,i)=>(i*600/11).toFixed(1)+','+(180-(v-2.4)/2.2*170).toFixed(1));
+    const planDefs=[
+      {name:'Starter',for:'For one person taking bookings.',feats:['One booking page','One staff calendar','All five templates','Calendar and appointment list','Core analytics']},
+      {name:'Growth',for:'For a small team with set schedules.',feats:['Everything in Starter','Up to 5 staff schedules','Customer directory','Full analytics and filters','Custom brand colours and type']},
+      {name:'Business',for:'For busy teams and multiple locations.',feats:['Everything in Growth','Unlimited staff','Multiple locations','Roles and permissions','Data export']}
+    ];
+    const sl=['9:00','9:30','10:00','10:30','11:00','11:30','1:30','2:00','2:30','3:00','3:30','4:00'], taken=[1,2,4,6,7,10];
+    return {
+      heroRef:this.heroRef,worldRef:this.worldRef,heroTextRef:this.heroTextRef,bRef:this.bRef,oRef:this.oRef,
+      world:this.buildWorld(st.scene,st.dotP),bH:st.flat?'auto':'320vh',oH:st.flat?'auto':'420vh',stickPos:st.flat?'relative':'sticky',stickH:st.flat?'auto':'100vh',bigDisp:st.flat?'none':'block', originX:st.narrow?'50%':'64%',
+      sky:sc.sky, cap:sc, cueOp:st.scrolled?0:1,capOp:st.scrolled?1:0,
+      navBg:st.scrolled?'rgba(244,240,232,.82)':'transparent', navInk:'#1c1a17',
+      sceneDots:Component.SCENES.map((_,i)=>({h:i===st.scene?'28px':'8px',bg:i===st.scene?'#1c1a17':'rgba(28,26,23,.25)'})),
+      bSteps:[['01','Find the business','Customers land on your page from a link, a search or your socials.'],['02','Pick a time that is actually free','Only open slots appear. Breaks, buffers and existing bookings are already accounted for.'],['03','Confirm in one tap','A confirmation number, a calendar file and an easy way to reschedule.']].map((s,i)=>({n:s[0],title:s[1],body:s[2],op:st.flat||i===st.b?1:.28})),
+      bBig:'0'+(st.b+1),
+      bs0:{op:st.b===0?1:0,tf:st.b===0?'none':'translateY(-30px)'},bs1:{op:st.b===1?1:0,tf:st.b===1?'none':(st.b<1?'translateY(30px)':'translateY(-30px)')},bs2:{op:st.b===2?1:0,tf:st.b===2?'none':'translateY(30px)'},
+      phoneServices:[['Classic Cut','$38'],['Skin Fade','$45'],['Beard Trim','$22'],['Cut & Beard','$58']].map((s,i)=>({name:s[0],price:s[1],border:i===1?'#d6a15c':'rgba(243,236,226,.16)',bg:i===1?'rgba(214,161,92,.14)':'transparent'})),
+      phoneSlots:sl.map((t,i)=>{const tk=taken.includes(i),sel=i===8;return {t,border:sel?'#d6a15c':tk?'transparent':'rgba(243,236,226,.2)',bg:sel?'#d6a15c':tk?'rgba(243,236,226,.05)':'transparent',color:sel?'#1b1714':tk?'#7d7266':'#f3ece2',deco:tk?'line-through':'none'};}),
+      oSteps:[['Set your hours','Weekly hours, split shifts and breaks. Holidays and one-off closures in a click.'],['Add services and prices','Duration, price and buffer time for every service.'],['Give each person a schedule','Staff keep their own hours and offer only the services they do.'],['See the day at a glance','Online and walk-in bookings land in the same calendar.'],['Know what is working','Demand by day and hour, popular services and estimated revenue.']].map((s,i)=>({n:'0'+(i+1),title:s[0],body:s[1],active:st.flat||i===st.o,op:st.flat||i===st.o?1:.45,numColor:i===st.o?'#e0773a':'#7d766a'})),
+      oPanelTitle:['Availability','Services','Staff','Today','Analytics'][st.o],
+      o0:st.o===0,o1:st.o===1,o2:st.o===2,o3:st.o===3,o4:st.o===4,
+      hoursRows:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map((d,i)=>{const open=i<6,s=9,e=i===5?18:19,span=14;return {d,open,l:((s-7)/span*100)+'%',w:((e-s)/span*100)+'%',bl:((13-7)/span*100)+'%',bw:(0.5/span*100)+'%',label:open?(i===5?'9:00–18:00':'9:00–19:00'):'Closed'};}),
+      oServices:[['Classic Cut',45,38],['Skin Fade',60,45],['Beard Trim',30,22],['Cut & Beard',75,58],['Hot Towel Shave',45,40]].map(s=>({name:s[0],dur:s[1],price:s[2]})),
+      oStaff:[['Marcus Reed',[3,3,0,3,3,3,0]],['Theo Alvarez',[2,3,3,3,3,2,0]],['Jun Park',[0,2,3,3,3,3,0]],['Dana Okafor',[2,2,2,0,2,3,0]]].map(p=>({name:p[0],days:p[1].map(v=>['#efebe4','#c7dcd3','#7fb09d','#2f6e5a'][v])})),
+      oAppts:[['9:00','Andre Wallace','Skin Fade · Marcus','Completed','#2f6e5a','#e3efe9','#1f5040'],['10:15','Sam Whitfield','Classic Cut · Theo','Completed','#2f6e5a','#e3efe9','#1f5040'],['11:30','Luis Ortega','Cut & Beard · Marcus','Confirmed','#e0773a','#fbe6d8','#8a3d12'],['12:00','Ben Carter','Beard Trim · Jun','Pending','#c9a227','#f6edd0','#6e5609'],['14:30','Tom Nguyen','Skin Fade · Theo','Confirmed','#e0773a','#fbe6d8','#8a3d12']].map(a=>({t:a[0],c:a[1],s:a[2],status:a[3],color:a[4],bbg:a[5],bink:a[6]})),
+      revBars:rev.map((v,i)=>({h:((v-2)/2.5*100)+'%',bg:i===11?'#e0773a':'#d7cfc1'})),
+      tplKey:st.tpl, tpl:Object.assign({},tp,{href:'Booking Pages.dc.html?t='+st.tpl}), tplBg:tp.bg, tplInk:tp.ink,
+      tplTabs:Object.keys(T).map((k,i)=>({n:'0'+(i+1),label:T[k].label,biz:T[k].biz,sel:k===st.tpl,border:k===st.tpl?tp.btn:'rgba(128,128,128,.3)',bg:k===st.tpl?'rgba(128,128,128,.12)':'transparent',pick:()=>this.setState({tpl:k})})),
+      kpis:[{label:'Appointments completed',value:'1,042',note:'Status: completed'},{label:'Upcoming',value:'86',note:'Next 30 days, confirmed or pending'},{label:'Estimated appointment value',value:'$43,860',note:'Price × completed, not payments'},{label:'Cancellation rate',value:'6.1%',note:'Cancelled ÷ all booked'}],
+      revLine:pts.join(' '), revArea:'0,180 '+pts.join(' ')+' 600,180',
+      days:[['M',38],['T',52],['W',61],['T',74],['F',96],['S',118],['S',0]].map((d,i)=>({d:d[0],h:(d[1]/118*100)+'%',bg:i===5?'#e0773a':'#d7cfc1'})),
+      hours:[6,9,12,10,5,8,11,15,18,14].map((v,i)=>({l:((i+8)%12+1)+'',bg:`oklch(${0.96-v/18*0.5} ${0.02+v/18*0.1} 160)`})),
+      popular:[['Skin Fade',31],['Classic Cut',27],['Cut & Beard',19],['Beard Trim',14],['Hot Towel Shave',9]].map(p=>({name:p[0],v:p[1]+'%',w:(p[1]/31*100)+'%'})),
+      benefits:[['Bookings around the clock','Your page takes appointments while you sleep, cut hair or take a day off.'],['Fewer double bookings','Every slot checks staff hours, service length, breaks and existing appointments.'],['Hours that fit how you work','Split shifts, different days, per-person schedules and services of any length.'],['A page that looks like you','Five templates, your colours, type, photos and policies. No code.'],['Numbers you can act on','Busy days, quiet hours and popular services, with clear labels for what each metric counts.'],['One place for every appointment','Online, phone and walk-in bookings in a single calendar and list.']].map((b,i)=>({n:'0'+(i+1),t:b[0],d:b[1]})),
+      monthly:!st.annual,annual:st.annual,mBg:st.annual?'transparent':'#fff',aBg:st.annual?'#fff':'transparent',
+      setMonthly:()=>this.setState({annual:false}),setAnnual:()=>this.setState({annual:true}),
+      per:st.annual?'per month, billed yearly':'per month',
+      plans:planDefs.map((p,i)=>{const sel=st.plan===i;return {...p,sel,border:sel?'#1c1a17':'#e3ddd2',bg:sel?'#1c1a17':'#fff',ink:sel?'#f4f0e8':'#1c1a17',line:sel?'#3a3731':'#ece7de',tagBg:'#e0773a',tagOp:sel?1:0,pick:()=>this.setState({plan:i})};}),
+      planName:planDefs[st.plan].name,
+      compare:st.compare,compareLabel:st.compare?'Hide feature comparison':'Compare all features',toggleCompare:()=>this.setState({compare:!st.compare}),
+      compareRows:[['Booking pages','1','1','1 per location'],['Staff calendars','1','Up to 5','Unlimited'],['Templates','All five','All five','All five'],['Custom colours and type','Preset','✓','✓'],['Customer directory','—','✓','✓'],['Analytics','Core','Full','Full + export'],['Roles and permissions','—','—','✓'],['Payments, SMS reminders','Planned','Planned','Planned']].map(r=>({f:r[0],a:r[1],b:r[2],c:r[3]}))
+    };
+  }
+}
+</script>
+</body>
+</html>

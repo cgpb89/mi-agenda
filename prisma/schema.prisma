@@ -1,0 +1,620 @@
+// Tempo — multi-tenant appointment booking.
+//
+// Conventions
+// - All tables live in the `app` schema (not exposed by Supabase's Data API).
+// - Every tenant-owned table carries `tenant_id` and a UNIQUE (tenant_id, id) key.
+//   Child rows reference parents with COMPOSITE foreign keys (tenant_id, x_id),
+//   so a row can never point at another tenant's data, even through a bug.
+// - Money is stored as integer minor units (cents) + ISO-4217 currency.
+// - Instants are timestamptz (UTC). Recurring hours are minutes-from-midnight
+//   interpreted in the tenant's IANA timezone (Tenant.timezone).
+// - Constraints Prisma cannot express (CHECKs, the GiST exclusion constraint,
+//   grants) live in hand-written SQL migrations — see prisma/migrations.
+
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "esm"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["app"]
+}
+
+// ───────────────────────────── Enums ─────────────────────────────
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+
+  @@schema("app")
+}
+
+enum PlatformRole {
+  NONE
+  ADMIN
+
+  @@schema("app")
+}
+
+enum TenantStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CHURNED
+
+  @@schema("app")
+}
+
+enum Plan {
+  TRIAL
+  STARTER
+  GROWTH
+  BUSINESS
+
+  @@schema("app")
+}
+
+enum BusinessCategory {
+  BARBER
+  WELLNESS
+  CONSULT
+  FITNESS
+  SERVICES
+
+  @@schema("app")
+}
+
+enum BookingTemplate {
+  BARBER
+  WELLNESS
+  CONSULT
+  FITNESS
+  SERVICES
+
+  @@schema("app")
+}
+
+enum PageStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+
+  @@schema("app")
+}
+
+enum MembershipRole {
+  OWNER
+  MANAGER
+  STAFF
+
+  @@schema("app")
+}
+
+enum MembershipStatus {
+  ACTIVE
+  SUSPENDED
+
+  @@schema("app")
+}
+
+enum ServiceDays {
+  ALL
+  WEEKDAYS
+  SATURDAYS
+
+  @@schema("app")
+}
+
+enum ExceptionType {
+  CLOSED // whole local date(s) closed (business) or day off (staff)
+  CUSTOM_HOURS // replaces regular hours for that local date
+  BLOCK // a blocked interval inside the local date
+
+  @@schema("app")
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+
+  @@schema("app")
+}
+
+enum AppointmentSource {
+  ONLINE
+  PHONE
+  WALK_IN
+
+  @@schema("app")
+}
+
+enum CancelledBy {
+  CUSTOMER
+  BUSINESS
+
+  @@schema("app")
+}
+
+enum PaymentKind {
+  PAYMENT
+  REFUND
+
+  @@schema("app")
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  OTHER
+
+  @@schema("app")
+}
+
+// ───────────────────────── Identity & sessions ─────────────────────────
+
+model User {
+  id           String       @id @default(uuid()) @db.Uuid
+  /// Normalised (trimmed, NFKC, lower-cased). Unique platform-wide.
+  email        String       @unique @db.VarChar(254)
+  name         String       @db.VarChar(120)
+  passwordHash String       @map("password_hash")
+  status       UserStatus   @default(ACTIVE)
+  platformRole PlatformRole @default(NONE) @map("platform_role")
+  lastLoginAt  DateTime?    @map("last_login_at") @db.Timestamptz(3)
+  createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  sessions       Session[]
+  resetTokens    PasswordResetToken[]
+  memberships    Membership[]
+  staffProfiles  Staff[]
+  invitationsBy  Invitation[]         @relation("InvitedBy")
+  paymentsBy     PaymentRecord[]      @relation("RecordedBy")
+  paymentsVoided PaymentRecord[]      @relation("VoidedBy")
+  policyUpdates  BookingPolicy[]
+  auditEvents    AuditLog[]
+
+  @@map("users")
+  @@schema("app")
+}
+
+model Session {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @map("user_id") @db.Uuid
+  /// HMAC-SHA256 of the opaque bearer token. The raw token is never stored.
+  tokenHash  String   @unique @map("token_hash") @db.VarChar(64)
+  userAgent  String?  @map("user_agent") @db.VarChar(256)
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt DateTime @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("sessions")
+  @@schema("app")
+}
+
+model PasswordResetToken {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @map("user_id") @db.Uuid
+  tokenHash  String    @unique @map("token_hash") @db.VarChar(64)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(3)
+  consumedAt DateTime? @map("consumed_at") @db.Timestamptz(3)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_reset_tokens")
+  @@schema("app")
+}
+
+// ───────────────────────────── Tenancy ─────────────────────────────
+
+model Tenant {
+  id          String           @id @default(uuid()) @db.Uuid
+  name        String           @db.VarChar(120)
+  /// Public booking identifier: /book/{slug}
+  slug        String           @unique @db.VarChar(48)
+  status      TenantStatus     @default(TRIAL)
+  plan        Plan             @default(TRIAL)
+  category    BusinessCategory @default(SERVICES)
+  /// IANA timezone, e.g. America/New_York
+  timezone    String           @db.VarChar(64)
+  /// BCP-47 locale, e.g. en-US
+  locale      String           @default("en-US") @db.VarChar(16)
+  /// ISO-4217
+  currency    String           @default("USD") @db.Char(3)
+  /// ISO-3166-1 alpha-2, default country for phone parsing
+  country     String           @default("US") @db.Char(2)
+  suspendedAt DateTime?        @map("suspended_at") @db.Timestamptz(3)
+  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  memberships  Membership[]
+  invitations  Invitation[]
+  profile      BusinessProfile?
+  policy       BookingPolicy?
+  services     Service[]
+  staff        Staff[]
+  staffService StaffService[]
+  rules        AvailabilityRule[]
+  exceptions   AvailabilityException[]
+  customers    Customer[]
+  appointments Appointment[]
+  payments     PaymentRecord[]
+  auditEvents  AuditLog[]
+
+  @@index([status])
+  @@map("tenants")
+  @@schema("app")
+}
+
+model Membership {
+  id        String           @id @default(uuid()) @db.Uuid
+  tenantId  String           @map("tenant_id") @db.Uuid
+  userId    String           @map("user_id") @db.Uuid
+  role      MembershipRole
+  status    MembershipStatus @default(ACTIVE)
+  createdAt DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, userId])
+  @@index([userId])
+  @@map("memberships")
+  @@schema("app")
+}
+
+model Invitation {
+  id              String         @id @default(uuid()) @db.Uuid
+  tenantId        String         @map("tenant_id") @db.Uuid
+  email           String         @db.VarChar(254)
+  role            MembershipRole
+  tokenHash       String         @unique @map("token_hash") @db.VarChar(64)
+  invitedByUserId String         @map("invited_by_user_id") @db.Uuid
+  expiresAt       DateTime       @map("expires_at") @db.Timestamptz(3)
+  acceptedAt      DateTime?      @map("accepted_at") @db.Timestamptz(3)
+  revokedAt       DateTime?      @map("revoked_at") @db.Timestamptz(3)
+  createdAt       DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  invitedBy User   @relation("InvitedBy", fields: [invitedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId])
+  @@map("invitations")
+  @@schema("app")
+}
+
+model BusinessProfile {
+  tenantId    String          @id @map("tenant_id") @db.Uuid
+  displayName String          @map("display_name") @db.VarChar(120)
+  tagline     String?         @db.VarChar(160)
+  description String?         @db.VarChar(1000)
+  phone       String?         @db.VarChar(40)
+  email       String?         @db.VarChar(254)
+  address     String?         @db.VarChar(240)
+  /// Free-form human hours line shown on the page, e.g. "Mon–Sat 9:00 AM – 7:00 PM".
+  hoursNote   String?         @map("hours_note") @db.VarChar(240)
+  template    BookingTemplate @default(SERVICES)
+  pageStatus  PageStatus      @default(DRAFT) @map("page_status")
+  /// Template-specific copy (category strip, info cards, prep notes...).
+  /// Validated server-side by a zod schema before every write.
+  pageContent Json            @default("{}") @map("page_content")
+  updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+
+  @@map("business_profiles")
+  @@schema("app")
+}
+
+model BookingPolicy {
+  tenantId                      String   @id @map("tenant_id") @db.Uuid
+  /// Max future PENDING/CONFIRMED appointments per normalised phone (1..20).
+  maxActiveAppointmentsPerPhone Int      @default(2) @map("max_active_appointments_per_phone")
+  slotIntervalMin               Int      @default(30) @map("slot_interval_min")
+  minNoticeMin                  Int      @default(60) @map("min_notice_min")
+  maxAdvanceDays                Int      @default(60) @map("max_advance_days")
+  /// Customers may cancel/reschedule online until this many minutes before start.
+  cancellationWindowMin         Int      @default(240) @map("cancellation_window_min")
+  requireEmail                  Boolean  @default(true) @map("require_email")
+  /// Online bookings start CONFIRMED when true, PENDING otherwise.
+  autoConfirm                   Boolean  @default(true) @map("auto_confirm")
+  policyText                    String?  @map("policy_text") @db.VarChar(600)
+  updatedByUserId               String?  @map("updated_by_user_id") @db.Uuid
+  updatedAt                     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  updatedBy User?  @relation(fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@map("booking_policies")
+  @@schema("app")
+}
+
+// ───────────────────────── Services & staff ─────────────────────────
+
+model Service {
+  id              String      @id @default(uuid()) @db.Uuid
+  tenantId        String      @map("tenant_id") @db.Uuid
+  name            String      @db.VarChar(80)
+  description     String?     @db.VarChar(300)
+  durationMin     Int         @map("duration_min")
+  priceMinor      Int         @map("price_minor")
+  currency        String      @db.Char(3)
+  bufferBeforeMin Int         @default(0) @map("buffer_before_min")
+  bufferAfterMin  Int         @default(0) @map("buffer_after_min")
+  isActive        Boolean     @default(true) @map("is_active")
+  /// Shown and bookable on the public page.
+  isOnline        Boolean     @default(true) @map("is_online")
+  availableOn     ServiceDays @default(ALL) @map("available_on")
+  /// Overrides BookingPolicy.maxAdvanceDays when set.
+  maxAdvanceDays  Int?        @map("max_advance_days")
+  sortOrder       Int         @default(0) @map("sort_order")
+  createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  staff        StaffService[]
+  appointments Appointment[]
+
+  @@unique([tenantId, id])
+  @@index([tenantId, isActive])
+  @@map("services")
+  @@schema("app")
+}
+
+model Staff {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String   @map("tenant_id") @db.Uuid
+  /// Optional login account (a member of the same tenant).
+  userId      String?  @map("user_id") @db.Uuid
+  displayName String   @map("display_name") @db.VarChar(80)
+  title       String?  @db.VarChar(80)
+  bio         String?  @db.VarChar(300)
+  isActive    Boolean  @default(true) @map("is_active")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant       Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  user         User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)
+  services     StaffService[]
+  rules        AvailabilityRule[]
+  exceptions   AvailabilityException[]
+  appointments Appointment[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, userId])
+  @@index([tenantId, isActive])
+  @@map("staff")
+  @@schema("app")
+}
+
+model StaffService {
+  tenantId  String @map("tenant_id") @db.Uuid
+  staffId   String @map("staff_id") @db.Uuid
+  serviceId String @map("service_id") @db.Uuid
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  staff   Staff   @relation(fields: [tenantId, staffId], references: [tenantId, id], onDelete: Cascade)
+  service Service @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Cascade)
+
+  @@id([staffId, serviceId])
+  @@index([tenantId, serviceId])
+  @@map("staff_services")
+  @@schema("app")
+}
+
+// ───────────────────────────── Scheduling ─────────────────────────────
+
+/// Weekly recurring hours. staffId NULL = business hours (the outer limit).
+model AvailabilityRule {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  staffId   String?  @map("staff_id") @db.Uuid
+  /// ISO weekday: 1 = Monday … 7 = Sunday
+  dayOfWeek Int      @map("day_of_week")
+  startMin  Int      @map("start_min")
+  endMin    Int      @map("end_min")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  staff  Staff? @relation(fields: [tenantId, staffId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, staffId, dayOfWeek])
+  @@map("availability_rules")
+  @@schema("app")
+}
+
+/// Date-specific overrides. staffId NULL = whole business.
+model AvailabilityException {
+  id              String        @id @default(uuid()) @db.Uuid
+  tenantId        String        @map("tenant_id") @db.Uuid
+  staffId         String?       @map("staff_id") @db.Uuid
+  type            ExceptionType
+  /// Local date (tenant timezone) the exception starts on.
+  date            DateTime      @db.Date
+  /// Inclusive last local date for multi-day CLOSED ranges; NULL = single day.
+  endDate         DateTime?     @map("end_date") @db.Date
+  /// For CUSTOM_HOURS / BLOCK: minutes from local midnight.
+  startMin        Int?          @map("start_min")
+  endMin          Int?          @map("end_min")
+  reason          String?       @db.VarChar(120)
+  createdByUserId String?       @map("created_by_user_id") @db.Uuid
+  createdAt       DateTime      @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  staff  Staff? @relation(fields: [tenantId, staffId], references: [tenantId, id], onDelete: Cascade)
+
+  @@index([tenantId, date])
+  @@map("availability_exceptions")
+  @@schema("app")
+}
+
+// ───────────────────────── Customers & bookings ─────────────────────────
+
+model Customer {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  name      String   @db.VarChar(120)
+  /// E.164. NULL only for owner-created walk-ins without a phone.
+  /// Unverified: a lookup / booking-policy key, never a credential.
+  phoneE164 String?  @map("phone_e164") @db.VarChar(16)
+  email     String?  @db.VarChar(254)
+  notes     String?  @db.VarChar(1000)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant       Tenant        @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  appointments Appointment[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, phoneE164])
+  @@index([tenantId, name])
+  @@map("customers")
+  @@schema("app")
+}
+
+model Appointment {
+  id                  String            @id @default(uuid()) @db.Uuid
+  tenantId            String            @map("tenant_id") @db.Uuid
+  /// Human reference, displayed as A-{refNumber}. Global sequence.
+  refNumber           Int               @unique @default(autoincrement()) @map("ref_number")
+  customerId          String            @map("customer_id") @db.Uuid
+  serviceId           String            @map("service_id") @db.Uuid
+  staffId             String            @map("staff_id") @db.Uuid
+  startAt             DateTime          @map("start_at") @db.Timestamptz(3)
+  endAt               DateTime          @map("end_at") @db.Timestamptz(3)
+  /// startAt - bufferBefore / endAt + bufferAfter. Used by the overlap constraint.
+  blockStartAt        DateTime          @map("block_start_at") @db.Timestamptz(3)
+  blockEndAt          DateTime          @map("block_end_at") @db.Timestamptz(3)
+  status              AppointmentStatus
+  source              AppointmentSource
+  /// Snapshots so later service edits don't rewrite history.
+  serviceNameSnapshot String            @map("service_name_snapshot") @db.VarChar(80)
+  durationMin         Int               @map("duration_min")
+  quotedPriceMinor    Int               @map("quoted_price_minor")
+  currency            String            @db.Char(3)
+  /// Contact details exactly as submitted for this booking (the Customer
+  /// record is not overwritten by unverified public submissions).
+  contactName         String            @map("contact_name") @db.VarChar(120)
+  contactEmail        String?           @map("contact_email") @db.VarChar(254)
+  customerNote        String?           @map("customer_note") @db.VarChar(500)
+  internalNote        String?           @map("internal_note") @db.VarChar(1000)
+  /// HMAC of the customer's self-service link token.
+  manageTokenHash     String?           @unique @map("manage_token_hash") @db.VarChar(64)
+  idempotencyKey      String?           @map("idempotency_key") @db.VarChar(64)
+  createdByUserId     String?           @map("created_by_user_id") @db.Uuid
+  confirmedAt         DateTime?         @map("confirmed_at") @db.Timestamptz(3)
+  completedAt         DateTime?         @map("completed_at") @db.Timestamptz(3)
+  noShowAt            DateTime?         @map("no_show_at") @db.Timestamptz(3)
+  cancelledAt         DateTime?         @map("cancelled_at") @db.Timestamptz(3)
+  cancelledBy         CancelledBy?      @map("cancelled_by")
+  cancelReason        String?           @map("cancel_reason") @db.VarChar(200)
+  rescheduleCount     Int               @default(0) @map("reschedule_count")
+  createdAt           DateTime          @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime          @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  customer Customer        @relation(fields: [tenantId, customerId], references: [tenantId, id], onDelete: Restrict)
+  service  Service         @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Restrict)
+  staff    Staff           @relation(fields: [tenantId, staffId], references: [tenantId, id], onDelete: Restrict)
+  payments PaymentRecord[]
+
+  @@unique([tenantId, id])
+  @@unique([tenantId, idempotencyKey])
+  @@index([tenantId, startAt])
+  @@index([tenantId, staffId, startAt])
+  @@index([tenantId, customerId, startAt])
+  @@index([tenantId, status, startAt])
+  @@map("appointments")
+  @@schema("app")
+}
+
+/// Money explicitly recorded as collected by an authorised user.
+/// Collected = Σ PAYMENT − Σ REFUND over rows where voided_at IS NULL.
+model PaymentRecord {
+  id               String        @id @default(uuid()) @db.Uuid
+  tenantId         String        @map("tenant_id") @db.Uuid
+  appointmentId    String        @map("appointment_id") @db.Uuid
+  kind             PaymentKind
+  amountMinor      Int           @map("amount_minor")
+  currency         String        @db.Char(3)
+  method           PaymentMethod
+  note             String?       @db.VarChar(200)
+  recordedByUserId String        @map("recorded_by_user_id") @db.Uuid
+  recordedAt       DateTime      @default(now()) @map("recorded_at") @db.Timestamptz(3)
+  voidedAt         DateTime?     @map("voided_at") @db.Timestamptz(3)
+  voidedByUserId   String?       @map("voided_by_user_id") @db.Uuid
+  voidReason       String?       @map("void_reason") @db.VarChar(200)
+
+  tenant      Tenant      @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  appointment Appointment @relation(fields: [tenantId, appointmentId], references: [tenantId, id], onDelete: Restrict)
+  recordedBy  User        @relation("RecordedBy", fields: [recordedByUserId], references: [id], onDelete: Restrict)
+  voidedBy    User?       @relation("VoidedBy", fields: [voidedByUserId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, recordedAt])
+  @@index([tenantId, appointmentId])
+  @@map("payment_records")
+  @@schema("app")
+}
+
+// ───────────────────────────── Platform ─────────────────────────────
+
+/// Append-only. The runtime DB role has INSERT/SELECT only (see grants migration).
+model AuditLog {
+  id          String   @id @default(uuid()) @db.Uuid
+  tenantId    String?  @map("tenant_id") @db.Uuid
+  actorUserId String?  @map("actor_user_id") @db.Uuid
+  /// "user" | "customer" | "system"
+  actorType   String   @map("actor_type") @db.VarChar(16)
+  action      String   @db.VarChar(64)
+  targetType  String?  @map("target_type") @db.VarChar(32)
+  targetId    String?  @map("target_id") @db.VarChar(64)
+  /// Redacted structured details. Never contains secrets or raw phone numbers.
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  actor  User?   @relation(fields: [actorUserId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, createdAt])
+  @@index([createdAt])
+  @@map("audit_logs")
+  @@schema("app")
+}
+
+model FeatureFlag {
+  key       String   @id @db.VarChar(48)
+  name      String   @db.VarChar(80)
+  note      String?  @db.VarChar(120)
+  enabled   Boolean  @default(false)
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  @@map("feature_flags")
+  @@schema("app")
+}
+
+/// Fixed-window rate-limit counters (shared across instances).
+model RateLimitBucket {
+  /// HMAC of the logical key — no raw IPs, emails or phones are stored.
+  key         String   @db.VarChar(64)
+  windowStart DateTime @map("window_start") @db.Timestamptz(3)
+  count       Int      @default(0)
+  expiresAt   DateTime @map("expires_at") @db.Timestamptz(3)
+
+  @@id([key, windowStart])
+  @@index([expiresAt])
+  @@map("rate_limit_buckets")
+  @@schema("app")
+}

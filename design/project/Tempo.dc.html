@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Tempo — Prototype index & design system</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;500&family=Anton&family=Cormorant+Garamond:ital,wght@1,500&family=Public+Sans:wght@700&family=Archivo:ital,wdth,wght@1,62..125,900&family=Schibsted+Grotesk:wght@800&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#f4f0e8;color:#1c1a17;font-family:'Hanken Grotesk',sans-serif;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}a{color:#1c1a17}a:hover{color:#c4581f}</style>
+</helmet>
+<div style="max-width:1280px;margin:0 auto;padding:clamp(24px,5vw,72px) clamp(16px,4vw,48px);display:flex;flex-direction:column;gap:64px">
+  <header style="display:flex;flex-direction:column;gap:16px">
+    <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:28px;letter-spacing:-.04em">tempo<span style="color:#e0773a">.</span></span>
+    <h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:clamp(40px,6vw,84px);line-height:.95;letter-spacing:-.045em;max-width:900px">Your time. Your business. Your way.</h1>
+    <p style="margin:0;font-size:17px;color:#4a443c;max-width:620px;line-height:1.55">Prototype index. Four connected experiences on one foundation, all running on the same demo data for Northside Barber Co.</p>
+  </header>
+
+  <section data-screen-label="Experiences" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:12px">
+    <a href="Tempo Landing.dc.html" style="text-decoration:none;background:#fff;border:1px solid #e3ddd2;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px;min-height:220px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#c4581f">01 · PUBLIC · /</span><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;letter-spacing:-.03em">Marketing site</span><span style="font-size:14px;color:#5d564b;line-height:1.5;flex:1">Scroll-driven street of five businesses, booking and owner journeys, live template previews, analytics, pricing.</span><span style="font-weight:700;font-size:14px">Open →</span></a>
+    <a href="Booking Pages.dc.html" style="text-decoration:none;background:#16120f;color:#f3ece2;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px;min-height:220px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#d6a15c">02 · PUBLIC · /book/[slug]</span><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;letter-spacing:-.03em">Booking pages</span><span style="font-size:14px;color:#c9bdae;line-height:1.5;flex:1">Five templates over one booking flow: service, staff, time, details, review, confirmation. Desktop and mobile.</span><span style="font-weight:700;font-size:14px">Open →</span></a>
+    <a href="Tempo App.dc.html" style="text-decoration:none;background:#1c1a17;color:#f4f0e8;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px;min-height:220px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#e0773a">03 · BUSINESS · /app</span><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;letter-spacing:-.03em">Business dashboard</span><span style="font-size:14px;color:#cfc8bc;line-height:1.5;flex:1">Overview, calendar (day/week/month), appointments, services, availability. Create, reschedule, cancel, conflicts.</span><span style="font-weight:700;font-size:14px">Open →</span></a>
+    <a href="Tempo Super Admin.dc.html" style="text-decoration:none;background:#12201b;color:#dfe8e3;border-radius:16px;padding:22px;display:flex;flex-direction:column;gap:10px;min-height:220px">
+      <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7fb09d">04 · PLATFORM · /super-admin</span><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;letter-spacing:-.03em">Platform admin</span><span style="font-size:14px;color:#b9cac2;line-height:1.5;flex:1">Tenant overview, business directory, suspend and plan changes with reasons, users, feature flags, audit log.</span><span style="font-weight:700;font-size:14px">Open →</span></a>
+  </section>
+
+  <section data-screen-label="Colour" style="display:flex;flex-direction:column;gap:20px">
+    <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:36px;letter-spacing:-.035em">Colour</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="height:84px;border-radius:12px;background:#f4f0e8;border:1px solid #e3ddd2"></span><span style="font-weight:700;font-size:13px">Paper</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">#F4F0E8 · public ground</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="height:84px;border-radius:12px;background:#f6f4ef;border:1px solid #e3ddd2"></span><span style="font-weight:700;font-size:13px">Workspace</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">#F6F4EF · app ground</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="height:84px;border-radius:12px;background:#1c1a17"></span><span style="font-weight:700;font-size:13px">Ink</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">#1C1A17 · text, primary buttons</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="height:84px;border-radius:12px;background:#e0773a"></span><span style="font-weight:700;font-size:13px">Tempo orange</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">#E0773A · accent, confirmed</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="height:84px;border-radius:12px;background:#2f6e5a"></span><span style="font-weight:700;font-size:13px">Evergreen</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">#2F6E5A · open, completed</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="height:84px;border-radius:12px;background:#12201b"></span><span style="font-weight:700;font-size:13px">Platform</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">#12201B · super-admin chrome</span></div>
+      <div style="display:flex;flex-direction:column;gap:6px"><span style="height:84px;border-radius:12px;background:#b3261e"></span><span style="font-weight:700;font-size:13px">Danger</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">#B3261E · destructive only</span></div>
+    </div>
+  </section>
+
+  <section data-screen-label="Type" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:24px">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:36px;letter-spacing:-.035em">Type</h2>
+      <div style="display:flex;flex-direction:column;gap:14px;background:#fff;border:1px solid #e3ddd2;border-radius:16px;padding:22px">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:56px;line-height:.95;letter-spacing:-.045em">Display 56–112</span>
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.025em">Page title 22 · Bricolage Grotesque</span>
+        <span style="font-size:14px;line-height:1.5">Body 14 (app) / 17 (marketing) · Hanken Grotesk. Built for dense tables and readable long copy.</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#6b6358">LABELS, IDS, TIMES · JETBRAINS MONO 11–13</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:36px;letter-spacing:-.035em">Template identities</h2>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <a href="Booking Pages.dc.html?t=barber" style="text-decoration:none;background:#16120f;color:#f3ece2;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Anton',sans-serif;font-size:26px">NORTHSIDE</span><span style="font-size:12px;color:#d6a15c">Anton · amber</span></a>
+        <a href="Booking Pages.dc.html?t=wellness" style="text-decoration:none;background:#f4efe6;color:#3a3128;border:1px solid #e4dacb;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Cormorant Garamond',serif;font-style:italic;font-weight:500;font-size:28px">Sable &amp; Sage</span><span style="font-size:12px;color:#7f6545">Cormorant · clay</span></a>
+        <a href="Booking Pages.dc.html?t=consult" style="text-decoration:none;background:#fff;color:#14233a;border:1px solid #dbe3ee;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Public Sans',sans-serif;font-weight:700;font-size:22px">Harbor Physio</span><span style="font-size:12px;color:#1f5fbf">Public Sans · harbour blue</span></a>
+        <a href="Booking Pages.dc.html?t=fitness" style="text-decoration:none;background:#0e0f0c;color:#f2f5ea;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Archivo',sans-serif;font-weight:900;font-style:italic;font-stretch:62%;font-size:30px">FORGE/LAB</span><span style="font-size:12px;color:#c8f542">Archivo condensed · lime</span></a>
+        <a href="Booking Pages.dc.html?t=services" style="text-decoration:none;background:#efefec;color:#1d1f22;border-radius:12px;padding:14px 18px;display:flex;justify-content:space-between;align-items:center"><span style="font-family:'Schibsted Grotesk',sans-serif;font-weight:800;font-size:24px;letter-spacing:-.03em">Mendwell</span><span style="font-size:12px;color:#d9532a">Schibsted · signal orange</span></a>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Components" style="display:flex;flex-direction:column;gap:20px">
+    <h2 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:36px;letter-spacing:-.035em">Components</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:12px">
+      <div style="background:#fff;border:1px solid #e3ddd2;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">BUTTONS</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span style="background:#1c1a17;color:#fff;border-radius:8px;padding:10px 14px;font-weight:700;font-size:13px">Primary</span>
+          <span style="border:1px solid #d9d3c8;background:#fff;border-radius:8px;padding:10px 14px;font-weight:600;font-size:13px">Secondary</span>
+          <span style="border:1px solid #e8c4bf;color:#b3261e;border-radius:8px;padding:10px 14px;font-weight:700;font-size:13px">Cancel</span>
+          <span style="background:#bdb5a8;color:#fff;border-radius:8px;padding:10px 14px;font-weight:700;font-size:13px">Disabled</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><span style="background:#1c1a17;color:#f4f0e8;padding:12px 22px;border-radius:999px;font-weight:700;font-size:14px">Start free</span><span style="background:#e0773a;padding:12px 22px;border-radius:999px;font-weight:800;font-size:14px">Create your booking page</span></div>
+        <span style="font-size:12px;color:#6b6358">Pills for marketing, 8px radius in the app.</span>
+      </div>
+      <div style="background:#fff;border:1px solid #e3ddd2;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">APPOINTMENT STATUS</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:#f6edd0;color:#6e5609">Pending</span>
+          <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:#fbe6d8;color:#8a3d12">Confirmed</span>
+          <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:#e3efe9;color:#1f5040">Completed</span>
+          <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:#eeebe6;color:#6b6358">Cancelled</span>
+          <span style="font-size:12px;font-weight:700;padding:4px 10px;border-radius:999px;background:#f8dedb;color:#9b2c1f">No-show</span>
+        </div>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">CALENDAR TIME</span>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;font-size:12px">
+          <span style="padding:8px 10px;border-radius:6px;border:1px solid #d9d3c8">Available</span>
+          <span style="padding:8px 10px;border-radius:6px;background:#fbe6d8;border-left:3px solid #e0773a">Booked</span>
+          <span style="padding:8px 10px;border-radius:6px;background:repeating-linear-gradient(135deg,#f3f0ea 0 4px,#ddd6ca 4px 8px)">Break</span>
+          <span style="padding:8px 10px;border-radius:6px;background:repeating-linear-gradient(135deg,#f6e5e2 0 4px,#e5b9b2 4px 8px)">Blocked</span>
+          <span style="padding:8px 10px;border-radius:6px;background:#ebe7e0">Not working</span>
+        </div>
+      </div>
+      <div style="background:#fff;border:1px solid #e3ddd2;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:12px">
+        <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#6b6358">FORMS & FEEDBACK</span>
+        <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#5d564b">Customer name<span style="border:1px solid #d9d3c8;border-radius:8px;padding:9px;font-size:14px;color:#1c1a17;font-weight:400">Jordan Lee</span></label>
+        <span style="border-radius:10px;padding:10px 12px;background:#fbe9e7;color:#9b2c1f;font-size:13px;font-weight:600">Overlaps Andre Wallace, 10:00–10:45 AM (Skin Fade) with Marcus.</span>
+        <span style="border-radius:10px;padding:10px 12px;background:#e3efe9;color:#1f5040;font-size:13px;font-weight:600">✓ Saturday, Oct 10, 2:30–3:30 PM is free for Marcus.</span>
+        <span style="align-self:flex-start;background:#1c1a17;color:#f4f0e8;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:600">Toast · Appointment created · A-12873</span>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Principles" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:24px;border-top:1px solid #d3cbbd;padding-top:28px">
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font-weight:800">Spacing & radius</span><span style="font-size:14px;color:#4a443c;line-height:1.6">4 · 8 · 12 · 16 · 24 · 40 · 64 px. Cards 12–16px radius, controls 8px, pills for marketing calls to action.</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font-weight:800">Breakpoints</span><span style="font-size:14px;color:#4a443c;line-height:1.6">Fluid grids reflow under 900px. App sidebar becomes a drawer under 900px. Booking templates stack under 420px columns and use container queries for type.</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font-weight:800">Motion</span><span style="font-family:'Hanken Grotesk';font-size:14px;color:#4a443c;line-height:1.6">Cinematic scroll on the marketing site only. The app uses short fades. Booking controls never wait on animation, and reduced-motion turns transitions off.</span></div>
+    <div style="display:flex;flex-direction:column;gap:8px"><span style="font-weight:800">Metric labels</span><span style="font-size:14px;color:#4a443c;line-height:1.6">“Estimated revenue” is price × completed appointments. “Collected” needs payment tracking. Platform revenue is Tempo subscriptions only.</span></div>
+  </section>
+</div>
+</x-dc>
+</body>
+</html>

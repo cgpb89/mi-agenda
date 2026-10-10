@@ -1,0 +1,67 @@
+@use 'tokens' as *;
+
+@mixin below($width) {
+  @media (max-width: ($width - 0.02px)) {
+    @content;
+  }
+}
+
+@mixin focus-ring($color: $tempo-orange) {
+  &:focus-visible {
+    outline: 2px solid $color;
+    outline-offset: 2px;
+  }
+}
+
+@mixin mono-label($size: 11px, $color: $muted) {
+  font-family: $font-mono;
+  font-size: $size;
+  color: $color;
+  letter-spacing: 0.02em;
+}
+
+@mixin display($size, $weight: 700, $track: -0.025em) {
+  font-family: $font-display;
+  font-weight: $weight;
+  font-size: $size;
+  letter-spacing: $track;
+  line-height: 1.05;
+}
+
+@mixin hatched($a: #f3f0ea, $b: #ddd6ca, $step: 4px) {
+  background: repeating-linear-gradient(135deg, $a 0 $step, $b $step $step * 2);
+}
+
+@mixin card {
+  background: $white;
+  border: 1px solid $card-border;
+  border-radius: $radius-card;
+}
+
+@mixin reset-button {
+  appearance: none;
+  border: 0;
+  background: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+@mixin visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}

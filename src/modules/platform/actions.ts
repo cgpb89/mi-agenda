@@ -1,0 +1,242 @@
+'use server';
+
+import { revalidatePath } from 'next/cache';
+import { z } from 'zod';
+import { AppError, runAction, type ActionResult } from '@/lib/errors';
+import { requirePlatformAdmin } from '@/lib/auth/authorize';
+import { revokeAllSessions } from '@/lib/auth/session';
+import { withTransaction } from '@/lib/db/tx';
+import { parseInput, uuidSchema } from '@/lib/validation';
+import { audit } from '@/modules/audit/audit';
+
+/*
+ * Platform administration. These actions manage ACCOUNTS (tenant status, plan,
+ * user access) and never read or change a tenant's customer data.
+ * Every change requires a reason (where the design asks for one) and is audited.
+ */
+
+const reason = z.string().trim().min(3, 'Add a reason').max(300);
+
+const tenantStatusSchema = z.object({
+  tenantId: uuidSchema,
+  action: z.enum(['suspend', 'reactivate']),
+  reason,
+});
+
+export async function setTenantStatusAction(raw: unknown): Promise<ActionResult<{ name: string }>> {
+  return runAction('platform.setTenantStatus', async () => {
+    const admin = await requirePlatformAdmin();
+    const input = parseInput(tenantStatusSchema, raw);
+    const res = await withTransaction(async (tx) => {
+      const t = await tx.tenant.findUnique({
+        where: { id: input.tenantId },
+        select: { id: true, name: true, status: true, plan: true },
+      });
+      if (!t) throw new AppError('NOT_FOUND', 'Business not found.');
+      if (input.action === 'suspend') {
+        if (t.status === 'SUSPENDED') throw new AppError('CONFLICT', 'Already suspended.');
+        await tx.tenant.update({
+          where: { id: t.id },
+          data: { status: 'SUSPENDED', suspendedAt: new Date() },
+        });
+        // Booking page goes offline (status check) and members are signed out.
+        const members = await tx.membership.findMany({
+          where: { tenantId: t.id },
+          select: { userId: true },
+        });
+        await revokeAllSessions(
+          members.map((m) => m.userId),
+          tx,
+        );
+      } else {
+        if (t.status !== 'SUSPENDED')
+          throw new AppError('CONFLICT', 'This business is not suspended.');
+        await tx.tenant.update({
+          where: { id: t.id },
+          data: { status: t.plan === 'TRIAL' ? 'TRIAL' : 'ACTIVE', suspendedAt: null },
+        });
+      }
+      await audit(
+        {
+          tenantId: t.id,
+          actorUserId: admin.userId,
+          actorType: 'user',
+          action: input.action === 'suspend' ? 'tenant.suspended' : 'tenant.reactivated',
+          targetType: 'tenant',
+          targetId: t.id,
+          metadata: { reason: input.reason, name: t.name },
+        },
+        tx,
+      );
+      return { name: t.name };
+    });
+    revalidatePath('/super-admin', 'layout');
+    return res;
+  });
+}
+
+const planSchema = z.object({
+  tenantId: uuidSchema,
+  plan: z.enum(['TRIAL', 'STARTER', 'GROWTH', 'BUSINESS']),
+  reason,
+});
+
+export async function changePlanAction(raw: unknown): Promise<ActionResult<{ plan: string }>> {
+  return runAction('platform.changePlan', async () => {
+    const admin = await requirePlatformAdmin();
+    const input = parseInput(planSchema, raw);
+    await withTransaction(async (tx) => {
+      const t = await tx.tenant.findUnique({
+        where: { id: input.tenantId },
+        select: { id: true, name: true, plan: true, status: true },
+      });
+      if (!t) throw new AppError('NOT_FOUND', 'Business not found.');
+      if (t.plan === input.plan)
+        throw new AppError('CONFLICT', 'That is already the current plan.');
+      await tx.tenant.update({
+        where: { id: t.id },
+        data: {
+          plan: input.plan,
+          // Leaving trial makes an active trial account a paying (active) one.
+          ...(t.status === 'TRIAL' && input.plan !== 'TRIAL' ? { status: 'ACTIVE' as const } : {}),
+        },
+      });
+      await audit(
+        {
+          tenantId: t.id,
+          actorUserId: admin.userId,
+          actorType: 'user',
+          action: 'tenant.plan_changed',
+          targetType: 'tenant',
+          targetId: t.id,
+          metadata: { from: t.plan, to: input.plan, reason: input.reason, name: t.name },
+        },
+        tx,
+      );
+    });
+    revalidatePath('/super-admin', 'layout');
+    return { plan: input.plan };
+  });
+}
+
+const userStatusSchema = z.object({
+  userId: uuidSchema,
+  action: z.enum(['suspend', 'reactivate']),
+  reason: reason.optional(),
+});
+
+export async function setUserStatusAction(raw: unknown): Promise<ActionResult<{ name: string }>> {
+  return runAction('platform.setUserStatus', async () => {
+    const admin = await requirePlatformAdmin();
+    const input = parseInput(userStatusSchema, raw);
+    if (input.userId === admin.userId)
+      throw new AppError('POLICY', "You can't suspend your own account.");
+    const res = await withTransaction(async (tx) => {
+      const u = await tx.user.findUnique({
+        where: { id: input.userId },
+        select: { id: true, name: true, platformRole: true },
+      });
+      if (!u) throw new AppError('NOT_FOUND', 'User not found.');
+      if (u.platformRole === 'ADMIN')
+        throw new AppError('POLICY', 'Platform admins are managed with the admin CLI.');
+      await tx.user.update({
+        where: { id: u.id },
+        data: { status: input.action === 'suspend' ? 'SUSPENDED' : 'ACTIVE' },
+      });
+      if (input.action === 'suspend') await revokeAllSessions([u.id], tx);
+      await audit(
+        {
+          actorUserId: admin.userId,
+          actorType: 'user',
+          action: input.action === 'suspend' ? 'user.suspended' : 'user.reactivated',
+          targetType: 'user',
+          targetId: u.id,
+          metadata: { reason: input.reason, name: u.name },
+        },
+        tx,
+      );
+      return { name: u.name };
+    });
+    revalidatePath('/super-admin', 'layout');
+    return res;
+  });
+}
+
+const roleSchema = z.object({
+  membershipId: uuidSchema,
+  role: z.enum(['OWNER', 'MANAGER', 'STAFF']),
+});
+
+/** Support operation: change a member's role (e.g. ownership transfer). Revokes their sessions. */
+export async function platformChangeRoleAction(raw: unknown): Promise<ActionResult<undefined>> {
+  return runAction('platform.changeRole', async () => {
+    const admin = await requirePlatformAdmin();
+    const input = parseInput(roleSchema, raw);
+    await withTransaction(async (tx) => {
+      const m = await tx.membership.findUnique({
+        where: { id: input.membershipId },
+        include: { user: { select: { name: true } }, tenant: { select: { name: true } } },
+      });
+      if (!m) throw new AppError('NOT_FOUND', 'Membership not found.');
+      if (m.role === 'OWNER' && input.role !== 'OWNER') {
+        const owners = await tx.membership.count({
+          where: { tenantId: m.tenantId, role: 'OWNER', status: 'ACTIVE' },
+        });
+        if (owners <= 1)
+          throw new AppError('POLICY', 'A business needs at least one active owner.');
+      }
+      await tx.membership.update({ where: { id: m.id }, data: { role: input.role } });
+      await revokeAllSessions([m.userId], tx);
+      await audit(
+        {
+          tenantId: m.tenantId,
+          actorUserId: admin.userId,
+          actorType: 'user',
+          action: 'membership.role_changed',
+          targetType: 'user',
+          targetId: m.userId,
+          metadata: {
+            from: m.role,
+            to: input.role,
+            by: 'platform',
+            user: m.user.name,
+            business: m.tenant.name,
+          },
+        },
+        tx,
+      );
+    });
+    revalidatePath('/super-admin', 'layout');
+    return undefined;
+  });
+}
+
+const flagSchema = z.object({
+  key: z.string().regex(/^[a-zA-Z0-9_-]{1,48}$/),
+  enabled: z.boolean(),
+});
+
+export async function toggleFlagAction(raw: unknown): Promise<ActionResult<undefined>> {
+  return runAction('platform.toggleFlag', async () => {
+    const admin = await requirePlatformAdmin();
+    const input = parseInput(flagSchema, raw);
+    await withTransaction(async (tx) => {
+      const f = await tx.featureFlag.findUnique({ where: { key: input.key } });
+      if (!f) throw new AppError('NOT_FOUND', 'Flag not found.');
+      await tx.featureFlag.update({ where: { key: f.key }, data: { enabled: input.enabled } });
+      await audit(
+        {
+          actorUserId: admin.userId,
+          actorType: 'user',
+          action: 'feature_flag.toggled',
+          targetType: 'feature_flag',
+          targetId: f.key,
+          metadata: { name: f.name, enabled: input.enabled },
+        },
+        tx,
+      );
+    });
+    revalidatePath('/super-admin', 'layout');
+    return undefined;
+  });
+}

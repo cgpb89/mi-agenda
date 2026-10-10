@@ -1,0 +1,336 @@
+@use 'tokens' as *;
+@use 'mixins' as *;
+
+.root {
+  display: flex;
+  min-height: 100dvh;
+  background: $workspace;
+}
+
+.side {
+  width: 236px;
+  flex: 0 0 236px;
+  background: $side-bg;
+  color: $side-text;
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100dvh;
+  z-index: $z-sidebar;
+  padding: 14px 12px;
+  gap: 4px;
+  overflow-y: auto;
+
+  @include below($bp-app-drawer) {
+    display: none;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+  }
+}
+
+.sideOpen {
+  @include below($bp-app-drawer) {
+    display: flex;
+  }
+}
+
+.overlay {
+  display: none;
+  @include below($bp-app-drawer) {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: $z-nav-overlay;
+  }
+}
+
+.brandRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px 14px;
+}
+
+.logo {
+  text-decoration: none;
+  color: $paper;
+  font-family: $font-display;
+  font-weight: 800;
+  font-size: 22px;
+  letter-spacing: -0.04em;
+  span {
+    color: $tempo-orange;
+  }
+  &:hover {
+    color: $paper;
+  }
+}
+
+.closeNav {
+  @include reset-button;
+  color: $side-text;
+  font-size: 20px;
+  display: none;
+  @include below($bp-app-drawer) {
+    display: block;
+  }
+}
+
+.switcher {
+  position: relative;
+}
+
+.bizButton {
+  appearance: none;
+  width: 100%;
+  border: 1px solid $side-border;
+  background: $side-surface;
+  border-radius: 10px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  color: $paper;
+}
+
+.bizAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  background: #d6a15c;
+  color: #1b1714;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+
+.bizText {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.bizName {
+  font-weight: 700;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bizSub {
+  font-size: 11px;
+  color: $side-sub;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.caret {
+  color: $side-sub;
+  font-size: 11px;
+}
+
+.menu {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(100% + 6px);
+  background: $side-menu;
+  border: 1px solid $side-border;
+  border-radius: 10px;
+  padding: 6px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.menuItem {
+  border-radius: 7px;
+  padding: 9px 10px;
+  text-decoration: none;
+  color: $paper;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  &:hover {
+    color: $paper;
+    background: $side-border;
+  }
+}
+
+.menuItemOn {
+  background: $side-border;
+}
+
+.menuNew {
+  border-top: 1px solid $side-border;
+  margin-top: 4px;
+  padding-top: 10px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 14px;
+}
+
+.navItem {
+  border-radius: 8px;
+  padding: 9px 10px;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 600;
+  font-size: 14px;
+  color: $side-item;
+  &:hover {
+    color: $white;
+    background: rgba(255, 255, 255, 0.04);
+  }
+}
+
+.navItemOn {
+  background: $side-active;
+  color: $white;
+}
+
+.foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-top: 1px solid $side-active;
+  padding-top: 12px;
+}
+
+.footLink {
+  @include reset-button;
+  text-decoration: none;
+  color: $side-link;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  &:hover {
+    color: $white;
+  }
+}
+
+.user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+
+.userAvatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: $side-border;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex: 0 0 auto;
+}
+
+.userName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.userRole {
+  font-size: 11px;
+  color: $side-sub;
+}
+
+.main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+// Sticky page header
+.header {
+  position: sticky;
+  top: 0;
+  z-index: $z-header;
+  background: rgba(246, 244, 239, 0.92);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid $card-border;
+  padding: 12px $page-pad;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.menuButton {
+  appearance: none;
+  border: 1px solid $input-border;
+  background: $white;
+  border-radius: 8px;
+  width: 36px;
+  height: 36px;
+  cursor: pointer;
+  font-size: 16px;
+  display: none;
+  @include below($bp-app-drawer) {
+    display: block;
+  }
+}
+
+.titleBlock {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 160px;
+}
+
+.h1 {
+  @include display(22px, 700, -0.025em);
+}
+
+.sub {
+  font-size: 12px;
+  color: $muted;
+}
+
+.content {
+  padding: $page-pad;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.banner {
+  margin: 0;
+  padding: 10px $page-pad;
+  background: $warning-bg;
+  color: $warning-ink;
+  font-size: 13px;
+  font-weight: 600;
+  border-bottom: 1px solid #ecdcae;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: center;
+  a {
+    color: inherit;
+  }
+}

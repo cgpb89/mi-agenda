@@ -1,0 +1,99 @@
+@use 'tokens' as *;
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: $text-secondary;
+  min-width: 0;
+}
+
+.full {
+  grid-column: 1 / -1;
+}
+
+.hint {
+  font-weight: 400;
+  color: $faint;
+}
+
+.error {
+  font-size: 12px;
+  font-weight: 500;
+  color: $danger;
+}
+
+.control {
+  width: 100%;
+  border: 1px solid $input-border;
+  border-radius: $radius-control;
+  padding: 9px 10px;
+  font-size: 14px;
+  font-weight: 400;
+  color: $ink;
+  background: $white;
+  min-height: 38px;
+
+  &[aria-invalid='true'] {
+    border-color: $danger;
+  }
+  &:disabled {
+    background: $tile;
+    color: $faint;
+  }
+}
+
+textarea.control {
+  resize: vertical;
+  min-height: 64px;
+  line-height: 1.45;
+}
+
+.grid2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 12px;
+}
+
+.checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: $ink;
+  input {
+    width: 16px;
+    height: 16px;
+    accent-color: $ink;
+  }
+}
+
+.formError {
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: $error-bg;
+  color: $error-ink;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.formSuccess {
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: $success-bg;
+  color: $success-ink;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.formWarning {
+  border-radius: 10px;
+  padding: 10px 12px;
+  background: $warning-bg;
+  color: $warning-ink;
+  font-size: 13px;
+  font-weight: 600;
+}

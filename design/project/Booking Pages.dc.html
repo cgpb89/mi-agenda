@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Tempo — Booking pages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Cormorant+Garamond:ital,wght@0,400..700;1,400..700&family=Hanken+Grotesk:wght@400..800&family=Jost:wght@300..600&family=Public+Sans:wght@400..700&family=Schibsted+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#e9e6e1;font-family:'Hanken Grotesk',sans-serif}a{color:inherit}a:hover{opacity:.8}*{box-sizing:border-box}@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}</style>
+</helmet>
+<div style="min-height:100vh;display:flex;flex-direction:column">
+  <div style="position:sticky;top:0;z-index:20;background:#1c1a17;color:#efe9df;display:flex;align-items:center;gap:16px;padding:10px 18px;flex-wrap:wrap;font-size:13px">
+    <a href="Tempo Landing.dc.html" style="text-decoration:none;font-family:'Bricolage Grotesque','Hanken Grotesk',sans-serif;font-weight:800;font-size:17px;letter-spacing:-.02em">tempo</a>
+    <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#a9a195;flex:1 1 200px">tempo.example.com/<span style="color:#efe9df">{{ slug }}</span></span>
+    <div role="tablist" aria-label="Template" style="display:flex;gap:2px;background:#2b2824;padding:3px;border-radius:8px;flex-wrap:wrap">
+      <sc-for list="{{ tabs }}" as="tb" hint-placeholder-count="5">
+        <button role="tab" aria-selected="{{ tb.sel }}" onClick="{{ tb.pick }}" style="appearance:none;border:0;font:inherit;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px;cursor:pointer;background:{{ tb.bg }};color:{{ tb.color }}">{{ tb.label }}</button>
+      </sc-for>
+    </div>
+    <div role="group" aria-label="Preview size" style="display:flex;gap:2px;background:#2b2824;padding:3px;border-radius:8px">
+      <button onClick="{{ setDesk }}" aria-pressed="{{ isDesk }}" style="appearance:none;border:0;font:inherit;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px;cursor:pointer;background:{{ deskBg }};color:#efe9df">Desktop</button>
+      <button onClick="{{ setMob }}" aria-pressed="{{ isMob }}" style="appearance:none;border:0;font:inherit;font-size:12px;font-weight:600;padding:6px 10px;border-radius:6px;cursor:pointer;background:{{ mobBg }};color:#efe9df">Mobile</button>
+    </div>
+    <a href="Tempo App.dc.html" style="font-size:12px;font-weight:600;text-decoration:none;border:1px solid #4a453e;padding:6px 10px;border-radius:6px">Owner view →</a>
+  </div>
+
+  <div style="flex:1;display:flex;justify-content:center;padding:{{ framePad }}">
+    <div style="width:100%;max-width:{{ frameW }};container-type:inline-size;border-radius:{{ frameR }};overflow:hidden;box-shadow:{{ frameShadow }}">
+
+      <sc-if value="{{ isBarber }}" hint-placeholder-val="{{ true }}">
+        <div style="background:#16120f;color:#f3ece2;font-family:'Hanken Grotesk',sans-serif">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:20px clamp(18px,4cqw,48px);border-bottom:1px solid rgba(243,236,226,.12);gap:16px">
+            <span style="font-family:'Anton',sans-serif;font-size:20px;letter-spacing:.06em">NORTHSIDE</span>
+            <div style="display:flex;gap:22px;font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;align-items:center">
+              <a href="#b-barbers" style="text-decoration:none;color:#b0a393">Barbers</a>
+              <a href="#b-visit" style="text-decoration:none;color:#b0a393">Visit</a>
+              <a href="#b-book" style="text-decoration:none;background:#d6a15c;color:#16120f;padding:9px 14px">Book</a>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,380px),1fr));border-bottom:1px solid rgba(243,236,226,.12)">
+            <div style="padding:clamp(28px,6cqw,80px) clamp(18px,4cqw,48px);display:flex;flex-direction:column;justify-content:flex-end;gap:22px">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#d6a15c;letter-spacing:.1em">BROOKLYN · CUTS, FADES, SHAVES</span>
+              <h1 style="margin:0;font-family:'Anton',sans-serif;font-weight:400;font-size:clamp(64px,11cqw,168px);line-height:.88;letter-spacing:-.005em">NORTHSIDE<br>BARBER CO.</h1>
+              <p style="margin:0;max-width:420px;font-size:17px;line-height:1.5;color:#c9bdae;text-wrap:pretty">Three chairs, no rush. Pick your barber and a time that suits you.</p>
+            </div>
+            <div style="min-height:420px;background:repeating-linear-gradient(135deg,#221c17 0 12px,#1b1612 12px 24px);display:flex;align-items:flex-end;padding:18px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8c7f70">[ shop interior photo ]</span></div>
+          </div>
+          <div id="b-book" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:clamp(28px,5cqw,64px);padding:clamp(28px,5cqw,64px) clamp(18px,4cqw,48px)">
+            <div style="display:flex;flex-direction:column;gap:40px">
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <h2 style="margin:0 0 14px;font-family:'Anton',sans-serif;font-weight:400;font-size:40px">SERVICES</h2>
+                <sc-for list="{{ barberServices }}" as="s" hint-placeholder-count="5">
+                  <div style="display:flex;align-items:baseline;gap:10px;padding:12px 0;border-bottom:1px solid rgba(243,236,226,.1)">
+                    <span style="font-size:17px;font-weight:600">{{ s.name }}</span>
+                    <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8c7f70">{{ s.dur }} MIN</span>
+                    <span style="flex:1;border-bottom:1px dotted rgba(243,236,226,.25);transform:translateY(-4px)"></span>
+                    <span style="font-size:17px;font-weight:600;color:#d6a15c">${{ s.price }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div id="b-barbers" style="display:flex;flex-direction:column;gap:14px">
+                <h2 style="margin:0;font-family:'Anton',sans-serif;font-weight:400;font-size:40px">BARBERS</h2>
+                <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+                  <sc-for list="{{ barbers }}" as="p" hint-placeholder-count="3">
+                    <div style="display:flex;flex-direction:column;gap:8px">
+                      <div style="aspect-ratio:3/4;background:repeating-linear-gradient(135deg,#221c17 0 10px,#1b1612 10px 20px);display:flex;align-items:flex-end;padding:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#8c7f70">[ portrait ]</span></div>
+                      <span style="font-weight:700;font-size:15px">{{ p.name }}</span>
+                      <span style="font-size:12px;color:#b0a393;margin-top:-6px">{{ p.role }}</span>
+                    </div>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+            <div style="position:sticky;top:72px;align-self:start">
+              <dc-import name="Booking Flow" template="barber" hint-size="100%,640px"></dc-import>
+            </div>
+          </div>
+          <div id="b-visit" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:32px;padding:clamp(28px,5cqw,64px) clamp(18px,4cqw,48px);border-top:1px solid rgba(243,236,226,.12)">
+            <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Anton',sans-serif;font-size:24px">VISIT</span><span style="color:#c9bdae;line-height:1.6">214 Halsey St<br>Brooklyn, NY 11216<br>(555) 014-3380</span></div>
+            <div style="display:flex;flex-direction:column;gap:8px"><span style="font-family:'Anton',sans-serif;font-size:24px">HOURS</span><span style="color:#c9bdae;line-height:1.6">Mon–Sat 9:00 AM – 7:00 PM<br>Lunch 1:00 – 1:30 PM<br>Sunday closed</span></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div style="aspect-ratio:1;background:repeating-linear-gradient(135deg,#221c17 0 10px,#1b1612 10px 20px)"></div>
+              <div style="aspect-ratio:1;background:repeating-linear-gradient(135deg,#221c17 0 10px,#1b1612 10px 20px);display:flex;align-items:flex-end;padding:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#8c7f70">[ gallery ]</span></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isWellness }}">
+        <div style="background:#f4efe6;color:#3a3128;font-family:'Jost',sans-serif">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:6px;padding:28px 20px 0">
+            <span style="font-family:'Cormorant Garamond',serif;font-size:28px;font-style:italic;font-weight:500">Sable &amp; Sage</span>
+            <span style="font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:#7d7064">Skin · Body · Rest</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;text-align:center;gap:24px;padding:clamp(36px,6cqw,80px) 20px">
+            <h1 style="margin:0;font-family:'Cormorant Garamond',serif;font-weight:400;font-size:clamp(46px,7.5cqw,104px);line-height:1;max-width:900px;text-wrap:balance">A quieter hour, <em>set aside for you.</em></h1>
+            <a href="#w-book" style="text-decoration:none;background:#7f6545;color:#fbf8f2;padding:14px 28px;border-radius:999px;font-size:15px;letter-spacing:.04em">Book a treatment</a>
+            <div style="width:min(100%,520px);aspect-ratio:4/3;border-radius:999px 999px 0 0;background:repeating-linear-gradient(135deg,#e9e0d1 0 12px,#efe7da 12px 24px);display:flex;align-items:flex-end;justify-content:center;padding:18px;margin-top:20px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#9a8c7c">[ treatment room photo ]</span></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:1px;background:#e4dacb;border-top:1px solid #e4dacb;border-bottom:1px solid #e4dacb">
+            <sc-for list="{{ wellCats }}" as="c" hint-placeholder-count="3">
+              <div style="background:#f4efe6;padding:28px clamp(20px,4cqw,44px);display:flex;flex-direction:column;gap:8px">
+                <span style="font-family:'Cormorant Garamond',serif;font-size:30px;font-style:italic">{{ c.name }}</span>
+                <span style="font-size:14px;color:#7d7064;line-height:1.6">{{ c.desc }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div id="w-book" style="display:flex;flex-direction:column;align-items:center;gap:28px;padding:clamp(40px,6cqw,80px) clamp(16px,4cqw,44px)">
+            <div style="width:100%;max-width:640px"><dc-import name="Booking Flow" template="wellness" hint-size="100%,640px"></dc-import></div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:40px;padding:0 clamp(20px,6cqw,80px) clamp(40px,6cqw,80px)">
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <span style="font-family:'Cormorant Garamond',serif;font-size:32px;font-style:italic">Before your visit</span>
+              <span style="font-size:15px;line-height:1.8;color:#5d5248">Arrive ten minutes early to settle in.<br>Skip retinoids for 48 hours before a facial.<br>Come with clean, dry lashes for a lift.</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px">
+              <span style="font-family:'Cormorant Garamond',serif;font-size:32px;font-style:italic">Find us</span>
+              <span style="font-size:15px;line-height:1.8;color:#5d5248">88 Alder Lane, Portland, OR<br>Tuesday – Saturday, 10:00 AM – 7:00 PM<br>hello@sableandsage.example</span>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isConsult }}">
+        <div style="background:#f6f8fb;color:#14233a;font-family:'Public Sans',sans-serif">
+          <div style="background:#fff;border-bottom:1px solid #dbe3ee;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px clamp(16px,4cqw,48px);flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:10px"><span style="width:30px;height:30px;border-radius:8px;background:#1f5fbf;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px">H</span><span style="font-weight:700;font-size:16px">Harbor Physio &amp; Consulting</span></div>
+            <span style="font-size:14px;color:#5a6a80">(555) 018-7700 · Mon–Fri 8:00 AM – 5:30 PM</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:clamp(24px,4cqw,48px);padding:clamp(24px,4cqw,56px) clamp(16px,4cqw,48px);max-width:1280px;margin:0 auto">
+            <div style="display:flex;flex-direction:column;gap:28px">
+              <div style="display:flex;flex-direction:column;gap:14px">
+                <h1 style="margin:0;font-size:clamp(32px,4.4cqw,52px);line-height:1.08;letter-spacing:-.02em;font-weight:700;text-wrap:balance">Book a physiotherapy consultation</h1>
+                <p style="margin:0;font-size:17px;line-height:1.6;color:#3d4d63;max-width:560px">See a practitioner in our Lakeview clinic or by secure video. Choose a consultation type and a time below.</p>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">
+                <div style="background:#fff;border:1px solid #dbe3ee;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:#5a6a80;font-weight:600">In person</span><span style="font-size:14px;font-weight:600">1200 Lakeview Ave, Suite 4, Chicago</span></div>
+                <div style="background:#fff;border:1px solid #dbe3ee;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:#5a6a80;font-weight:600">Video</span><span style="font-size:14px;font-weight:600">Secure link sent by email before your visit</span></div>
+                <div style="background:#fff;border:1px solid #dbe3ee;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:4px"><span style="font-size:12px;color:#5a6a80;font-weight:600">Accessibility</span><span style="font-size:14px;font-weight:600">Step-free entrance and lift</span></div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <h2 style="margin:0;font-size:20px">Practitioners</h2>
+                <sc-for list="{{ practitioners }}" as="p" hint-placeholder-count="2">
+                  <div style="display:grid;grid-template-columns:72px minmax(0,1fr);gap:14px;background:#fff;border:1px solid #dbe3ee;border-radius:12px;padding:14px;align-items:center">
+                    <div style="width:72px;height:72px;border-radius:50%;background:repeating-linear-gradient(135deg,#e6edf6 0 8px,#f1f5fa 8px 16px)"></div>
+                    <div style="display:flex;flex-direction:column;gap:3px"><span style="font-weight:700">{{ p.name }}</span><span style="font-size:14px;color:#3d4d63">{{ p.role }}</span><span style="font-size:13px;color:#5a6a80">{{ p.focus }}</span></div>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="background:#fff;border:1px solid #dbe3ee;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:8px">
+                <h2 style="margin:0;font-size:16px">Appointment policies</h2>
+                <span style="font-size:14px;line-height:1.7;color:#3d4d63">Give 24 hours notice to cancel or reschedule.<br>We ask only for contact details when you book. Health history is collected privately at your first visit.<br>Bring any referral letters or imaging reports.</span>
+              </div>
+            </div>
+            <div style="position:sticky;top:72px;align-self:start"><dc-import name="Booking Flow" template="consult" hint-size="100%,640px"></dc-import></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isFitness }}">
+        <div style="background:#0e0f0c;color:#f2f5ea;font-family:'Archivo',sans-serif;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:18px clamp(16px,4cqw,48px);gap:16px">
+            <span style="font-weight:900;font-style:italic;font-stretch:70%;font-size:24px;letter-spacing:-.01em">FORGE<span style="color:#c8f542">/</span>LAB</span>
+            <a href="#f-book" style="text-decoration:none;background:#c8f542;color:#0e0f0c;padding:10px 16px;font-weight:800;font-size:13px;letter-spacing:.06em;font-stretch:85%">BOOK A SESSION</a>
+          </div>
+          <div style="padding:clamp(20px,5cqw,64px) clamp(16px,4cqw,48px) 0;display:flex;flex-direction:column;gap:20px">
+            <h1 style="margin:0;font-weight:900;font-style:italic;font-stretch:62%;font-size:clamp(76px,15cqw,240px);line-height:.82;letter-spacing:-.02em">TRAIN WITH<br><span style="color:#c8f542">INTENT.</span></h1>
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between">
+              <p style="margin:0;max-width:440px;font-size:18px;line-height:1.5;color:#c3c8b6;font-stretch:90%">Coached strength and conditioning in Denver. Book one-to-one, with a partner, or in a small group.</p>
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#a3a896">47 FOUNDRY RD · MON–SAT 7 AM – 8 PM</span>
+            </div>
+          </div>
+          <div style="height:260px;margin:36px -40px 0;transform:skewY(-3deg);background:repeating-linear-gradient(90deg,#1b1d15 0 14px,#15160f 14px 28px);display:flex;align-items:center;justify-content:center"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#7a7f6c;transform:skewY(3deg)">[ training floor photo, full bleed ]</span></div>
+          <div id="f-book" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:clamp(28px,5cqw,64px);padding:clamp(40px,6cqw,80px) clamp(16px,4cqw,48px)">
+            <div style="display:flex;flex-direction:column">
+              <sc-for list="{{ sessions }}" as="s" hint-placeholder-count="4">
+                <div style="display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:14px;align-items:baseline;padding:18px 0;border-top:1px solid rgba(242,245,234,.14)">
+                  <span style="font-family:'JetBrains Mono',monospace;color:#c8f542;font-size:13px">{{ s.n }}</span>
+                  <span style="display:flex;flex-direction:column;gap:4px"><span style="font-weight:900;font-style:italic;font-stretch:70%;font-size:30px;line-height:1;text-transform:uppercase">{{ s.name }}</span><span style="font-size:14px;color:#a3a896">{{ s.meta }}</span></span>
+                  <span style="font-weight:800;font-size:18px">{{ s.price }}</span>
+                </div>
+              </sc-for>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:28px">
+                <sc-for list="{{ coaches }}" as="p" hint-placeholder-count="2">
+                  <div style="display:flex;flex-direction:column;gap:6px">
+                    <div style="aspect-ratio:1;background:repeating-linear-gradient(135deg,#1b1d15 0 10px,#15160f 10px 20px);display:flex;align-items:flex-end;padding:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#7a7f6c">[ coach ]</span></div>
+                    <span style="font-weight:900;font-style:italic;font-stretch:70%;font-size:22px;text-transform:uppercase">{{ p.name }}</span>
+                    <span style="font-size:13px;color:#a3a896;margin-top:-4px">{{ p.role }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="position:sticky;top:72px;align-self:start"><dc-import name="Booking Flow" template="fitness" hint-size="100%,640px"></dc-import></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ isServices }}">
+        <div style="background:#efefec;color:#1d1f22;font-family:'Schibsted Grotesk',sans-serif;padding:clamp(12px,2cqw,24px)">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:12px">
+            <div style="background:#fff;border-radius:16px;padding:clamp(22px,3cqw,36px);display:flex;flex-direction:column;gap:20px;justify-content:space-between;min-height:320px">
+              <div style="display:flex;align-items:center;gap:10px"><span style="width:28px;height:28px;border-radius:7px;background:#d9532a"></span><span style="font-weight:800;font-size:17px">Mendwell</span></div>
+              <div style="display:flex;flex-direction:column;gap:12px">
+                <h1 style="margin:0;font-size:clamp(34px,4.4cqw,56px);line-height:1.02;letter-spacing:-.035em;font-weight:800;text-wrap:balance">Repairs and IT advice, by appointment.</h1>
+                <p style="margin:0;font-size:16px;line-height:1.55;color:#4a4e55">Bring your laptop in, or book us for a home office visit. Diagnostics are quoted before any work starts.</p>
+              </div>
+            </div>
+            <div style="border-radius:16px;min-height:320px;background:repeating-linear-gradient(135deg,#e2e2de 0 12px,#e9e9e6 12px 24px);display:flex;align-items:flex-end;padding:16px"><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#85878a">[ workshop photo ]</span></div>
+            <div style="background:#1d1f22;color:#fff;border-radius:16px;padding:clamp(22px,3cqw,36px);display:flex;flex-direction:column;gap:14px;min-height:320px">
+              <span style="font-size:13px;font-weight:700;color:#a8abb0;text-transform:uppercase;letter-spacing:.08em">Contact</span>
+              <span style="font-size:20px;font-weight:700;line-height:1.35">31 Mercer St<br>Jersey City, NJ</span>
+              <span style="font-size:15px;line-height:1.7;color:#d1d3d6">(555) 016-4410<br>desk@mendwell.example<br>Mon–Sat 9:00 AM – 6:00 PM</span>
+              <div style="margin-top:auto;height:90px;border-radius:10px;background:repeating-linear-gradient(135deg,#2a2d31 0 10px,#24272b 10px 20px);display:flex;align-items:flex-end;padding:8px"><span style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#85878a">[ map ]</span></div>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:12px;margin-top:12px">
+            <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px;align-content:start">
+              <sc-for list="{{ catalog }}" as="s" hint-placeholder-count="4">
+                <div style="background:#fff;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:10px;min-height:170px">
+                  <span style="font-size:12px;font-weight:700;color:#d9532a;text-transform:uppercase;letter-spacing:.06em">{{ s.dur }} min</span>
+                  <span style="font-size:20px;font-weight:800;letter-spacing:-.02em">{{ s.name }}</span>
+                  <span style="font-size:14px;color:#62666d;line-height:1.5;flex:1">{{ s.desc }}</span>
+                  <span style="font-size:15px;font-weight:700">From ${{ s.price }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="position:sticky;top:72px;align-self:start"><dc-import name="Booking Flow" template="services" hint-size="100%,640px"></dc-import></div>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="padding:14px;text-align:center;font-size:12px;color:#7a746b;background:#e9e6e1">Booking pages by <a href="Tempo Landing.dc.html">Tempo</a> · Demo content</div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;template&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;barber&quot;,&quot;wellness&quot;,&quot;consult&quot;,&quot;fitness&quot;,&quot;services&quot;],&quot;default&quot;:&quot;barber&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  state = { t: (new URLSearchParams(location.search).get('t')) || this.props.template || 'barber', mobile: false };
+  renderVals() {
+    const t = this.state.t, m = this.state.mobile;
+    const names = { barber:'Barber & hair', wellness:'Beauty & wellness', consult:'Consultation', fitness:'Fitness', services:'General services' };
+    const slugs = { barber:'northside-barber', wellness:'sable-and-sage', consult:'harbor-physio', fitness:'forge-training-lab', services:'mendwell' };
+    return {
+      slug: slugs[t],
+      tabs: Object.keys(names).map(k => ({ label: names[k], sel: k===t, bg: k===t?'#efe9df':'transparent', color: k===t?'#1c1a17':'#cfc8bc', pick: () => { this.setState({ t:k }); history.replaceState(null,'','?t='+k); window.scrollTo(0,0); } })),
+      isBarber:t==='barber', isWellness:t==='wellness', isConsult:t==='consult', isFitness:t==='fitness', isServices:t==='services',
+      isDesk:!m, isMob:m, deskBg:m?'transparent':'#4a453e', mobBg:m?'#4a453e':'transparent',
+      setDesk:()=>this.setState({mobile:false}), setMob:()=>this.setState({mobile:true}),
+      frameW: m?'390px':'100%', framePad: m?'28px 12px':'0', frameR: m?'28px':'0', frameShadow: m?'0 30px 60px rgba(0,0,0,.18)':'none',
+      barberServices:[{name:'Classic Cut',dur:45,price:38},{name:'Skin Fade',dur:60,price:45},{name:'Beard Trim',dur:30,price:22},{name:'Cut & Beard',dur:75,price:58},{name:'Hot Towel Shave',dur:45,price:40}],
+      barbers:[{name:'Marcus Reed',role:'Senior barber'},{name:'Theo Alvarez',role:'Barber'},{name:'Jun Park',role:'Barber & colourist'}],
+      wellCats:[{name:'Face',desc:'Facials and skin consultations, from 60 minutes.'},{name:'Body',desc:'Deep tissue and restorative massage.'},{name:'Brows & lashes',desc:'Shaping, tints and lash lifts.'}],
+      practitioners:[{name:'Dr. Elena Ruiz',role:'Physiotherapist',focus:'Back and neck pain, post-surgery rehab'},{name:'Samuel Achebe',role:'Sports physiotherapist',focus:'Running injuries, return to sport'}],
+      sessions:[{n:'01',name:'1:1 Strength',meta:'60 min · programmed for you',price:'$70'},{n:'02',name:'Partner Session',meta:'60 min · two people',price:'$90'},{n:'03',name:'Small Group HIIT',meta:'45 min · up to 6 people',price:'$25'},{n:'04',name:'Movement Assessment',meta:'30 min · first visit',price:'Free'}],
+      coaches:[{name:'Kai Morgan',role:'Strength coach'},{name:'Priya Shah',role:'Conditioning coach'}],
+      catalog:[{name:'Laptop diagnostic',dur:30,price:45,desc:'We find the fault and quote before any work.'},{name:'Screen replacement',dur:90,price:140,desc:'Most models same day. Parts quoted separately.'},{name:'Data recovery consult',dur:45,price:60,desc:'Assess drives and recovery options.'},{name:'Home office setup',dur:120,price:180,desc:'On-site network, printer and desk setup.'}]
+    };
+  }
+}
+</script>
+</body>
+</html>

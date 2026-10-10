@@ -1,0 +1,127 @@
+@use 'tokens' as *;
+
+.btn {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: $radius-control;
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+  cursor: pointer;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color 0.15s ease,
+    opacity 0.15s ease;
+
+  &:disabled,
+  &[aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+}
+
+.primary {
+  background: $ink;
+  border-color: $ink;
+  color: $white;
+  &:hover {
+    color: $white;
+    background: #34312c;
+  }
+  &:disabled,
+  &[aria-disabled='true'] {
+    background: $disabled;
+    border-color: $disabled;
+  }
+}
+
+.secondary {
+  background: $white;
+  border-color: $input-border;
+  color: $ink;
+  font-weight: 600;
+  &:hover {
+    color: $ink;
+    background: $row-hover;
+  }
+  &:disabled {
+    color: $faint;
+  }
+}
+
+.danger {
+  background: $white;
+  border-color: $danger-border;
+  color: $danger;
+  &:hover {
+    color: $danger;
+    background: #fdf3f2;
+  }
+}
+
+.dangerSolid {
+  background: $danger;
+  border-color: $danger;
+  color: $white;
+  &:hover {
+    color: $white;
+    background: #9d2019;
+  }
+  &:disabled {
+    background: $danger-disabled;
+    border-color: $danger-disabled;
+  }
+}
+
+.accent {
+  background: $tempo-orange;
+  border-color: $tempo-orange;
+  color: $ink;
+  font-weight: 800;
+  &:hover {
+    color: $ink;
+    background: #e98a52;
+  }
+  &:disabled {
+    background: #8f887c;
+    border-color: #8f887c;
+    color: $white;
+  }
+}
+
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: $orange-deep;
+  font-weight: 600;
+  &:hover {
+    color: $ink;
+  }
+}
+
+.pill {
+  border-radius: $radius-pill;
+  padding: 7px 12px;
+  font-weight: 600;
+}
+
+.sm {
+  padding: 7px 10px;
+  font-size: 12px;
+  border-radius: 7px;
+}
+
+.lg {
+  padding: 12px 22px;
+  font-size: 14px;
+}
+
+.block {
+  width: 100%;
+}

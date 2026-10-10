@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:ital,wdth,wght@0,62..125,100..900;1,62..125,100..900&family=Cormorant+Garamond:ital,wght@0,400..700;1,400..700&family=Hanken+Grotesk:wght@400..800&family=Jost:wght@300..600&family=Public+Sans:wght@400..700&family=Schibsted+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</helmet>
+<div style="font-family:{{ t.font }};background:{{ t.surface }};color:{{ t.ink }};border:1px solid {{ t.line }};border-radius:{{ t.panelRadius }};overflow:hidden;width:100%;box-sizing:border-box;display:flex;flex-direction:column;position:relative">
+  <div style="padding:20px 22px 16px;border-bottom:1px solid {{ t.line }};display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;flex-wrap:wrap">
+      <div style="font-family:{{ t.display }};font-size:{{ t.titleSize }};font-weight:{{ t.titleWeight }};font-style:{{ t.titleStyle }};text-transform:{{ t.upper }};letter-spacing:{{ t.titleTrack }};font-stretch:{{ t.stretch }};line-height:1">{{ title }}</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:{{ t.muted }}">{{ stepLabel }}</div>
+    </div>
+    <sc-if value="{{ showSteps }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px">
+        <sc-for list="{{ steps }}" as="s" hint-placeholder-count="5">
+          <button onClick="{{ s.go }}" disabled="{{ s.locked }}" aria-current="{{ s.current }}" style="appearance:none;border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:{{ s.cursor }};display:flex;flex-direction:column;gap:6px;min-width:0">
+            <span style="height:3px;background:{{ s.bar }};border-radius:2px"></span>
+            <span style="font-size:11px;color:{{ s.color }};font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+  </div>
+
+  <div style="padding:18px 22px 22px;display:flex;flex-direction:column;gap:12px;min-height:340px">
+    <sc-if value="{{ is0 }}" hint-placeholder-val="{{ true }}">
+      <div style="font-size:13px;color:{{ t.muted }}">Choose a {{ b.serviceLabel }}</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <sc-for list="{{ services }}" as="s" hint-placeholder-count="4">
+          <button onClick="{{ s.pick }}" aria-pressed="{{ s.sel }}" style="appearance:none;font:inherit;color:inherit;text-align:left;cursor:pointer;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;padding:14px 16px;border:1px solid {{ s.border }};background:{{ s.bg }};border-radius:{{ t.radius }}">
+            <span style="font-weight:600;font-size:15px">{{ s.name }}</span>
+            <span style="font-weight:600;font-size:15px">{{ s.price }}</span>
+            <span style="font-size:13px;color:{{ t.muted }};text-wrap:pretty">{{ s.desc }}</span>
+            <span style="font-size:12px;color:{{ t.muted }};font-family:'JetBrains Mono',monospace;text-align:right">{{ s.durLabel }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is1 }}">
+      <div style="font-size:13px;color:{{ t.muted }}">Who would you like to see?</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px">
+        <sc-for list="{{ staffList }}" as="p" hint-placeholder-count="3">
+          <button onClick="{{ p.pick }}" aria-pressed="{{ p.sel }}" style="appearance:none;font:inherit;color:inherit;text-align:left;cursor:pointer;display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid {{ p.border }};background:{{ p.bg }};border-radius:{{ t.radius }}">
+            <span style="width:40px;height:40px;border-radius:50%;background:{{ p.avBg }};color:{{ p.avInk }};display:grid;place-items:center;font-weight:700;font-size:14px">{{ p.initials }}</span>
+            <span style="display:flex;flex-direction:column;gap:2px"><span style="font-weight:600;font-size:14px">{{ p.name }}</span><span style="font-size:12px;color:{{ t.muted }}">{{ p.role }}</span></span>
+          </button>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is2 }}">
+      <div style="display:flex;justify-content:space-between;gap:12px;font-size:13px;color:{{ t.muted }};flex-wrap:wrap"><span>{{ monthLabel }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px">Times in {{ b.tz }}</span></div>
+      <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:thin">
+        <sc-for list="{{ dayChips }}" as="d" hint-placeholder-count="7">
+          <button onClick="{{ d.pick }}" disabled="{{ d.disabled }}" aria-pressed="{{ d.sel }}" style="appearance:none;font:inherit;cursor:{{ d.cursor }};flex:0 0 auto;width:58px;padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:2px;border:1px solid {{ d.border }};background:{{ d.bg }};color:{{ d.color }};border-radius:{{ t.radius }};opacity:{{ d.opacity }}">
+            <span style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.04em">{{ d.wd }}</span>
+            <span style="font-size:18px;font-weight:700">{{ d.num }}</span>
+            <span style="font-size:10px;height:12px">{{ d.sub }}</span>
+          </button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ noSlots }}">
+        <div style="padding:22px;border:1px dashed {{ t.line }};border-radius:{{ t.radius }};display:flex;flex-direction:column;gap:10px;align-items:flex-start">
+          <div style="font-weight:600">No times left on {{ selDayLabel }}.</div>
+          <button onClick="{{ jumpNext }}" style="appearance:none;font:inherit;cursor:pointer;border:1px solid {{ t.ink }};background:transparent;color:{{ t.ink }};padding:8px 14px;border-radius:{{ t.radius }};font-size:13px;font-weight:600">Show {{ nextOpenLabel }}</button>
+        </div>
+      </sc-if>
+      <sc-for list="{{ slotGroups }}" as="g" hint-placeholder-count="2">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font-size:12px;font-weight:600;color:{{ t.muted }};text-transform:uppercase;letter-spacing:.06em">{{ g.label }}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:6px">
+            <sc-for list="{{ g.slots }}" as="sl">
+              <button onClick="{{ sl.pick }}" disabled="{{ sl.disabled }}" aria-label="{{ sl.aria }}" aria-pressed="{{ sl.sel }}" style="appearance:none;font:inherit;cursor:{{ sl.cursor }};padding:10px 0;font-size:13px;font-weight:600;border:1px solid {{ sl.border }};background:{{ sl.bg }};color:{{ sl.color }};text-decoration:{{ sl.deco }};border-radius:{{ t.radius }}">{{ sl.label }}</button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+      <div style="font-size:12px;color:{{ t.muted }}">Struck-through times are already booked or too soon to book (1 hour minimum notice).</div>
+    </sc-if>
+
+    <sc-if value="{{ is3 }}">
+      <div style="font-size:13px;color:{{ t.muted }}">We only use these details for this appointment.</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px">
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600">Full name
+          <input value="{{ form.name }}" onChange="{{ setName }}" autocomplete="name" placeholder="Jordan Lee" style="font:inherit;font-weight:400;font-size:15px;padding:11px 12px;border:1px solid {{ errName.border }};background:{{ t.field }};color:{{ t.ink }};border-radius:{{ t.radius }};outline-color:{{ t.accent }}">
+          <span style="font-size:12px;font-weight:500;color:{{ t.error }}">{{ errName.msg }}</span>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600">Email
+          <input type="email" value="{{ form.email }}" onChange="{{ setEmail }}" autocomplete="email" placeholder="jordan@email.com" style="font:inherit;font-weight:400;font-size:15px;padding:11px 12px;border:1px solid {{ errEmail.border }};background:{{ t.field }};color:{{ t.ink }};border-radius:{{ t.radius }};outline-color:{{ t.accent }}">
+          <span style="font-size:12px;font-weight:500;color:{{ t.error }}">{{ errEmail.msg }}</span>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600">Phone
+          <input type="tel" value="{{ form.phone }}" onChange="{{ setPhone }}" autocomplete="tel" placeholder="(555) 014-2290" style="font:inherit;font-weight:400;font-size:15px;padding:11px 12px;border:1px solid {{ errPhone.border }};background:{{ t.field }};color:{{ t.ink }};border-radius:{{ t.radius }};outline-color:{{ t.accent }}">
+          <span style="font-size:12px;font-weight:500;color:{{ t.error }}">{{ errPhone.msg }}</span>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:600">Notes <span style="font-weight:400;color:{{ t.muted }};margin-top:-6px">Optional</span>
+          <input value="{{ form.notes }}" onChange="{{ setNotes }}" placeholder="{{ b.notesHint }}" style="font:inherit;font-weight:400;font-size:15px;padding:11px 12px;border:1px solid {{ t.line }};background:{{ t.field }};color:{{ t.ink }};border-radius:{{ t.radius }};outline-color:{{ t.accent }}">
+        </label>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ is4 }}">
+      <div style="font-size:13px;color:{{ t.muted }}">Check the details. Nothing is booked until you confirm.</div>
+      <div style="display:flex;flex-direction:column;border:1px solid {{ t.line }};border-radius:{{ t.panelRadius }}">
+        <sc-for list="{{ summary }}" as="r" hint-placeholder-count="6">
+          <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;padding:11px 14px;border-bottom:1px solid {{ t.line }};font-size:14px"><span style="color:{{ t.muted }}">{{ r.k }}</span><span style="font-weight:600;overflow-wrap:anywhere">{{ r.v }}</span></div>
+        </sc-for>
+      </div>
+      <div style="font-size:12px;color:{{ t.muted }};text-wrap:pretty">{{ b.policy }}</div>
+      <sc-if value="{{ submitErr }}"><div role="alert" style="font-size:13px;color:{{ t.error }};font-weight:600">{{ submitErr }}</div></sc-if>
+    </sc-if>
+
+    <sc-if value="{{ is5 }}">
+      <sc-if value="{{ notCancelled }}">
+        <div style="display:flex;flex-direction:column;gap:6px;align-items:flex-start">
+          <span style="width:44px;height:44px;border-radius:50%;background:{{ t.accent }};color:{{ t.accentInk }};display:grid;place-items:center;font-size:22px;font-weight:700" aria-hidden="true">✓</span>
+          <div style="font-family:{{ t.display }};font-size:{{ t.titleSize }};font-weight:{{ t.titleWeight }};font-style:{{ t.titleStyle }};text-transform:{{ t.upper }};font-stretch:{{ t.stretch }};line-height:1.05;margin-top:6px">{{ doneTitle }}</div>
+          <div style="font-size:14px;color:{{ t.muted }}">Confirmation <span style="font-family:'JetBrains Mono',monospace;color:{{ t.ink }};font-weight:500">{{ conf }}</span> · sent to {{ form.email }}</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ cancelled }}">
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="font-family:{{ t.display }};font-size:{{ t.titleSize }};font-weight:{{ t.titleWeight }};font-style:{{ t.titleStyle }};text-transform:{{ t.upper }};font-stretch:{{ t.stretch }};line-height:1.05">Appointment cancelled</div>
+          <div style="font-size:14px;color:{{ t.muted }}">{{ conf }} was cancelled. The time is open for others to book.</div>
+        </div>
+      </sc-if>
+      <div style="display:flex;flex-direction:column;border:1px solid {{ t.line }};border-radius:{{ t.panelRadius }};opacity:{{ summaryOpacity }}">
+        <sc-for list="{{ summaryShort }}" as="r">
+          <div style="display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;padding:10px 14px;border-bottom:1px solid {{ t.line }};font-size:14px"><span style="color:{{ t.muted }}">{{ r.k }}</span><span style="font-weight:600">{{ r.v }}</span></div>
+        </sc-for>
+      </div>
+      <sc-if value="{{ notCancelled }}">
+        <sc-if value="{{ askCancel }}">
+          <div role="alertdialog" aria-label="Cancel appointment" style="padding:14px;border:1px solid {{ t.error }};border-radius:{{ t.radius }};display:flex;flex-direction:column;gap:10px">
+            <div style="font-size:14px;font-weight:600">Cancel this appointment? {{ b.cancelRule }}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <button onClick="{{ doCancel }}" style="appearance:none;font:inherit;cursor:pointer;border:0;background:{{ t.error }};color:#fff;padding:9px 14px;border-radius:{{ t.radius }};font-weight:600;font-size:13px">Yes, cancel</button>
+              <button onClick="{{ keep }}" style="appearance:none;font:inherit;cursor:pointer;border:1px solid {{ t.line }};background:transparent;color:{{ t.ink }};padding:9px 14px;border-radius:{{ t.radius }};font-weight:600;font-size:13px">Keep appointment</button>
+            </div>
+          </div>
+        </sc-if>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button onClick="{{ addCal }}" style="appearance:none;font:inherit;cursor:pointer;border:0;background:{{ t.accent }};color:{{ t.accentInk }};padding:11px 16px;border-radius:{{ t.radius }};font-weight:700;font-size:14px">Add to calendar</button>
+          <button onClick="{{ resched }}" style="appearance:none;font:inherit;cursor:pointer;border:1px solid {{ t.line }};background:transparent;color:{{ t.ink }};padding:11px 16px;border-radius:{{ t.radius }};font-weight:600;font-size:14px">Reschedule</button>
+          <button onClick="{{ askCancelFn }}" style="appearance:none;font:inherit;cursor:pointer;border:1px solid {{ t.line }};background:transparent;color:{{ t.ink }};padding:11px 16px;border-radius:{{ t.radius }};font-weight:600;font-size:14px">Cancel</button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ cancelled }}">
+        <button onClick="{{ restart }}" style="appearance:none;font:inherit;cursor:pointer;align-self:flex-start;border:0;background:{{ t.accent }};color:{{ t.accentInk }};padding:11px 16px;border-radius:{{ t.radius }};font-weight:700;font-size:14px">Book another time</button>
+      </sc-if>
+      <div style="font-size:11px;color:{{ t.muted }};font-family:'JetBrains Mono',monospace">Demo prototype · no appointment was created and no email was sent.</div>
+    </sc-if>
+  </div>
+
+  <sc-if value="{{ showFooter }}" hint-placeholder-val="{{ true }}">
+    <div style="position:sticky;bottom:0;padding:14px 22px;border-top:1px solid {{ t.line }};background:{{ t.surface }};display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap">
+      <div style="font-size:13px;color:{{ t.muted }};min-width:0;flex:1 1 160px">{{ footerSummary }}</div>
+      <div style="display:flex;gap:8px">
+        <sc-if value="{{ canBack }}">
+          <button onClick="{{ back }}" style="appearance:none;font:inherit;cursor:pointer;border:1px solid {{ t.line }};background:transparent;color:{{ t.ink }};padding:11px 16px;border-radius:{{ t.radius }};font-weight:600;font-size:14px">Back</button>
+        </sc-if>
+        <button onClick="{{ next }}" disabled="{{ nextDisabled }}" style="appearance:none;font:inherit;cursor:{{ nextCursor }};border:0;background:{{ nextBg }};color:{{ nextInk }};padding:11px 20px;border-radius:{{ t.radius }};font-weight:700;font-size:14px;min-width:120px">{{ nextLabel }}</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:520,&quot;height&quot;:720},&quot;template&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;barber&quot;,&quot;wellness&quot;,&quot;consult&quot;,&quot;fitness&quot;,&quot;services&quot;],&quot;default&quot;:&quot;barber&quot;,&quot;tsType&quot;:&quot;string&quot;}}">
+class Component extends DCLogic {
+  static T = {
+    barber:{surface:'#1f1a16',ink:'#f3ece2',muted:'#b0a393',line:'rgba(243,236,226,.16)',accent:'#d6a15c',accentInk:'#1b1714',font:"'Hanken Grotesk',sans-serif",display:"'Anton',sans-serif",titleSize:'30px',titleWeight:'400',titleStyle:'normal',upper:'uppercase',titleTrack:'.01em',stretch:'normal',radius:'2px',panelRadius:'4px',slotOff:'rgba(243,236,226,.04)',field:'#2a2420',error:'#ff8a7a',sel:'rgba(214,161,92,.12)'},
+    wellness:{surface:'#fbf8f2',ink:'#3a3128',muted:'#7d7064',line:'#e4dacb',accent:'#7f6545',accentInk:'#fbf8f2',font:"'Jost',sans-serif",display:"'Cormorant Garamond',serif",titleSize:'34px',titleWeight:'500',titleStyle:'italic',upper:'none',titleTrack:'0',stretch:'normal',radius:'999px',panelRadius:'22px',slotOff:'#f1ebe1',field:'#fff',error:'#a8432f',sel:'#f1e8da'},
+    consult:{surface:'#ffffff',ink:'#14233a',muted:'#5a6a80',line:'#dbe3ee',accent:'#1f5fbf',accentInk:'#ffffff',font:"'Public Sans',sans-serif",display:"'Public Sans',sans-serif",titleSize:'22px',titleWeight:'700',titleStyle:'normal',upper:'none',titleTrack:'-.01em',stretch:'normal',radius:'8px',panelRadius:'12px',slotOff:'#f2f5f9',field:'#fff',error:'#b42318',sel:'#eaf1fc'},
+    fitness:{surface:'#15160f',ink:'#f2f5ea',muted:'#a3a896',line:'rgba(242,245,234,.16)',accent:'#c8f542',accentInk:'#0e0f0c',font:"'Archivo',sans-serif",display:"'Archivo',sans-serif",titleSize:'34px',titleWeight:'900',titleStyle:'italic',upper:'uppercase',titleTrack:'-.01em',stretch:'70%',radius:'0px',panelRadius:'0px',slotOff:'rgba(242,245,234,.04)',field:'#1d1f16',error:'#ff7b6b',sel:'rgba(200,245,66,.12)'},
+    services:{surface:'#ffffff',ink:'#1d1f22',muted:'#62666d',line:'#e3e3df',accent:'#d9532a',accentInk:'#ffffff',font:"'Schibsted Grotesk',sans-serif",display:"'Schibsted Grotesk',sans-serif",titleSize:'24px',titleWeight:'800',titleStyle:'normal',upper:'none',titleTrack:'-.02em',stretch:'normal',radius:'10px',panelRadius:'16px',slotOff:'#f3f3f1',field:'#fff',error:'#b42318',sel:'#fbeee8'}
+  };
+  static B = {
+    barber:{name:'Northside Barber Co.',serviceLabel:'service',staffLabel:'Barber',tz:'Eastern Time',open:540,close:1140,brk:[780,810],closed:[0],address:'214 Halsey St, Brooklyn, NY',notesHint:'e.g. Keep length on top',policy:'Free cancellation up to 4 hours before. Late arrivals over 15 minutes may need to rebook.',cancelRule:'You are inside the free cancellation window.',
+      services:[{name:'Classic Cut',dur:45,price:38,desc:'Scissor and clipper cut, wash and style.'},{name:'Skin Fade',dur:60,price:45,desc:'Tight fade blended to your length on top.'},{name:'Beard Trim',dur:30,price:22,desc:'Shape, line-up and hot towel finish.'},{name:'Cut & Beard',dur:75,price:58,desc:'Full cut with beard shaping.'},{name:'Hot Towel Shave',dur:45,price:40,desc:'Straight razor shave, two towels.'}],
+      staff:[{name:'Marcus Reed',role:'Senior barber'},{name:'Theo Alvarez',role:'Barber'},{name:'Jun Park',role:'Barber & colourist'}]},
+    wellness:{name:'Sable & Sage Studio',serviceLabel:'treatment',staffLabel:'Practitioner',tz:'Pacific Time',open:600,close:1140,brk:[810,840],closed:[0,1],address:'88 Alder Lane, Portland, OR',notesHint:'Allergies or areas to avoid',policy:'Please arrive 10 minutes early. Cancel or move your visit up to 24 hours before at no charge.',cancelRule:'Cancelling more than 24 hours ahead is free.',
+      services:[{name:'Signature Facial',dur:60,price:95,desc:'Cleanse, exfoliation, mask and lymphatic massage.'},{name:'Deep Tissue Massage',dur:75,price:110,desc:'Slow, focused pressure for tension.'},{name:'Brow Shape & Tint',dur:30,price:38,desc:'Mapping, shaping and a soft tint.'},{name:'Lash Lift',dur:45,price:72,desc:'Natural curl that lasts six to eight weeks.'}],
+      staff:[{name:'Amara Lind',role:'Lead aesthetician'},{name:'Noor Haddad',role:'Massage therapist'}]},
+    consult:{name:'Harbor Physio & Consulting',serviceLabel:'consultation type',staffLabel:'Practitioner',tz:'Central Time',open:480,close:1050,brk:[750,780],closed:[0,6],address:'1200 Lakeview Ave, Suite 4, Chicago, IL',notesHint:'Anything we should prepare for',policy:'Please give 24 hours notice to cancel. Video consultations receive a secure link by email before the visit.',cancelRule:'Cancelling more than 24 hours ahead is free.',
+      services:[{name:'Initial assessment',dur:60,price:120,desc:'Full assessment and a written plan. In person.'},{name:'Follow-up session',dur:30,price:70,desc:'Progress review and treatment. In person.'},{name:'Video consultation',dur:30,price:65,desc:'Advice and exercise review by video.'},{name:'Workplace ergonomic review',dur:45,price:90,desc:'Desk and posture review. In person or video.'}],
+      staff:[{name:'Dr. Elena Ruiz',role:'Physiotherapist'},{name:'Samuel Achebe',role:'Sports physiotherapist'}]},
+    fitness:{name:'Forge Training Lab',serviceLabel:'session',staffLabel:'Coach',tz:'Mountain Time',open:420,close:1200,brk:[780,840],closed:[0],address:'47 Foundry Rd, Denver, CO',notesHint:'Injuries or goals',policy:'Cancel up to 12 hours before. Group sessions run with at least 2 people booked.',cancelRule:'You are inside the free cancellation window.',
+      services:[{name:'1:1 Strength',dur:60,price:70,desc:'Coached strength session, programmed for you.'},{name:'Partner Session',dur:60,price:90,desc:'Train with a friend. Price covers two people.'},{name:'Small Group HIIT',dur:45,price:25,desc:'Up to 6 people. Conditioning circuit.'},{name:'Movement Assessment',dur:30,price:0,desc:'First visit. Mobility screen and plan.'}],
+      staff:[{name:'Kai Morgan',role:'Strength coach'},{name:'Priya Shah',role:'Conditioning coach'}]},
+    services:{name:'Mendwell Repair & Advisory',serviceLabel:'service',staffLabel:'Specialist',tz:'Eastern Time',open:540,close:1080,brk:[750,780],closed:[0],address:'31 Mercer St, Jersey City, NJ',notesHint:'Device model or what you need',policy:'Bring your device and charger. Reschedule anytime up to 2 hours before.',cancelRule:'Cancelling more than 2 hours ahead is free.',
+      services:[{name:'Laptop diagnostic',dur:30,price:45,desc:'We find the fault and quote before any work.'},{name:'Screen replacement',dur:90,price:140,desc:'Most models same day. Parts quoted separately.'},{name:'Data recovery consult',dur:45,price:60,desc:'Assess drives and recovery options.'},{name:'Home office setup',dur:120,price:180,desc:'On-site network, printer and desk setup.'}],
+      staff:[{name:'Ravi Menon',role:'Hardware technician'},{name:'Lena Fischer',role:'IT consultant'}]}
+  };
+  state = {step:0,svc:null,staff:null,date:0,time:null,form:{name:'',email:'',phone:'',notes:''},errors:{},submitting:false,cancelled:false,askCancel:false,resched:false,submitErr:''};
+  componentDidUpdate(pp){ if(pp.template!==this.props.template) this.reset(); }
+  reset(){ this.setState({step:0,svc:null,staff:null,date:0,time:null,errors:{},submitting:false,cancelled:false,askCancel:false,resched:false,submitErr:''}); }
+  fmt(m){ const h=Math.floor(m/60),mm=m%60; return ((h+11)%12+1)+':'+String(mm).padStart(2,'0')+(h<12?' AM':' PM'); }
+  day(i){ return new Date(2026,9,9+i); }
+  booked(d,m,s){ return (((d+3)*7919 + m*31 + (s+2)*104729) % 97) < 30; }
+  okFor(b,d,m,dur,s){
+    if(m+dur>b.close) return false;
+    if(m<b.brk[1] && m+dur>b.brk[0]) return false;
+    if(d===0 && m<680+60) return false;
+    for(let k=m;k<m+dur;k+=30){ if(this.booked(d,k,s)) return false; }
+    return true;
+  }
+  ok(b,d,m,dur,staff){ if(staff>=0) return this.okFor(b,d,m,dur,staff); return b.staff.some((_,i)=>this.okFor(b,d,m,dur,i)); }
+  slots(b,d,dur,staff){ if(b.closed.includes(this.day(d).getDay())) return null; const out=[]; for(let m=b.open;m<b.close;m+=30) out.push({m,ok:this.ok(b,d,m,dur,staff)}); return out; }
+  validate(){ const f=this.state.form,e={}; if(!f.name.trim()) e.name='Enter your name'; if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.email)) e.email='Enter a valid email'; if(f.phone.replace(/\D/g,'').length<7) e.phone='Enter a phone number we can reach'; this.setState({errors:e}); return !Object.keys(e).length; }
+  renderVals(){
+    const key=this.props.template||'barber', t=Component.T[key], b=Component.B[key], st=this.state;
+    const svc=st.svc!=null?b.services[st.svc]:null, dur=svc?svc.dur:30;
+    const price=p=>p===0?'Free':'$'+p;
+    const staffIdx=st.staff==null?-1:st.staff;
+    const assigned=st.time==null?null:(staffIdx>=0?staffIdx:b.staff.findIndex((_,i)=>this.okFor(b,st.date,st.time,dur,i)));
+    const staffName=st.staff==null?null:(st.staff===-1?'First available':b.staff[st.staff].name);
+    const names=['Service',b.staffLabel,'Time','Details','Review'];
+    const done=st.step===5;
+    const steps=names.map((label,i)=>({label,go:()=>{ if(i<st.step&&!done) this.setState({step:i}); },locked:i>=st.step||done,current:i===st.step?'step':undefined,bar:i<=st.step?t.accent:t.line,color:i===st.step?t.ink:t.muted,cursor:i<st.step&&!done?'pointer':'default'}));
+    const services=b.services.map((s,i)=>{const sel=st.svc===i;return {...s,price:price(s.price),durLabel:s.dur+' min',sel,border:sel?t.accent:t.line,bg:sel?t.sel:'transparent',pick:()=>this.setState({svc:i,time:null,step:1})};});
+    const staffList=[{name:'No preference',role:'First available',initials:'∗',i:-1},...b.staff.map((p,i)=>({...p,i,initials:p.name.replace('Dr. ','').split(' ').map(x=>x[0]).join('')}))].map(p=>{const sel=st.staff===p.i;return {...p,sel,border:sel?t.accent:t.line,bg:sel?t.sel:'transparent',avBg:sel?t.accent:t.slotOff,avInk:sel?t.accentInk:t.ink,pick:()=>this.setState({staff:p.i,time:null,step:2})};});
+    const dayChips=[...Array(14)].map((_,i)=>{const d=this.day(i);const sl=this.slots(b,i,dur,staffIdx);const closed=!sl;const full=sl&&!sl.some(x=>x.ok);const sel=st.date===i;return {wd:d.toLocaleDateString('en-US',{weekday:'short'}),num:d.getDate(),sub:closed?'Closed':full?'Full':(i===0?'Today':''),disabled:closed,sel,cursor:closed?'not-allowed':'pointer',opacity:closed?.45:1,border:sel?t.accent:t.line,bg:sel?t.accent:'transparent',color:sel?t.accentInk:t.ink,pick:()=>this.setState({date:i,time:null})};});
+    const cur=this.slots(b,st.date,dur,staffIdx)||[];
+    const mk=x=>{const sel=st.time===x.m;return {label:this.fmt(x.m),disabled:!x.ok,sel,cursor:x.ok?'pointer':'not-allowed',aria:this.fmt(x.m)+(x.ok?'':' unavailable'),bg:sel?t.accent:x.ok?'transparent':t.slotOff,color:sel?t.accentInk:x.ok?t.ink:t.muted,deco:x.ok?'none':'line-through',border:sel?t.accent:x.ok?t.line:'transparent',pick:()=>this.setState({time:x.m})};};
+    const slotGroups=[['Morning',0,720],['Afternoon',720,1020],['Evening',1020,1440]].map(([label,a,z])=>({label,slots:cur.filter(x=>x.m>=a&&x.m<z).map(mk)})).filter(g=>g.slots.length);
+    const noSlots=st.step===2&&!cur.some(x=>x.ok);
+    let nextOpen=st.date+1; while(nextOpen<14){const s=this.slots(b,nextOpen,dur,staffIdx); if(s&&s.some(x=>x.ok)) break; nextOpen++;}
+    const dl=i=>this.day(i).toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'});
+    const timeStr=st.time==null?'':this.fmt(st.time)+' – '+this.fmt(st.time+dur);
+    const conf='TMP-'+(4000+((st.svc||0)*311+(st.time||0)*7+st.date*53)%5000)+'-'+'KMRTZ'[st.date%5];
+    const f=st.form, er=st.errors;
+    const fe=k=>({border:er[k]?t.error:t.line,msg:er[k]||''});
+    const summary=svc?[{k:b.serviceLabel[0].toUpperCase()+b.serviceLabel.slice(1),v:svc.name},{k:b.staffLabel,v:assigned!=null&&assigned>=0?b.staff[assigned].name+(st.staff===-1?' (first available)':''):'—'},{k:'Date',v:dl(st.date)},{k:'Time',v:timeStr+' · '+dur+' min'},{k:'Price',v:price(svc.price)+(svc.price?' · pay at the visit':'')},{k:'Contact',v:[f.name,f.email,f.phone].filter(Boolean).join(' · ')},{k:'Where',v:b.address}].concat(f.notes?[{k:'Notes',v:f.notes}]:[]):[];
+    const setF=k=>e=>this.setState({form:{...this.state.form,[k]:e.target.value},errors:{...this.state.errors,[k]:undefined}});
+    const can=[st.svc!=null,st.staff!=null,st.time!=null,true,!st.submitting][st.step];
+    const title=done?b.name:(st.resched?'Pick a new time':'Book an appointment');
+    return {
+      t,b,title,steps,services,staffList,dayChips,slotGroups,noSlots,form:f,conf,
+      stepLabel:done?'Booked':'Step '+(st.step+1)+' of 5',
+      showSteps:!done,showFooter:!done,
+      is0:st.step===0,is1:st.step===1,is2:st.step===2,is3:st.step===3,is4:st.step===4,is5:done,
+      monthLabel:this.day(st.date).toLocaleDateString('en-US',{month:'long',year:'numeric'}),
+      selDayLabel:dl(st.date),nextOpenLabel:nextOpen<14?dl(nextOpen):'later dates',
+      jumpNext:()=>{ if(nextOpen<14) this.setState({date:nextOpen,time:null}); },
+      errName:fe('name'),errEmail:fe('email'),errPhone:fe('phone'),
+      setName:setF('name'),setEmail:setF('email'),setPhone:setF('phone'),setNotes:setF('notes'),
+      summary,summaryShort:summary.slice(0,5),submitErr:st.submitErr,
+      doneTitle:st.resched?'Rescheduled.':"You're booked.",
+      notCancelled:!st.cancelled,cancelled:st.cancelled,summaryOpacity:st.cancelled?.5:1,askCancel:st.askCancel,
+      footerSummary:[svc&&svc.name,staffName,st.time!=null&&(this.day(st.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})+', '+this.fmt(st.time))].filter(Boolean).join(' · ')||'No selection yet',
+      canBack:st.step>0,back:()=>this.setState({step:st.step-1}),
+      nextDisabled:!can,nextCursor:can?'pointer':'not-allowed',nextBg:can?t.accent:t.slotOff,nextInk:can?t.accentInk:t.muted,
+      nextLabel:st.step===4?(st.submitting?'Confirming…':(st.resched?'Confirm new time':'Confirm booking')):'Continue',
+      next:()=>{ if(!can) return; if(st.step===3){ if(this.validate()) this.setState({step:4}); return; } if(st.step===4){ this.setState({submitting:true,submitErr:''}); setTimeout(()=>this.setState({submitting:false,step:5}),1000); return; } this.setState({step:st.step+1}); },
+      addCal:()=>{ const d=this.day(st.date),p=n=>String(n).padStart(2,'0'),dt=m=>''+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'T'+p(Math.floor(m/60))+p(m%60)+'00';
+        const ics=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Tempo demo//EN','BEGIN:VEVENT','UID:'+conf+'@tempo.example','DTSTAMP:20261009T120000Z','DTSTART:'+dt(st.time),'DTEND:'+dt(st.time+dur),'SUMMARY:'+svc.name+' at '+b.name,'LOCATION:'+b.address,'END:VEVENT','END:VCALENDAR'].join('\r\n');
+        const a=document.createElement('a'); a.href=URL.createObjectURL(new Blob([ics],{type:'text/calendar'})); a.download='tempo-'+conf+'.ics'; a.click(); },
+      resched:()=>this.setState({step:2,resched:true,time:null,askCancel:false}),
+      askCancelFn:()=>this.setState({askCancel:true}),keep:()=>this.setState({askCancel:false}),
+      doCancel:()=>this.setState({cancelled:true,askCancel:false}),
+      restart:()=>this.reset()
+    };
+  }
+}
+</script>
+</body>
+</html>

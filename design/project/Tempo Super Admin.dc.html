@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<title>Tempo — Platform admin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Hanken+Grotesk:wght@400..800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#f3f3f0;color:#1c1a17;font-family:'Hanken Grotesk',sans-serif;font-size:14px;-webkit-font-smoothing:antialiased}*{box-sizing:border-box}a{color:#1c1a17}a:hover{color:#c4581f}button,select,input{font:inherit;color:inherit}button{white-space:nowrap}button:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible{outline:2px solid #2f6e5a;outline-offset:2px}</style>
+</helmet>
+<div style="display:flex;min-height:100vh;flex-wrap:wrap">
+  <aside style="width:236px;flex:1 0 236px;max-width:100%;background:#12201b;color:#dfe8e3;display:flex;flex-direction:column;padding:14px 12px;gap:4px;position:sticky;top:0;height:100vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 8px 16px">
+      <a href="Tempo Landing.dc.html" style="text-decoration:none;color:#f4f0e8;font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:22px;letter-spacing:-.04em">tempo<span style="color:#e0773a">.</span></a>
+      <span style="font-family:'JetBrains Mono',monospace;font-size:10px;background:#2f6e5a;color:#e3efe9;padding:3px 6px;border-radius:4px">PLATFORM</span>
+    </div>
+    <nav aria-label="Platform" style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="6">
+        <button onClick="{{ n.go }}" aria-current="{{ n.cur }}" style="appearance:none;border:0;background:{{ n.bg }};color:{{ n.color }};border-radius:8px;padding:9px 10px;text-align:left;cursor:pointer;display:flex;justify-content:space-between;font-weight:600">{{ n.label }}<span style="font-size:10px;font-family:'JetBrains Mono',monospace;color:#6f8a80">{{ n.tag }}</span></button>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto;border-top:1px solid #23372f;padding-top:12px;display:flex;flex-direction:column;gap:6px">
+      <a href="Tempo App.dc.html" style="text-decoration:none;color:#b9cac2;padding:6px 10px;font-size:13px;font-weight:600">Business app ↗</a>
+      <div style="display:flex;align-items:center;gap:10px;padding:8px 10px"><span style="width:30px;height:30px;border-radius:50%;background:#23372f;display:grid;place-items:center;font-size:12px;font-weight:700">PH</span><span style="display:flex;flex-direction:column"><span style="font-size:13px;font-weight:600">Priya Hale</span><span style="font-size:11px;color:#8ea79d">Platform admin</span></span></div>
+    </div>
+  </aside>
+  <main style="flex:999 1 600px;min-width:0;display:flex;flex-direction:column">
+    <div style="background:#e3efe9;color:#1f5040;font-size:12px;font-weight:600;padding:7px clamp(14px,2.4vw,28px);display:flex;gap:14px;flex-wrap:wrap"><span>Demo data</span><span>·</span><span>Business customer records are not visible here. Platform revenue is Tempo subscriptions, never a business's appointment revenue.</span></div>
+    <header style="padding:14px clamp(14px,2.4vw,28px);border-bottom:1px solid #e2e2dc;display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#f3f3f0;position:sticky;top:0;z-index:10">
+      <div style="flex:1;min-width:200px;display:flex;flex-direction:column"><h1 style="margin:0;font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.025em">{{ title }}</h1><span style="font-size:12px;color:#62666d">{{ sub }}</span></div>
+      <sc-if value="{{ pg.overview }}">
+        <div role="group" aria-label="Date range" style="display:flex;background:#e6e6e0;border-radius:9px;padding:3px;gap:2px">
+          <sc-for list="{{ ranges }}" as="r"><button onClick="{{ r.pick }}" aria-pressed="{{ r.sel }}" style="appearance:none;border:0;border-radius:7px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px;background:{{ r.bg }}">{{ r.label }}</button></sc-for>
+        </div>
+      </sc-if>
+    </header>
+    <div style="padding:clamp(14px,2.4vw,28px);display:flex;flex-direction:column;gap:16px">
+
+      <sc-if value="{{ pg.overview }}" hint-placeholder-val="{{ true }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px">
+          <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="7">
+            <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px">
+              <span style="font-size:12px;font-weight:600;color:#62666d">{{ k.label }}</span>
+              <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:28px;letter-spacing:-.03em">{{ k.value }}</span>
+              <span style="font-size:12px;color:#62666d">{{ k.note }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:16px">
+          <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span style="font-weight:700">New registrations</span><span style="font-size:12px;color:#62666d">{{ bucketLabel }}</span></div>
+            <div style="display:flex;align-items:flex-end;gap:6px;height:170px;border-bottom:1px solid #e2e2dc">
+              <sc-for list="{{ regBars }}" as="b" hint-placeholder-count="12"><div title="{{ b.tip }}" style="flex:1;height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:3px"><span style="font-size:10px;color:#62666d">{{ b.v }}</span><span style="width:100%;height:{{ b.h }};background:#2f6e5a;border-radius:4px 4px 0 0;min-height:2px"></span></div></sc-for>
+            </div>
+            <div style="display:flex;gap:6px"><sc-for list="{{ regBars }}" as="b"><span style="flex:1;text-align:center;font-size:10px;color:#62666d;font-family:'JetBrains Mono',monospace;white-space:nowrap;overflow:hidden">{{ b.l }}</span></sc-for></div>
+          </div>
+          <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap"><span style="font-weight:700">Appointments booked across the platform</span><span style="font-size:12px;color:#62666d">Count only · all tenants</span></div>
+            <svg viewBox="0 0 600 170" preserveAspectRatio="none" style="width:100%;height:170px;display:block;border-bottom:1px solid #e2e2dc"><polygon points="{{ apArea }}" fill="#e3efe9"></polygon><polyline points="{{ apLine }}" fill="none" stroke="#2f6e5a" stroke-width="2.5" vector-effect="non-scaling-stroke"></polyline></svg>
+            <div style="display:flex;justify-content:space-between;font-size:10px;color:#62666d;font-family:'JetBrains Mono',monospace"><span>{{ apFrom }}</span><span>{{ apTo }}</span></div>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:16px">
+          <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+            <span style="font-weight:700">Subscription distribution</span>
+            <div style="display:flex;height:14px;border-radius:7px;overflow:hidden"><sc-for list="{{ planDist }}" as="p"><span title="{{ p.name }}" style="width:{{ p.w }};background:{{ p.c }}"></span></sc-for></div>
+            <sc-for list="{{ planDist }}" as="p"><div style="display:grid;grid-template-columns:14px minmax(0,1fr) auto;gap:10px;align-items:center;font-size:13px"><span style="width:12px;height:12px;border-radius:3px;background:{{ p.c }}"></span><span>{{ p.name }}</span><span style="font-family:'JetBrains Mono',monospace">{{ p.n }} · {{ p.pct }}</span></div></sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+            <span style="font-weight:700">Businesses by category</span>
+            <sc-for list="{{ catDist }}" as="c"><div style="display:grid;grid-template-columns:140px minmax(0,1fr) 30px;gap:10px;align-items:center;font-size:13px"><span>{{ c.name }}</span><span style="height:10px;background:#efefea;border-radius:5px;overflow:hidden"><span style="display:block;height:100%;width:{{ c.w }};background:#1c1a17"></span></span><span style="text-align:right;font-family:'JetBrains Mono',monospace">{{ c.n }}</span></div></sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <span style="font-weight:700">Needs attention</span>
+            <sc-for list="{{ attention }}" as="a"><button onClick="{{ a.open }}" style="appearance:none;border:0;border-bottom:1px solid #f0f0ec;background:none;text-align:left;cursor:pointer;padding:8px 0;display:flex;flex-direction:column;gap:2px;white-space:normal"><span style="font-weight:600">{{ a.name }}</span><span style="font-size:12px;color:#62666d">{{ a.why }}</span></button></sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pg.businesses }}">
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <input value="{{ q }}" onChange="{{ setQ }}" placeholder="Search business, owner or slug" aria-label="Search businesses" style="flex:1 1 240px;border:1px solid #d6d6cf;border-radius:8px;padding:9px 12px;background:#fff">
+          <select value="{{ fCat }}" onChange="{{ setFCat }}" aria-label="Category" style="border:1px solid #d6d6cf;border-radius:8px;padding:8px;background:#fff"><option value="all">All categories</option><sc-for list="{{ cats }}" as="c"><option value="{{ c }}">{{ c }}</option></sc-for></select>
+          <select value="{{ fPlan }}" onChange="{{ setFPlan }}" aria-label="Plan" style="border:1px solid #d6d6cf;border-radius:8px;padding:8px;background:#fff"><option value="all">All plans</option><sc-for list="{{ planNames }}" as="c"><option value="{{ c }}">{{ c }}</option></sc-for></select>
+          <select value="{{ fStatus }}" onChange="{{ setFStatus }}" aria-label="Status" style="border:1px solid #d6d6cf;border-radius:8px;padding:8px;background:#fff"><option value="all">All statuses</option><option>Active</option><option>Trial</option><option>Suspended</option><option>Churned</option></select>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:1000px">
+            <thead><tr style="text-align:left;color:#62666d;font-size:12px"><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Business</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Category</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Owner</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Registered</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Plan</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Account</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Booking page</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600;text-align:right">Appts, 30 days</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Last activity</th></tr></thead>
+            <tbody>
+              <sc-for list="{{ bizRows }}" as="b" hint-placeholder-count="12">
+                <tr onClick="{{ b.open }}" style="cursor:pointer" style-hover="background:#f8f8f5">
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec"><div style="display:flex;flex-direction:column"><span style="font-weight:700">{{ b.name }}</span><span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#62666d">/{{ b.slug }}</span></div></td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec">{{ b.cat }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec">{{ b.owner }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec;white-space:nowrap">{{ b.reg }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec">{{ b.plan }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec"><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ b.sbg }};color:{{ b.sink }}">{{ b.status }}</span></td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec;color:{{ b.pageInk }}">{{ b.page }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec;text-align:right;font-family:'JetBrains Mono',monospace">{{ b.appts }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec;color:#62666d;white-space:nowrap">{{ b.last }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <sc-if value="{{ noBiz }}"><div style="padding:40px;text-align:center;color:#62666d">No businesses match. <button onClick="{{ clearBiz }}" style="appearance:none;border:0;background:none;color:#2f6e5a;font-weight:700;cursor:pointer">Clear filters</button></div></sc-if>
+        </div>
+        <span style="font-size:13px;color:#62666d">{{ bizCount }}</span>
+      </sc-if>
+
+      <sc-if value="{{ pg.users }}">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <input value="{{ uq }}" onChange="{{ setUq }}" placeholder="Search name, email or business" aria-label="Search users" style="flex:1 1 240px;border:1px solid #d6d6cf;border-radius:8px;padding:9px 12px;background:#fff">
+          <select value="{{ uRole }}" onChange="{{ setURole }}" aria-label="Role" style="border:1px solid #d6d6cf;border-radius:8px;padding:8px;background:#fff"><option value="all">All roles</option><option>Owner</option><option>Manager</option><option>Staff</option></select>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;min-width:900px">
+            <thead><tr style="text-align:left;color:#62666d;font-size:12px"><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">User</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Business</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Role</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Status</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Registered</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600">Last active</th><th style="padding:10px 14px;border-bottom:1px solid #e2e2dc;font-weight:600"></th></tr></thead>
+            <tbody>
+              <sc-for list="{{ userRows }}" as="u" hint-placeholder-count="12">
+                <tr>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec"><div style="display:flex;flex-direction:column"><span style="font-weight:700">{{ u.name }}</span><span style="font-size:12px;color:#62666d">{{ u.email }}</span></div></td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec">{{ u.biz }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec"><select value="{{ u.role }}" onChange="{{ u.setRole }}" aria-label="Role for {{ u.name }}" style="border:1px solid #d6d6cf;border-radius:7px;padding:5px;background:#fff;font-size:13px"><option>Owner</option><option>Manager</option><option>Staff</option></select></td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec"><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ u.sbg }};color:{{ u.sink }}">{{ u.status }}</span></td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec;white-space:nowrap">{{ u.reg }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec;color:#62666d;white-space:nowrap">{{ u.last }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #f0f0ec;text-align:right"><button onClick="{{ u.toggle }}" style="appearance:none;border:1px solid {{ u.tBorder }};background:#fff;color:{{ u.tInk }};border-radius:7px;padding:6px 10px;cursor:pointer;font-weight:700;font-size:12px">{{ u.tLabel }}</button></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pg.settings }}">
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr));gap:16px;align-items:start">
+          <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <span style="font-weight:700">Feature flags</span>
+            <sc-for list="{{ flags }}" as="f">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #f0f0ec"><span style="display:flex;flex-direction:column"><span style="font-weight:600">{{ f.name }}</span><span style="font-size:12px;color:#62666d">{{ f.note }}</span></span><button onClick="{{ f.toggle }}" role="switch" aria-checked="{{ f.on }}" aria-label="{{ f.name }}" style="appearance:none;border:0;width:40px;height:22px;border-radius:11px;background:{{ f.bg }};position:relative;cursor:pointer;flex:0 0 auto"><span style="position:absolute;top:3px;left:{{ f.x }};width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s"></span></button></div>
+            </sc-for>
+          </div>
+          <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:10px">
+            <span style="font-weight:700">System health</span>
+            <sc-for list="{{ health }}" as="h"><div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f0f0ec;font-size:13px"><span>{{ h.n }}</span><span style="color:#62666d;font-family:'JetBrains Mono',monospace;font-size:12px">{{ h.s }}</span></div></sc-for>
+            <span style="font-size:12px;color:#62666d">Placeholders until monitoring is connected.</span>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #e2e2dc;border-radius:12px;display:flex;flex-direction:column">
+          <div style="padding:14px 16px;border-bottom:1px solid #f0f0ec;display:flex;justify-content:space-between"><span style="font-weight:700">Audit log</span><span style="font-size:12px;color:#62666d">Every account-affecting action is recorded</span></div>
+          <sc-for list="{{ audit }}" as="a" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:150px 120px minmax(0,1fr);gap:12px;padding:10px 16px;border-bottom:1px solid #f4f4f0;font-size:13px"><span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#62666d">{{ a.t }}</span><span style="font-weight:600">{{ a.who }}</span><span>{{ a.what }}</span></div>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ pg.later }}">
+        <div style="background:#fff;border:1px dashed #c9c9c1;border-radius:14px;padding:40px 28px;display:flex;flex-direction:column;gap:12px;max-width:720px">
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#2f6e5a">DESIGNED IN THE NEXT PASS</span>
+          <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:26px;letter-spacing:-.03em">{{ later.title }}</span>
+          <span style="color:#4a4e55;line-height:1.6">{{ later.body }}</span>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+</div>
+
+<sc-if value="{{ drawer }}">
+  <div onClick="{{ closeDrawer }}" style="position:fixed;inset:0;background:rgba(18,32,27,.3);z-index:60"></div>
+  <aside role="dialog" aria-label="Business account" style="position:fixed;top:0;right:0;bottom:0;width:min(480px,100vw);background:#fff;z-index:61;display:flex;flex-direction:column">
+    <div style="padding:16px 18px;border-bottom:1px solid #f0f0ec;display:flex;justify-content:space-between;align-items:flex-start;gap:10px">
+      <div style="display:flex;flex-direction:column;gap:4px"><span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:22px;letter-spacing:-.02em">{{ b.name }}</span><span style="font-size:13px;color:#62666d">{{ b.cat }} · owner {{ b.owner }}</span><span style="font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;background:{{ b.sbg }};color:{{ b.sink }};align-self:flex-start">{{ b.status }}</span></div>
+      <button onClick="{{ closeDrawer }}" aria-label="Close" style="appearance:none;border:1px solid #e2e2dc;background:#fff;border-radius:8px;width:32px;height:32px;cursor:pointer">×</button>
+    </div>
+    <div style="padding:18px;display:flex;flex-direction:column;gap:16px;overflow-y:auto;flex:1">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <sc-for list="{{ b.metrics }}" as="m"><div style="background:#f6f6f2;border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:2px"><span style="font-size:12px;color:#62666d">{{ m.k }}</span><span style="font-weight:700;font-size:16px">{{ m.v }}</span></div></sc-for>
+      </div>
+      <div style="border:1px solid #e2e2dc;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:8px">
+        <span style="font-size:12px;font-weight:700;color:#62666d">SUBSCRIPTION</span>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><select value="{{ planPick }}" onChange="{{ setPlanPick }}" aria-label="Plan" style="border:1px solid #d6d6cf;border-radius:7px;padding:7px;background:#fff"><sc-for list="{{ planNames }}" as="c"><option value="{{ c }}">{{ c }}</option></sc-for></select><button onClick="{{ askPlan }}" disabled="{{ planSame }}" style="appearance:none;border:0;background:{{ planBtn }};color:#fff;border-radius:7px;padding:8px 12px;cursor:pointer;font-weight:700;font-size:13px">Change plan</button></div>
+        <span style="font-size:12px;color:#62666d">{{ b.usage }}</span>
+      </div>
+      <div style="border:1px solid #e2e2dc;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px">
+        <span style="font-size:12px;font-weight:700;color:#62666d">BOOKING PAGE</span>
+        <span style="font-weight:600">{{ b.page }} · {{ b.template }} template</span>
+        <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#62666d">tempo.example.com/{{ b.slug }}</span>
+        <a href="{{ b.demo }}" style="font-weight:700;color:#2f6e5a;font-size:13px">Preview template demo →</a>
+      </div>
+      <div style="background:#f6f6f2;border-radius:10px;padding:12px;font-size:12px;color:#4a4e55;line-height:1.5">Customer names, contacts and notes belong to the business and are hidden from platform admins. Support access through an owner-approved session is planned.</div>
+    </div>
+    <div style="padding:14px 18px;border-top:1px solid #f0f0ec;display:flex;gap:8px">
+      <button onClick="{{ askSuspend }}" style="appearance:none;border:1px solid {{ b.aBorder }};background:#fff;color:{{ b.aInk }};border-radius:8px;padding:10px 14px;cursor:pointer;font-weight:700">{{ b.aLabel }}</button>
+    </div>
+  </aside>
+</sc-if>
+
+<sc-if value="{{ confirmOpen }}">
+  <div style="position:fixed;inset:0;background:rgba(18,32,27,.45);z-index:80;display:grid;place-items:center;padding:16px">
+    <div role="alertdialog" aria-label="{{ cf.title }}" style="background:#fff;border-radius:16px;width:min(460px,100%);padding:22px;display:flex;flex-direction:column;gap:12px">
+      <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:700;font-size:20px">{{ cf.title }}</span>
+      <span style="color:#4a4e55;line-height:1.5">{{ cf.body }}</span>
+      <label style="display:flex;flex-direction:column;gap:5px;font-size:12px;font-weight:600;color:#62666d">Reason, saved to the audit log<input value="{{ reason }}" onChange="{{ setReason }}" placeholder="Required" style="border:1px solid #d6d6cf;border-radius:8px;padding:9px;font-size:14px;color:#1c1a17"></label>
+      <div style="display:flex;justify-content:flex-end;gap:8px"><button onClick="{{ closeConfirm }}" style="appearance:none;border:1px solid #d6d6cf;background:#fff;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:600">Cancel</button><button onClick="{{ runConfirm }}" disabled="{{ noReason }}" style="appearance:none;border:0;background:{{ cfBtn }};color:#fff;border-radius:8px;padding:10px 16px;cursor:pointer;font-weight:700">{{ cf.go }}</button></div>
+    </div>
+  </div>
+</sc-if>
+<sc-if value="{{ toast }}"><div role="status" style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#12201b;color:#e3efe9;padding:12px 18px;border-radius:10px;z-index:90;font-weight:600">{{ toast }}</div></sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  constructor(p){ super(p);
+    let seed=5; const r=()=>{seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+    const cats=['Barber & hair','Beauty & wellness','Health & consultation','Fitness & coaching','General services'];
+    const named=[['Northside Barber Co.',0,'Marcus Reed','northside-barber','Growth','Active','Published',612,-500],['Sable & Sage Studio',1,'Amara Lind','sable-and-sage','Growth','Active','Published',248,-410],['Harbor Physio & Consulting',2,'Elena Ruiz','harbor-physio','Business','Active','Published',391,-380],['Forge Training Lab',3,'Kai Morgan','forge-training-lab','Starter','Active','Published',307,-300],['Mendwell Repair & Advisory',4,'Ravi Menon','mendwell','Starter','Active','Published',96,-260],['Northside Eastgate',0,'Marcus Reed','northside-eastgate','Growth','Active','Draft',0,-6]];
+    const A=['Copper','Willow','Atlas','Lumen','Fern','Halcyon','Granite','Juniper','Saltwater','Ember','Linden','Meridian','Quarry','Birch','Cobalt','Oakline','Pilot','Ridge','Tidal','Vale','Harlow','Kestrel','Marlow','Wren'];
+    const Bn=[['Barbers','Cuts','Grooming Room'],['Skin Studio','Spa','Nail Bar'],['Clinic','Therapy','Counselling'],['Strength','Pilates','Yoga'],['Tutoring','Photo','Repairs']];
+    const own=['Jess Alvarado','Tom Brennan','Aisha Bello','Mateo Cruz','Hannah Ford','Ian Gallagher','Mei Lin','Sofia Russo','Omar Farouk','Grace Okoye','Lukas Weber','Nina Petrova','Carlos Diaz','Yuki Tanaka','Ellie Shaw','Ade Ola'];
+    const biz=named.map((n,i)=>({id:i,name:n[0],cat:cats[n[1]],ci:n[1],owner:n[2],slug:n[3],plan:n[4],status:n[5],page:n[6],appts:n[7],reg:n[8],last:i===5?-1:0,staff:[4,2,2,2,2,0][i]}));
+    for(let i=0;i<54;i++){ const ci=Math.floor(r()*5), nm=A[Math.floor(r()*A.length)]+' '+Bn[ci][Math.floor(r()*3)], reg=-Math.floor(Math.pow(r(),.8)*540)-1;
+      const trial=reg>-21, q=r(); const status=trial?'Trial':q<.08?'Churned':q<.12?'Suspended':'Active';
+      const plan=trial?'Trial':['Starter','Starter','Growth','Growth','Business'][Math.floor(r()*5)];
+      biz.push({id:biz.length,name:nm,cat:cats[ci],ci,owner:own[Math.floor(r()*own.length)],slug:nm.toLowerCase().replace(/[^a-z]+/g,'-'),plan,status,page:status==='Churned'?'Unpublished':r()<.82?'Published':'Draft',appts:status==='Active'?Math.floor(20+r()*420):status==='Trial'?Math.floor(r()*40):0,reg,last:status==='Churned'?-Math.floor(30+r()*120):-Math.floor(r()*9),staff:1+Math.floor(r()*6)}); }
+    const users=[]; biz.forEach(b=>{ users.push({id:users.length,name:b.owner,biz:b.name,role:'Owner',status:b.status==='Suspended'?'Suspended':'Active',reg:b.reg,last:b.last}); if(b.staff>2&&users.length<120) users.push({id:users.length,name:['Theo Alvarez','Jun Park','Dana Okafor','Noor Haddad','Samuel Achebe','Priya Shah','Lena Fischer'][b.id%7],biz:b.name,role:b.id%3?'Staff':'Manager',status:'Active',reg:b.reg+20,last:b.last}); });
+    this.state={page:'overview',range:'90d',biz,users,q:'',fCat:'all',fPlan:'all',fStatus:'all',uq:'',uRole:'all',sel:null,planPick:null,confirm:null,reason:'',toast:null,
+      flags:{waitlist:false,gcal:false,payments:false,newEditor:true,multiLoc:true},
+      audit:[{t:'Oct 9, 10:42',who:'Priya Hale',what:'Viewed booking-page configuration · Northside Eastgate'},{t:'Oct 8, 16:05',who:'System',what:'Trial ended → Starter · Willow Pilates'},{t:'Oct 7, 09:13',who:'Priya Hale',what:'Enabled feature flag “New booking-page editor” for all tenants'},{t:'Oct 3, 14:30',who:'Dev Mirza',what:'Suspended Granite Repairs · reason: chargeback investigation'}]};
+  }
+  fD(off){ return new Date(2026,9,9+off).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}); }
+  rel(off){ return off>=0?'Today':off===-1?'Yesterday':(-off)+' days ago'; }
+  toast(m){ clearTimeout(this.tt); this.setState({toast:m}); this.tt=setTimeout(()=>this.setState({toast:null}),2600); }
+  log(what){ const d=new Date(); this.setState(s=>({audit:[{t:'Oct 9, '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'),who:'Priya Hale',what}].concat(s.audit)})); }
+  renderVals(){
+    const st=this.state, B=st.biz;
+    const SB={Active:['#e3efe9','#1f5040'],Trial:['#e4ecf7','#1f4f8f'],Suspended:['#f8dedb','#9b2c1f'],Churned:['#eeebe6','#62666d']};
+    const pages=[['overview','Overview'],['businesses','Businesses'],['users','Users'],['plans','Plans','next'],['templates','Templates','next'],['settings','Settings & audit log']];
+    const pg={}; pages.forEach(p=>pg[p[0]]=st.page===p[0]); pg.later=pages.some(p=>p[0]===st.page&&p[2]);
+    const days={'30d':30,'90d':90,'12m':365}[st.range];
+    const live=B.filter(b=>b.status!=='Churned');
+    const newR=B.filter(b=>b.reg>=-days).length;
+    const cohort=B.filter(b=>b.reg<-21&&b.reg>=-21-days), paid=cohort.filter(b=>b.status!=='Churned'&&b.plan!=='Trial').length;
+    const churned=B.filter(b=>b.status==='Churned').length;
+    const price={Trial:0,Starter:19,Growth:49,Business:99};
+    const mrr=B.filter(b=>b.status==='Active').reduce((s,b)=>s+price[b.plan],0);
+    const apTotal=Math.round(B.reduce((s,b)=>s+b.appts,0)*days/30);
+    const nb=st.range==='12m'?12:st.range==='90d'?13:10, span=days/nb;
+    const regBars=[...Array(nb)].map((_,i)=>{ const a=-days+i*span, z=a+span; const v=B.filter(b=>b.reg>=a&&b.reg<z).length; return {v,l:st.range==='12m'?new Date(2026,9,9+Math.round(a)).toLocaleDateString('en-US',{month:'short'}):new Date(2026,9,9+Math.round(a)).toLocaleDateString('en-US',{month:'numeric',day:'numeric'}),tip:v+' new businesses'}; });
+    const rmx=Math.max(1,...regBars.map(b=>b.v)); regBars.forEach(b=>b.h=(b.v/rmx*100)+'%');
+    const ap=[...Array(24)].map((_,i)=>1+i/23*0.55+Math.sin(i*1.3)*0.06), amx=Math.max(...ap);
+    const pts=ap.map((v,i)=>(i*600/23).toFixed(1)+','+(170-v/amx*150).toFixed(1));
+    const plans=['Trial','Starter','Growth','Business'], pc=['#9fb8d9','#c9c2b6','#2f6e5a','#1c1a17'];
+    const catsL=['Barber & hair','Beauty & wellness','Health & consultation','Fitness & coaching','General services'];
+    const cd=catsL.map(c=>({name:c,n:live.filter(b=>b.cat===c).length})), cmx=Math.max(...cd.map(c=>c.n));
+    const q=st.q.trim().toLowerCase();
+    const fl=B.filter(b=>(!q||(b.name+' '+b.owner+' '+b.slug).toLowerCase().includes(q))&&(st.fCat==='all'||b.cat===st.fCat)&&(st.fPlan==='all'||b.plan===st.fPlan)&&(st.fStatus==='all'||b.status===st.fStatus)).sort((a,b)=>b.appts-a.appts);
+    const open=b=>()=>this.setState({sel:b.id,planPick:b.plan});
+    const sel=st.sel!=null?B[st.sel]:null; let bd={};
+    const tplKey=['barber','wellness','consult','fitness','services'];
+    if(sel){ const susp=sel.status==='Suspended'; const lim={Trial:2,Starter:1,Growth:5,Business:'Unlimited'}[sel.plan];
+      bd=Object.assign({},sel,{sbg:SB[sel.status][0],sink:SB[sel.status][1],metrics:[{k:'Registered',v:this.fD(sel.reg)},{k:'Last activity',v:this.rel(sel.last)},{k:'Appointments, 30 days',v:String(sel.appts)},{k:'Staff seats',v:sel.staff+' of '+lim}],usage:'Plan prices are placeholders until launch. Changes take effect at the next billing cycle in production.',template:['Barber','Wellness','Consultation','Fitness','General services'][sel.ci],demo:'Booking Pages.dc.html?t='+tplKey[sel.ci],aLabel:susp?'Reactivate account':'Suspend account',aBorder:susp?'#d6d6cf':'#e8c4bf',aInk:susp?'#1c1a17':'#b3261e'}); }
+    let cf=null;
+    if(st.confirm&&sel){ if(st.confirm==='suspend') cf=sel.status==='Suspended'?{title:'Reactivate '+sel.name+'?',body:'The booking page and staff logins come back immediately.',go:'Reactivate'}:{title:'Suspend '+sel.name+'?',body:'The booking page goes offline and staff can no longer sign in. Existing appointments are kept. The owner is not notified in this prototype.',go:'Suspend account'};
+      else cf={title:'Change plan to '+st.planPick+'?',body:sel.name+' moves from '+sel.plan+' to '+st.planPick+'. Feature limits update straight away.',go:'Change plan'}; }
+    const flagDefs=[['newEditor','New booking-page editor','All tenants'],['multiLoc','Multiple locations','Business plan only'],['waitlist','Waitlist','Planned · internal testing'],['gcal','Google Calendar sync','Planned integration'],['payments','Online payments','Planned integration']];
+    const uq=st.uq.trim().toLowerCase();
+    return {
+      nav:pages.map(p=>({label:p[1],tag:p[2]?'NEXT':'',cur:st.page===p[0]?'page':undefined,bg:st.page===p[0]?'#23372f':'transparent',color:st.page===p[0]?'#fff':(p[2]?'#6f8a80':'#cfdcd6'),go:()=>this.setState({page:p[0]})})),
+      pg,title:{overview:'Platform overview',businesses:'Businesses',users:'Users',plans:'Plans',templates:'Templates',settings:'Settings & audit log'}[st.page],
+      sub:st.page==='overview'?'All tenants · as of Oct 9, 2026':B.length+' businesses · '+st.users.length+' users',
+      ranges:[['30d','30 days'],['90d','90 days'],['12m','12 months']].map(([k,l])=>({label:l,sel:st.range===k,bg:st.range===k?'#fff':'transparent',pick:()=>this.setState({range:k})})),
+      kpis:[{label:'Registered businesses',value:String(B.length),note:churned+' churned all-time'},{label:'Active businesses',value:String(B.filter(b=>b.status==='Active').length),note:B.filter(b=>b.status==='Trial').length+' in trial · '+B.filter(b=>b.status==='Suspended').length+' suspended'},{label:'New registrations',value:String(newR),note:'Last '+(st.range==='12m'?'12 months':days+' days')},{label:'Appointments, all tenants',value:apTotal.toLocaleString(),note:'Booked in range, estimated from 30-day volume'},{label:'Trial → paid',value:cohort.length?Math.round(paid/cohort.length*100)+'%':'—',note:cohort.length+' trials ended in range'},{label:'Churn',value:(churned/B.length*100).toFixed(1)+'%',note:'Share of all businesses ever registered'},{label:'Platform MRR (demo)',value:'$'+mrr.toLocaleString(),note:'Tempo subscriptions at placeholder prices'}],
+      bucketLabel:st.range==='12m'?'Per month':'Per '+Math.round(span)+' days',regBars,apLine:pts.join(' '),apArea:'0,170 '+pts.join(' ')+' 600,170',apFrom:this.fD(-days),apTo:'Oct 9, 2026',
+      planDist:plans.map((p,i)=>{const n=live.filter(b=>b.plan===p).length;return {name:p,n,pct:Math.round(n/live.length*100)+'%',w:(n/live.length*100)+'%',c:pc[i]};}),
+      catDist:cd.map(c=>({...c,w:(c.n/cmx*100)+'%'})),
+      attention:B.filter(b=>b.status==='Suspended'||(b.status==='Trial'&&b.page==='Draft')||(b.status==='Active'&&b.page==='Draft')).slice(0,5).map(b=>({name:b.name,why:b.status==='Suspended'?'Suspended account':b.status==='Trial'?'Trial with an unpublished page':'Paying, booking page still in draft',open:()=>this.setState({page:'businesses',sel:b.id,planPick:b.plan})})),
+      q:st.q,setQ:e=>this.setState({q:e.target.value}),fCat:st.fCat,setFCat:e=>this.setState({fCat:e.target.value}),fPlan:st.fPlan,setFPlan:e=>this.setState({fPlan:e.target.value}),fStatus:st.fStatus,setFStatus:e=>this.setState({fStatus:e.target.value}),
+      cats:catsL,planNames:plans,
+      bizRows:fl.map(b=>({name:b.name,slug:b.slug,cat:b.cat,owner:b.owner,reg:this.fD(b.reg),plan:b.plan,status:b.status,sbg:SB[b.status][0],sink:SB[b.status][1],page:b.page,pageInk:b.page==='Published'?'#1c1a17':'#8a8e94',appts:b.appts,last:this.rel(b.last),open:open(b)})),
+      noBiz:!fl.length,bizCount:fl.length+' of '+B.length+' businesses · appointment counts only, no customer data',clearBiz:()=>this.setState({q:'',fCat:'all',fPlan:'all',fStatus:'all'}),
+      drawer:!!sel,b:bd,closeDrawer:()=>this.setState({sel:null}),
+      planPick:st.planPick,setPlanPick:e=>this.setState({planPick:e.target.value}),planSame:!sel||st.planPick===sel.plan,planBtn:!sel||st.planPick===sel.plan?'#b9bcb6':'#1c1a17',
+      askPlan:()=>this.setState({confirm:'plan',reason:''}),askSuspend:()=>this.setState({confirm:'suspend',reason:''}),
+      confirmOpen:!!cf,cf:cf||{},reason:st.reason,setReason:e=>this.setState({reason:e.target.value}),noReason:!st.reason.trim(),cfBtn:st.reason.trim()?'#b3261e':'#d8a9a4',closeConfirm:()=>this.setState({confirm:null}),
+      runConfirm:()=>{ if(!st.reason.trim()) return; const id=sel.id;
+        if(st.confirm==='suspend'){ const ns=sel.status==='Suspended'?'Active':'Suspended'; this.setState(s=>({biz:s.biz.map(b=>b.id===id?Object.assign({},b,{status:ns}):b),users:s.users.map(u=>u.biz===sel.name?Object.assign({},u,{status:ns==='Suspended'?'Suspended':'Active'}):u),confirm:null})); this.log((ns==='Suspended'?'Suspended ':'Reactivated ')+sel.name+' · reason: '+st.reason); this.toast(sel.name+(ns==='Suspended'?' suspended':' reactivated')); }
+        else { this.setState(s=>({biz:s.biz.map(b=>b.id===id?Object.assign({},b,{plan:st.planPick}):b),confirm:null})); this.log('Changed plan '+sel.plan+' → '+st.planPick+' · '+sel.name+' · reason: '+st.reason); this.toast('Plan changed to '+st.planPick); } },
+      uq:st.uq,setUq:e=>this.setState({uq:e.target.value}),uRole:st.uRole,setURole:e=>this.setState({uRole:e.target.value}),
+      userRows:st.users.filter(u=>(!uq||(u.name+' '+u.biz).toLowerCase().includes(uq))&&(st.uRole==='all'||u.role===st.uRole)).slice(0,60).map(u=>{const s=u.status==='Suspended';return {name:u.name,email:u.name.toLowerCase().replace(/[^a-z]+/g,'.')+'@'+u.biz.toLowerCase().replace(/[^a-z]+/g,'').slice(0,14)+'.example',biz:u.biz,role:u.role,status:u.status,sbg:s?'#f8dedb':'#e3efe9',sink:s?'#9b2c1f':'#1f5040',reg:this.fD(u.reg),last:this.rel(u.last),tLabel:s?'Reactivate':'Suspend',tBorder:s?'#d6d6cf':'#e8c4bf',tInk:s?'#1c1a17':'#b3261e',
+        toggle:()=>{ if(!s&&!confirm('Suspend '+u.name+'? They will be signed out of '+u.biz+'.')) return; this.setState(x=>({users:x.users.map(v=>v.id===u.id?Object.assign({},v,{status:s?'Active':'Suspended'}):v)})); this.log((s?'Reactivated user ':'Suspended user ')+u.name+' · '+u.biz); this.toast(u.name+(s?' reactivated':' suspended')); },
+        setRole:e=>{ const v=e.target.value; this.setState(x=>({users:x.users.map(w=>w.id===u.id?Object.assign({},w,{role:v}):w)})); this.log('Changed role of '+u.name+' to '+v+' · '+u.biz); this.toast('Role updated'); }};}),
+      flags:flagDefs.map(([k,n,note])=>{const on=st.flags[k];return {name:n,note,on,bg:on?'#2f6e5a':'#cfd2cc',x:on?'21px':'3px',toggle:()=>{ this.setState(x=>({flags:Object.assign({},x.flags,{[k]:!on})})); this.log((on?'Disabled':'Enabled')+' feature flag “'+n+'”'); }};}),
+      health:[{n:'Booking API',s:'— not connected'},{n:'Email delivery',s:'— planned'},{n:'Background jobs',s:'— not connected'},{n:'Error rate',s:'— not connected'}],
+      audit:st.audit,
+      later:{plans:{title:'Plans',body:'Configure plan name, price, billing interval, appointment and staff limits, feature availability, trial length and status. Prices stay placeholders until launch.'},templates:{title:'Templates',body:'Enable or retire each of the five booking templates, set category defaults and see how many businesses use each.'}}[st.page]||{},
+      toast:st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>

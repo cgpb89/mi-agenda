@@ -1,0 +1,145 @@
+@use 'tokens' as *;
+
+.wrap {
+  background: $white;
+  border: 1px solid $card-border;
+  border-radius: $radius-card;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+
+  th {
+    text-align: left;
+    color: $muted;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 10px 14px;
+    border-bottom: 1px solid $card-border;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid $row-divider;
+    vertical-align: middle;
+  }
+
+  tbody tr.clickable {
+    cursor: pointer;
+    &:hover {
+      background: $row-hover;
+    }
+    &:focus-visible {
+      outline: 2px solid $tempo-orange;
+      outline-offset: -2px;
+    }
+  }
+}
+
+.right {
+  text-align: right !important;
+}
+
+.mono {
+  font-family: $font-mono;
+  font-size: 12px;
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.muted {
+  color: $text-secondary;
+}
+
+.faint {
+  color: $faint;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.empty {
+  padding: 40px;
+  text-align: center;
+  color: $muted;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search {
+  flex: 1 1 240px;
+  border: 1px solid $input-border;
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: $white;
+}
+
+.select {
+  border: 1px solid $input-border;
+  border-radius: 8px;
+  padding: 8px;
+  background: $white;
+}
+
+.chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  border: 1px solid $input-border;
+  background: $white;
+  color: $ink;
+  border-radius: $radius-pill;
+  padding: 5px 11px;
+  font-weight: 600;
+  font-size: 12px;
+  text-decoration: none;
+  &:hover {
+    color: $ink;
+  }
+  span {
+    opacity: 0.6;
+  }
+}
+
+.chipOn {
+  background: $ink;
+  border-color: $ink;
+  color: $white;
+  &:hover {
+    color: $white;
+  }
+}
+
+.footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: $muted;
+}
+
+.linkBtn {
+  border: 0;
+  background: none;
+  color: $orange-deep;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+}

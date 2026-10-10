@@ -1,0 +1,57 @@
+@use 'tokens' as *;
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: $radius-pill;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.sm {
+  font-size: 11px;
+  padding: 3px 8px;
+}
+
+.PENDING {
+  background: $st-pending-bg;
+  color: $st-pending-ink;
+}
+.CONFIRMED {
+  background: $st-confirmed-bg;
+  color: $st-confirmed-ink;
+}
+.COMPLETED {
+  background: $st-completed-bg;
+  color: $st-completed-ink;
+}
+.CANCELLED {
+  background: $st-cancelled-bg;
+  color: $st-cancelled-ink;
+}
+.NO_SHOW {
+  background: $st-noshow-bg;
+  color: $st-noshow-ink;
+}
+
+// Tenant / account statuses (super-admin)
+.ACTIVE {
+  background: #e3efe9;
+  color: #1f5040;
+}
+.TRIAL {
+  background: #e4ecf7;
+  color: #1f4f8f;
+}
+.SUSPENDED {
+  background: #f8dedb;
+  color: #9b2c1f;
+}
+.CHURNED,
+.INACTIVE {
+  background: #eeebe6;
+  color: #62666d;
+}
