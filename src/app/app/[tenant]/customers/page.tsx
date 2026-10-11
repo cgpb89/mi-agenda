@@ -3,6 +3,9 @@ import { getDb } from '@/lib/db/client';
 import { requireTenantPage } from '@/lib/auth/authorize';
 import { formatPhone } from '@/lib/phone';
 import { CustomersView } from '@/components/features/customers/CustomersView';
+import { LockedPage } from '@/components/features/plans/UpgradeCard';
+import { cheapestPlanWith, hasFeature } from '@/modules/plans/features';
+import { entitlementsFor, getPlanCatalog } from '@/modules/plans/service';
 import { getI18n } from '@/i18n/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,6 +25,20 @@ export default async function CustomersPage({
   const { tenant } = await params;
   const sp = await searchParams;
   const ctx = await requireTenantPage(tenant, 'customers.read');
+  const [plan, catalog, { t }] = await Promise.all([
+    entitlementsFor(ctx.plan),
+    getPlanCatalog(),
+    getI18n(),
+  ]);
+  if (!hasFeature(plan, 'customerDirectory')) {
+    return (
+      <LockedPage
+        title={t.app.nav.customers}
+        plan={cheapestPlanWith(catalog, 'customerDirectory')}
+        body={t.app.plans.customersBody}
+      />
+    );
+  }
   const db = getDb();
   const q = (sp.q ?? '').trim().slice(0, 80);
   const digits = q.replace(/\D/g, '');

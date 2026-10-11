@@ -177,6 +177,7 @@ model User {
   paymentsBy     PaymentRecord[]      @relation("RecordedBy")
   paymentsVoided PaymentRecord[]      @relation("VoidedBy")
   policyUpdates  BookingPolicy[]
+  planUpdates    PlanSettings[]
   auditEvents    AuditLog[]
 
   @@map("users")
@@ -604,6 +605,25 @@ model AuditLog {
   @@index([tenantId, createdAt])
   @@index([createdAt])
   @@map("audit_logs")
+  @@schema("app")
+}
+
+/// What each plan includes. Edited in Super-admin → Plans (modules/plans/service.ts).
+model PlanSettings {
+  plan            Plan     @id
+  priceCrcMinor   Int      @default(0) @map("price_crc_minor")
+  priceUsdMinor   Int      @default(0) @map("price_usd_minor")
+  /// NULL = unlimited.
+  staffLimit      Int?     @map("staff_limit")
+  photoLimit      Int      @default(3) @map("photo_limit")
+  /// Array of feature keys (modules/plans/features.ts).
+  features        Json     @default("[]")
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedByUserId String?  @map("updated_by_user_id") @db.Uuid
+
+  updatedBy User? @relation(fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@map("plan_settings")
   @@schema("app")
 }
 

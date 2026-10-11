@@ -1,10 +1,13 @@
 import { z } from 'zod';
+import { MAX_PHOTOS_CEILING } from '@/modules/plans/features';
 
 /**
  * Booking-page photos stored in BusinessProfile.photos (JSON array, in display
  * order; the first one is the cover). The images themselves live in Cloudinary.
  */
-export const MAX_PHOTOS = 3;
+// How many a business may have depends on its plan (photoLimit); this is the
+// absolute ceiling, also enforced by a CHECK constraint.
+export const MAX_PHOTOS = MAX_PHOTOS_CEILING;
 
 export const storedPhotoSchema = z.object({
   id: z.uuid(),

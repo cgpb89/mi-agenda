@@ -136,6 +136,11 @@ export const errors: Messages['errors'] = {
   photoLimit: ({ n }) => `Puedes agregar hasta ${n} fotos. Elimina una para agregar otra.`,
   photosUnavailable: 'La carga de fotos no está disponible en este momento.',
   photoMissing: 'No encontramos esa carga. Inténtalo de nuevo.',
+  planFeature: 'Tu plan no incluye esta función. Mejora tu plan para usarla.',
+  staffLimit: ({ n }) =>
+    n === 1
+      ? 'Tu plan incluye 1 miembro activo del equipo. Mejora tu plan para agregar más.'
+      : `Tu plan incluye hasta ${n} miembros activos del equipo. Mejora tu plan para agregar más.`,
   storeClosed: 'Este negocio está cerrado hasta que se pague su plan.',
   alreadySuspended: 'Ya está suspendido.',
   notSuspended: 'Este negocio no está suspendido.',

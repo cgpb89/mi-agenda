@@ -56,6 +56,7 @@ export type AuditAction =
   | 'payment.voided'
   // platform
   | 'feature_flag.toggled'
+  | 'plan.updated'
   | 'platform.admin_granted';
 
 export interface AuditEntry {

@@ -185,6 +185,32 @@ export const admin = {
     roleBody: ({ business }: { business: string }) =>
       `This changes their access in ${business} and signs them out. Use for support requests such as ownership transfers.`,
   },
+  plans: {
+    sub: 'What each plan includes. Changes apply right away to every business on that plan.',
+    priceCrc: 'Price per month (₡)',
+    priceUsd: 'Price per month (US$)',
+    staffLimit: 'Active staff',
+    staffHint: 'Empty = unlimited',
+    photoLimit: 'Booking-page photos',
+    features: 'Features',
+    unlimited: 'Unlimited',
+    trialNote: 'Trial is what new businesses get during their free month (it has no price).',
+    downgradeNote:
+      "Lowering a limit never deletes data: extra photos are hidden and businesses over the staff limit just can't add or reactivate more.",
+    save: 'Save plans',
+    saving: 'Saving…',
+    saved: 'Plans saved',
+    featureNames: {
+      customerDirectory: ['Customer directory', 'Customers page with history and spend'],
+      fullAnalytics: ['Full analytics', 'Ranges beyond 30 days and staff/service filters'],
+      brandColors: ['Brand color and logo', 'Accent color and logo on the booking page'],
+      glassStyle: ['Glass style', 'Frosted-glass look on booking pages'],
+      emailReminders: ['Email reminders', 'Reminder to customers 24 h before'],
+      sinpeDeposits: ['SINPE Móvil deposits', 'Require a deposit with SINPE reference to book'],
+      waitlist: ['Waitlist', 'Customers join a list for full days and get notified'],
+      hideBranding: ['Hide "Powered by Tempo"', 'Removes the Tempo line from booking pages'],
+    } as Record<string, [string, string]>,
+  },
   settings: {
     title: 'Settings & audit log',
     flags: 'Feature flags',

@@ -61,9 +61,11 @@ export default async function BookingPage({ params, searchParams }: Params) {
         {!page.published ? <div className={s.preview}>{t.booking.page.preview}</div> : null}
         <Template page={page} flow={flow} />
         <div className={s.poweredBy}>
-          <span>
-            {t.booking.page.poweredBy} <Link href="/">Tempo</Link>
-          </span>
+          {page.hideBranding ? null : (
+            <span>
+              {t.booking.page.poweredBy} <Link href="/">Tempo</Link>
+            </span>
+          )}
           <LocaleSwitcher />
         </div>
       </main>

@@ -150,6 +150,13 @@ export const errors = {
   photosUnavailable: 'Photo uploads are not available right now.',
   photoMissing: "We couldn't find that upload. Please try again.",
 
+  // Plans
+  planFeature: "Your plan doesn't include this. Upgrade your plan to use it.",
+  staffLimit: ({ n }: { n: number }) =>
+    n === 1
+      ? 'Your plan includes 1 active staff member. Upgrade to add more.'
+      : `Your plan includes up to ${n} active staff members. Upgrade to add more.`,
+
   // Billing
   storeClosed: 'This business is closed until its plan is paid.',
 

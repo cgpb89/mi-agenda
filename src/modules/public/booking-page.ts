@@ -9,6 +9,8 @@ import {
   type PageContent,
 } from '@/modules/businesses/page-content';
 import { readPhotos } from '@/modules/businesses/photos';
+import { hasFeature } from '@/modules/plans/features';
+import { entitlementsFor } from '@/modules/plans/service';
 
 /**
  * Data for the PUBLIC booking page. Only fields that are meant to be public
@@ -29,6 +31,8 @@ export interface PublicPage {
   template: TemplateKey;
   /** Glass style chosen in the editor (on templates that support it). */
   glass: boolean;
+  /** Plan includes hiding the "Powered by Tempo" line. */
+  hideBranding: boolean;
   published: boolean;
   profile: {
     displayName: string;
@@ -110,6 +114,7 @@ export async function loadPublicPage(
       locale: true,
       status: true,
       accessUntil: true,
+      plan: true,
       profile: true,
       policy: {
         select: {
@@ -166,6 +171,7 @@ export async function loadPublicPage(
 
   const locale = (await getChosenLocale()) ?? toLocale(t.locale) ?? DEFAULT_LOCALE;
   const content = readPageContent(t.profile.pageContent);
+  const plan = await entitlementsFor(t.plan);
 
   return {
     tenantId: t.id,
@@ -176,7 +182,11 @@ export async function loadPublicPage(
     currency: t.currency,
     country: t.country,
     template: t.profile.template.toLowerCase() as TemplateKey,
-    glass: GLASS_TEMPLATES.includes(t.profile.template) && content.style === 'glass',
+    glass:
+      hasFeature(plan, 'glassStyle') &&
+      GLASS_TEMPLATES.includes(t.profile.template) &&
+      content.style === 'glass',
+    hideBranding: hasFeature(plan, 'hideBranding'),
     published,
     profile: {
       displayName: t.profile.displayName,
@@ -205,6 +215,7 @@ export async function loadPublicPage(
       }))
       .filter((s) => s.staffIds.length > 0),
     staff: staff.map((s) => ({ id: s.id, name: s.displayName, title: s.title, bio: s.bio })),
-    photos: publicPhotos(t.profile.photos),
+    // A downgrade hides extra photos without deleting them.
+    photos: publicPhotos(t.profile.photos).slice(0, plan.photoLimit),
   };
 }

@@ -92,12 +92,14 @@ export function BookingPageEditor({
   ready,
   photos,
   uploadsEnabled,
+  photoLimit,
 }: {
   initial: Form;
   pageStatus: string;
   ready: { services: boolean; hours: boolean };
   photos: EditorPhoto[];
   uploadsEnabled: boolean;
+  photoLimit: number;
 }) {
   const { data } = useShell();
   const slug = data.tenant.slug;
@@ -468,7 +470,7 @@ export function BookingPageEditor({
           </Card>
         </div>
 
-        <PhotoManager photos={photos} enabled={uploadsEnabled} />
+        <PhotoManager photos={photos} enabled={uploadsEnabled} limit={photoLimit} />
 
         {error ? <FormMessage kind="error">{error}</FormMessage> : null}
         {dirty ? (

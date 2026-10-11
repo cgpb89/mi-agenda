@@ -5,6 +5,7 @@ import { cloudName, imageUrl } from '@/lib/cloudinary';
 import { isCloudinaryConfigured } from '@/lib/env';
 import { readPageContent } from '@/modules/businesses/page-content';
 import { readPhotos } from '@/modules/businesses/photos';
+import { entitlementsFor } from '@/modules/plans/service';
 import { BookingPageEditor } from '@/components/features/booking-page/BookingPageEditor';
 import { getI18n } from '@/i18n/server';
 import { DEFAULT_LOCALE, toLocale } from '@/i18n/config';
@@ -28,6 +29,7 @@ export default async function BookingPageSettings({
     db.availabilityRule.count({ where: { tenantId: ctx.tenantId, staffId: null } }),
   ]);
   const uploadsEnabled = isCloudinaryConfigured();
+  const plan = await entitlementsFor(ctx.plan);
   const photos = uploadsEnabled
     ? readPhotos(profile.photos).map((p) => ({
         id: p.id,
@@ -52,6 +54,7 @@ export default async function BookingPageSettings({
       ready={{ services: onlineServices > 0, hours: rules > 0 }}
       photos={photos}
       uploadsEnabled={uploadsEnabled}
+      photoLimit={plan.photoLimit}
     />
   );
 }

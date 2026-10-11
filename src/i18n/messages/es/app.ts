@@ -9,6 +9,15 @@ export const app: Messages['app'] = {
   platformAdmin: 'Administración de la plataforma ↗',
   signOut: 'Cerrar sesión',
   newAppointment: '+ Nueva cita',
+  plans: {
+    availableFrom: ({ plan }) => `Disponible en el plan ${plan}`,
+    upgradeBody: 'Mejora tu plan para desbloquear esta y otras funciones.',
+    seePlans: 'Ver planes',
+    customersBody:
+      'Ten un directorio de clientes con historial de visitas, gasto y próximas citas de todos los que reservan contigo.',
+    analyticsLimited:
+      'Tu plan muestra los últimos 30 días. Mejora tu plan para ver más tiempo y filtrar por persona y servicio.',
+  },
   billing: {
     trialDays: ({ n }) =>
       n === 1 ? 'Prueba gratis: queda 1 día' : `Prueba gratis: quedan ${n} días`,

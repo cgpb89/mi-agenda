@@ -14,7 +14,6 @@ import {
   preparePhotoUploadAction,
   removePhotoAction,
 } from '@/modules/businesses/photo-actions';
-import { MAX_PHOTOS } from '@/modules/businesses/photos';
 import { useI18n } from '@/i18n/client';
 
 export interface EditorPhoto {
@@ -30,7 +29,16 @@ const ACCEPT = 'image/jpeg,image/png,image/webp,image/heic,image/heif,image/avif
  * page's "Save changes" bar). Files go straight from the browser to Cloudinary
  * with a short-lived server signature.
  */
-export function PhotoManager({ photos, enabled }: { photos: EditorPhoto[]; enabled: boolean }) {
+export function PhotoManager({
+  photos,
+  enabled,
+  limit,
+}: {
+  photos: EditorPhoto[];
+  enabled: boolean;
+  /** Photos allowed by the business's plan. */
+  limit: number;
+}) {
   const { data } = useShell();
   const slug = data.tenant.slug;
   const router = useRouter();
@@ -43,7 +51,7 @@ export function PhotoManager({ photos, enabled }: { photos: EditorPhoto[]; enabl
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const busy = uploading || pending;
-  const full = photos.length >= MAX_PHOTOS;
+  const full = photos.length >= limit;
 
   async function upload(file: File) {
     setError(null);
@@ -96,7 +104,7 @@ export function PhotoManager({ photos, enabled }: { photos: EditorPhoto[]; enabl
       }
     >
       <span style={{ fontSize: 12, color: '#6b6358' }}>
-        {enabled ? bp.photosHint({ n: MAX_PHOTOS }) : bp.photosDisabled}
+        {enabled ? bp.photosHint({ n: limit }) : bp.photosDisabled}
       </span>
       <input
         ref={fileInput}

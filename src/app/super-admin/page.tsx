@@ -6,7 +6,8 @@ import { Segmented } from '@/components/ui/Segmented';
 import { categoryLabel } from '@/components/features/shared/categories';
 import s from '@/components/features/admin/Admin.module.scss';
 import { requirePlatformAdminPage } from '@/lib/auth/authorize';
-import { PLANS, type PlanKey } from '@/modules/platform/constants';
+import { PLAN_KEYS, PLAN_LABELS, type PlanKey } from '@/modules/platform/constants';
+import { getPlanCatalog } from '@/modules/plans/service';
 import { listTenants, platformAppointmentSeries } from '@/modules/platform/service';
 import { getI18n } from '@/i18n/server';
 
@@ -26,7 +27,7 @@ const PLAN_COLOR: Record<PlanKey, string> = {
 function money(minor: number, intl: string) {
   return new Intl.NumberFormat(intl, {
     style: 'currency',
-    currency: 'USD',
+    currency: 'CRC',
     maximumFractionDigits: 0,
   }).format(minor / 100);
 }
@@ -39,13 +40,14 @@ export default async function PlatformOverview({
   await requirePlatformAdminPage();
   const { t, intl } = await getI18n();
   const ov = t.admin.overview;
-  const planLabel = (p: PlanKey) => t.settings.plans[p] ?? PLANS[p].label;
+  const planLabel = (p: PlanKey) => t.settings.plans[p] ?? PLAN_LABELS[p];
   const { range: r } = await searchParams;
   const range = (r && r in RANGES ? r : '90d') as keyof typeof RANGES;
   const days = RANGES[range];
   const now = DateTime.utc();
   const from = now.minus({ days });
-  const [tenants, series] = await Promise.all([
+  const [catalog, tenants, series] = await Promise.all([
+    getPlanCatalog(),
     listTenants(),
     platformAppointmentSeries(from.toJSDate()),
   ]);
@@ -64,7 +66,7 @@ export default async function PlatformOverview({
   const paid = cohort.filter((t) => t.status !== 'CHURNED' && t.plan !== 'TRIAL').length;
   const mrr = tenants
     .filter((t) => t.status === 'ACTIVE')
-    .reduce((sum, t) => sum + PLANS[t.plan].priceMinor, 0);
+    .reduce((sum, t) => sum + (catalog.find((c) => c.plan === t.plan)?.priceCrcMinor ?? 0), 0);
 
   // Registration buckets
   const bucketCount = range === '12m' ? 12 : range === '90d' ? 13 : 10;
@@ -102,7 +104,7 @@ export default async function PlatformOverview({
     .join(' ');
 
   const live = tenants.filter((t) => t.status !== 'CHURNED');
-  const planDist = (Object.keys(PLANS) as PlanKey[]).map((p) => ({
+  const planDist = PLAN_KEYS.map((p) => ({
     p,
     n: live.filter((t) => t.plan === p).length,
   }));

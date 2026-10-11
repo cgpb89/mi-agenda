@@ -19,7 +19,7 @@ import {
   setTenantStatusAction,
 } from '@/modules/platform/actions';
 import { accessState, extendAccess } from '@/modules/billing/access';
-import { PLANS, type PlanKey } from '@/modules/platform/constants';
+import { PLAN_KEYS, PLAN_LABELS, type PlanKey } from '@/modules/platform/constants';
 import type { TenantRow } from '@/modules/platform/service';
 import { AdminHeader } from './AdminShell';
 import s from './Admin.module.scss';
@@ -68,7 +68,7 @@ export function BusinessesView({
   const [pending, startTransition] = useTransition();
   const { t, intl } = useI18n();
   const bz = t.admin.businesses;
-  const planLabel = (p: PlanKey) => t.settings.plans[p] ?? PLANS[p].label;
+  const planLabel = (p: PlanKey) => t.settings.plans[p] ?? PLAN_LABELS[p];
   const PAGE_LABEL = bz.page;
 
   const rows = useMemo(() => {
@@ -128,7 +128,7 @@ export function BusinessesView({
     });
   }
 
-  const seats = b ? PLANS[b.plan].staffSeats : null;
+  const seats = b ? b.staffLimit : null;
   const access = b ? accessState({ status: b.status, accessUntil: new Date(b.accessUntil) }) : null;
   const confirmCopy =
     b && confirm
@@ -200,7 +200,7 @@ export function BusinessesView({
             onChange={(e) => setPlan(e.target.value)}
           >
             <option value="all">{bz.allPlans}</option>
-            {(Object.keys(PLANS) as PlanKey[]).map((p) => (
+            {PLAN_KEYS.map((p) => (
               <option key={p} value={p}>
                 {planLabel(p)}
               </option>
@@ -362,7 +362,7 @@ export function BusinessesView({
                   value={planPick}
                   onChange={(e) => setPlanPick(e.target.value as PlanKey)}
                 >
-                  {(Object.keys(PLANS) as PlanKey[]).map((p) => (
+                  {PLAN_KEYS.map((p) => (
                     <option key={p} value={p}>
                       {planLabel(p)}
                     </option>

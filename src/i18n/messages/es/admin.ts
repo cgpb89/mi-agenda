@@ -179,6 +179,39 @@ export const admin: Messages['admin'] = {
     roleBody: ({ business }) =>
       `Esto cambia su acceso en ${business} y cierra su sesión. Úsalo para solicitudes de soporte, como transferencias de propiedad.`,
   },
+  plans: {
+    sub: 'Lo que incluye cada plan. Los cambios aplican de inmediato a todos los negocios en ese plan.',
+    priceCrc: 'Precio por mes (₡)',
+    priceUsd: 'Precio por mes (US$)',
+    staffLimit: 'Miembros activos del equipo',
+    staffHint: 'Vacío = ilimitado',
+    photoLimit: 'Fotos de la página de reservas',
+    features: 'Funciones',
+    unlimited: 'Ilimitado',
+    trialNote:
+      'Prueba es lo que reciben los negocios nuevos durante su mes gratis (no tiene precio).',
+    downgradeNote:
+      'Bajar un límite nunca borra datos: las fotos de más se ocultan y los negocios por encima del límite de equipo solo no pueden agregar ni reactivar más.',
+    save: 'Guardar planes',
+    saving: 'Guardando…',
+    saved: 'Planes guardados',
+    featureNames: {
+      customerDirectory: ['Directorio de clientes', 'Página de clientes con historial y gasto'],
+      fullAnalytics: ['Estadísticas completas', 'Más de 30 días y filtros por persona y servicio'],
+      brandColors: ['Color de marca y logo', 'Color de acento y logo en la página de reservas'],
+      glassStyle: ['Estilo vidrio', 'Aspecto de vidrio esmerilado en las páginas de reservas'],
+      emailReminders: ['Recordatorios por correo', 'Recordatorio a los clientes 24 h antes'],
+      sinpeDeposits: [
+        'Depósitos por SINPE Móvil',
+        'Exige un depósito con referencia SINPE para reservar',
+      ],
+      waitlist: ['Lista de espera', 'Los clientes se anotan en días llenos y reciben aviso'],
+      hideBranding: [
+        'Ocultar "Con tecnología de Tempo"',
+        'Quita la línea de Tempo de las páginas de reservas',
+      ],
+    },
+  },
   settings: {
     title: 'Configuración y auditoría',
     flags: 'Funciones en desarrollo',

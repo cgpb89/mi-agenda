@@ -40,6 +40,7 @@ export const settings: Messages['settings'] = {
     'tenant.reactivated': 'Negocio reactivado por Tempo',
     'tenant.plan_changed': 'Plan modificado',
     'tenant.payment_recorded': 'Pago del plan registrado',
+    'plan.updated': 'Configuración de plan modificada',
     'tenant.deleted': 'Negocio eliminado (sin pago)',
   },
   actorCustomer: 'Cliente',

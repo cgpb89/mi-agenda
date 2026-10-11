@@ -1,6 +1,7 @@
 import 'server-only';
 import { getDb } from '@/lib/db/client';
-import { DEFAULT_FLAGS, PLANS } from './constants';
+import { getPlanCatalog } from '@/modules/plans/service';
+import { DEFAULT_FLAGS, type PlanKey } from './constants';
 
 /**
  * Platform-level reads. Deliberately limited to ACCOUNT data and COUNTS:
@@ -12,7 +13,9 @@ export interface TenantRow {
   slug: string;
   category: string;
   status: string;
-  plan: keyof typeof PLANS;
+  plan: PlanKey;
+  /** Staff limit of the current plan (null = unlimited). */
+  staffLimit: number | null;
   createdAt: string;
   /** End of the trial / paid period (ISO). */
   accessUntil: string;
@@ -27,7 +30,8 @@ export interface TenantRow {
 export async function listTenants(): Promise<TenantRow[]> {
   const db = getDb();
   const since = new Date(Date.now() - 30 * 24 * 3600 * 1000);
-  const [tenants, appts, last, staff] = await Promise.all([
+  const [catalog, tenants, appts, last, staff] = await Promise.all([
+    getPlanCatalog(),
     db.tenant.findMany({
       orderBy: { createdAt: 'desc' },
       select: {
@@ -71,6 +75,7 @@ export async function listTenants(): Promise<TenantRow[]> {
       category: t.category,
       status: t.status,
       plan: t.plan,
+      staffLimit: catalog.find((c) => c.plan === t.plan)?.staffLimit ?? null,
       createdAt: t.createdAt.toISOString(),
       accessUntil: t.accessUntil.toISOString(),
       owner: t.memberships[0]?.user.name ?? '—',
@@ -137,6 +142,9 @@ const PLATFORM_ACTIONS = [
   'user.suspended',
   'user.reactivated',
   'feature_flag.toggled',
+  'plan.updated',
+  'tenant.payment_recorded',
+  'tenant.deleted',
   'platform.admin_granted',
   'membership.role_changed',
 ];

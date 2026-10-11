@@ -13,7 +13,7 @@ const NAV = [
   { href: '/super-admin', key: 'overview', later: false },
   { href: '/super-admin/businesses', key: 'businesses', later: false },
   { href: '/super-admin/users', key: 'users', later: false },
-  { href: '/super-admin/plans', key: 'plans', later: true },
+  { href: '/super-admin/plans', key: 'plans', later: false },
   { href: '/super-admin/templates', key: 'templates', later: true },
   { href: '/super-admin/settings', key: 'settings', later: false },
 ] as const;

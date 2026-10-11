@@ -6,6 +6,7 @@ import { AppError } from '@/lib/errors';
 import { getSessionUser, type SessionUser } from './session';
 import { can, type MembershipRole, type Permission } from './permissions';
 import { isClosed } from '@/modules/billing/access';
+import type { PlanKey } from '@/modules/plans/features';
 import { msg } from '@/i18n/message-ref';
 
 /**
@@ -24,6 +25,8 @@ export interface TenantContext {
   /** Tenant status (TRIAL / ACTIVE) and end of the trial or paid period. */
   status: string;
   accessUntil: Date;
+  /** Subscription plan; what it includes comes from modules/plans. */
+  plan: PlanKey;
   role: MembershipRole;
   userId: string;
   /** Staff profile of the current user in this tenant, if any. */
@@ -73,6 +76,7 @@ export const getTenantContext = cache(async (tenantSlug: string): Promise<Tenant
     locale: t.locale,
     status: t.status,
     accessUntil: t.accessUntil,
+    plan: t.plan,
     role: membership.role,
     userId: user.userId,
     staffId: staff?.id ?? null,

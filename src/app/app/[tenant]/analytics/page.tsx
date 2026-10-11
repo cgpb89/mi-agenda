@@ -17,6 +17,8 @@ import { staffDay } from '@/modules/scheduling/availability';
 import { loadScheduleData } from '@/modules/scheduling/load';
 import { addDays } from '@/modules/scheduling/time';
 import { AnalyticsView } from '@/components/features/analytics/AnalyticsView';
+import { cheapestPlanWith, hasFeature } from '@/modules/plans/features';
+import { entitlementsFor, getPlanCatalog } from '@/modules/plans/service';
 import { getI18n, getLocale } from '@/i18n/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -34,6 +36,16 @@ export default async function AnalyticsPage({
   const { tenant } = await params;
   const sp = await searchParams;
   const ctx = await requireTenantPage(tenant, 'analytics.read');
+  const [plan, catalog] = await Promise.all([entitlementsFor(ctx.plan), getPlanCatalog()]);
+  // Without full analytics: last 7 or 30 days only, no staff/service filters.
+  const limited = !hasFeature(plan, 'fullAnalytics');
+  if (limited) {
+    if (sp.range !== '7d') sp.range = '30d';
+    delete sp.from;
+    delete sp.to;
+    delete sp.staff;
+    delete sp.svc;
+  }
   const db = getDb();
   const now = new Date();
   const range =
@@ -118,6 +130,7 @@ export default async function AnalyticsPage({
   const prev = totals(prevRows, now);
   return (
     <AnalyticsView
+      locked={limited ? { plan: cheapestPlanWith(catalog, 'fullAnalytics') } : null}
       rangeKey={rangeKey}
       range={range}
       granularity={g}

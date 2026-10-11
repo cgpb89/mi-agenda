@@ -191,7 +191,6 @@ export const landing = {
     plans: [
       {
         name: 'Starter',
-        price: { monthly: '$17', annual: '$14' },
         for: 'For one person taking bookings.',
         feats: [
           'One booking page',
@@ -203,7 +202,6 @@ export const landing = {
       },
       {
         name: 'Growth',
-        price: { monthly: '$29', annual: '$24' },
         for: 'For a small team with set schedules.',
         feats: [
           'Everything in Starter',
@@ -215,7 +213,6 @@ export const landing = {
       },
       {
         name: 'Business',
-        price: { monthly: '$59', annual: '$49' },
         for: 'For busy teams and multiple locations.',
         feats: [
           'Everything in Growth',

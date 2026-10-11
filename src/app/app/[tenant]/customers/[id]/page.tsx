@@ -5,6 +5,9 @@ import { requireTenantPage } from '@/lib/auth/authorize';
 import { can } from '@/lib/auth/permissions';
 import { netCollectedMinor } from '@/modules/payments/ledger';
 import { CustomerProfile } from '@/components/features/customers/CustomerProfile';
+import { LockedPage } from '@/components/features/plans/UpgradeCard';
+import { cheapestPlanWith, hasFeature } from '@/modules/plans/features';
+import { entitlementsFor, getPlanCatalog } from '@/modules/plans/service';
 import { getI18n } from '@/i18n/server';
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -19,6 +22,17 @@ export default async function CustomerPage({
 }) {
   const { tenant, id } = await params;
   const ctx = await requireTenantPage(tenant, 'customers.read');
+  const [plan, catalog] = await Promise.all([entitlementsFor(ctx.plan), getPlanCatalog()]);
+  if (!hasFeature(plan, 'customerDirectory')) {
+    const { t } = await getI18n();
+    return (
+      <LockedPage
+        title={t.app.titles.customer}
+        plan={cheapestPlanWith(catalog, 'customerDirectory')}
+        body={t.app.plans.customersBody}
+      />
+    );
+  }
   if (!/^[0-9a-f-]{36}$/i.test(id)) notFound();
   const db = getDb();
   // Tenant-scoped lookup: an ID from another tenant is simply "not found".

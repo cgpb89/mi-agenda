@@ -41,6 +41,7 @@ export const settings = {
     'tenant.reactivated': 'Business reactivated by Tempo',
     'tenant.plan_changed': 'Plan changed',
     'tenant.payment_recorded': 'Plan payment recorded',
+    'plan.updated': 'Plan settings changed',
     'tenant.deleted': 'Business deleted (unpaid)',
   } as Record<string, string>,
   actorCustomer: 'Customer',

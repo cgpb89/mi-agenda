@@ -9,6 +9,8 @@ import { withTransaction } from '@/lib/db/tx';
 import { parseInput, uuidSchema } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
 import { extendAccess } from '@/modules/billing/access';
+import { FEATURE_KEYS, MAX_PHOTOS_CEILING, PLAN_KEYS } from '@/modules/plans/features';
+import type { Prisma } from '@/generated/prisma/client';
 import { msg } from '@/i18n/message-ref';
 
 /*
@@ -173,6 +175,77 @@ export async function recordPaymentAction(
     });
     revalidatePath('/super-admin', 'layout');
     return { accessUntil: accessUntil.toISOString() };
+  });
+}
+
+const planSettingsSchema = z.object({
+  plans: z
+    .array(
+      z.object({
+        plan: z.enum(PLAN_KEYS),
+        priceCrcMinor: z.number().int().min(0).max(100_000_000),
+        priceUsdMinor: z.number().int().min(0).max(1_000_000),
+        staffLimit: z.number().int().min(1).max(1000).nullable(),
+        photoLimit: z.number().int().min(0).max(MAX_PHOTOS_CEILING),
+        features: z.array(z.enum(FEATURE_KEYS)).max(FEATURE_KEYS.length),
+      }),
+    )
+    .min(1)
+    .max(PLAN_KEYS.length),
+});
+
+/**
+ * Save what each plan includes (Super-admin → Plans). Takes effect on the next
+ * request for every business on that plan; existing data is never deleted
+ * (e.g. extra photos are hidden, not removed, when a limit goes down).
+ */
+export async function savePlanSettingsAction(raw: unknown): Promise<ActionResult<undefined>> {
+  return runAction('platform.savePlanSettings', async () => {
+    const admin = await requirePlatformAdmin();
+    const { plans } = parseInput(planSettingsSchema, raw);
+    await withTransaction(async (tx) => {
+      for (const p of plans) {
+        const before = await tx.planSettings.findUnique({ where: { plan: p.plan } });
+        const data = {
+          priceCrcMinor: p.priceCrcMinor,
+          priceUsdMinor: p.priceUsdMinor,
+          staffLimit: p.staffLimit,
+          photoLimit: p.photoLimit,
+          features: [...new Set(p.features)] as Prisma.InputJsonValue,
+          updatedByUserId: admin.userId,
+        };
+        await tx.planSettings.upsert({
+          where: { plan: p.plan },
+          create: { plan: p.plan, ...data },
+          update: data,
+        });
+        await audit(
+          {
+            actorUserId: admin.userId,
+            actorType: 'user',
+            action: 'plan.updated',
+            targetType: 'plan',
+            targetId: p.plan,
+            metadata: {
+              plan: p.plan,
+              from: before
+                ? {
+                    priceCrcMinor: before.priceCrcMinor,
+                    priceUsdMinor: before.priceUsdMinor,
+                    staffLimit: before.staffLimit,
+                    photoLimit: before.photoLimit,
+                    features: before.features,
+                  }
+                : null,
+              to: { ...data, updatedByUserId: undefined },
+            },
+          },
+          tx,
+        );
+      }
+    });
+    revalidatePath('/', 'layout');
+    return undefined;
   });
 }
 

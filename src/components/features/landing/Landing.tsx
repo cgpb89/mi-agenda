@@ -10,6 +10,7 @@ import { OFF, STREET_SPACING, Street } from './Street';
 import styles from './Landing.module.scss';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useI18n } from '@/i18n/client';
+import { annualMonthly } from '@/modules/plans/features';
 
 const SCENES = [
   {
@@ -127,7 +128,16 @@ function target(i: number): [number, number] {
   return [i * STREET_SPACING + o, i * STREET_SPACING - o];
 }
 
-export function Landing() {
+/** Monthly prices for Starter, Growth, Business (same order as the pricing copy). */
+export type LandingPrices = { crcMinor: number; usdMinor: number }[];
+
+/** "₡8 500" (non-breaking space as thousands separator) or "$17". */
+function landingPrice(minor: number, currency: 'CRC' | 'USD'): string {
+  const major = Math.round(minor / 100);
+  return currency === 'CRC' ? `₡${String(major).replace(/B(?=(d{3})+(?!d))/g, ' ')}` : `${major}`;
+}
+
+export function Landing({ prices }: { prices: LandingPrices }) {
   const heroRef = useRef<HTMLElement>(null);
   const worldRef = useRef<HTMLDivElement>(null);
   const heroTextRef = useRef<HTMLDivElement>(null);
@@ -1279,7 +1289,16 @@ export function Landing() {
                       className={styles.display}
                       style={{ fontSize: 48, letterSpacing: '-.04em' }}
                     >
-                      {annual ? p.price.annual : p.price.monthly}
+                      {(() => {
+                        const price = prices[i];
+                        if (!price) return '—';
+                        const currency = locale === 'es' ? 'CRC' : 'USD';
+                        const minor = currency === 'CRC' ? price.crcMinor : price.usdMinor;
+                        return landingPrice(
+                          annual ? annualMonthly(minor, currency === 'CRC' ? 10000 : 100) : minor,
+                          currency,
+                        );
+                      })()}
                     </span>
                     <span style={{ fontSize: 14, opacity: 0.7 }}>
                       {annual ? L.pricing.perMonthYearly : L.pricing.perMonth}

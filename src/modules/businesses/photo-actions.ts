@@ -21,7 +21,8 @@ import { enforceRateLimit } from '@/lib/rate-limit';
 import { parseInput } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
 import { msg } from '@/i18n/message-ref';
-import { MAX_PHOTOS, movePhoto, readPhotos, type StoredPhoto } from './photos';
+import { entitlementsFor } from '@/modules/plans/service';
+import { movePhoto, readPhotos, type StoredPhoto } from './photos';
 
 /*
  * Upload flow: (1) preparePhotoUploadAction signs a direct browser→Cloudinary
@@ -36,7 +37,7 @@ function assertConfigured() {
   if (!isCloudinaryConfigured()) throw new AppError('POLICY', msg('photosUnavailable'));
 }
 
-/** Locks the profile row so concurrent adds can't exceed MAX_PHOTOS. */
+/** Locks the profile row so concurrent adds can't exceed the plan's photo limit. */
 async function lockPhotos(tx: Tx, tenantId: string): Promise<StoredPhoto[]> {
   await tx.$queryRaw`SELECT 1 FROM "app"."business_profiles" WHERE "tenant_id" = ${tenantId}::uuid FOR UPDATE`;
   const profile = await tx.businessProfile.findUniqueOrThrow({
@@ -69,8 +70,9 @@ export async function preparePhotoUploadAction(
       where: { tenantId: ctx.tenantId },
       select: { photos: true },
     });
-    if (readPhotos(profile.photos).length >= MAX_PHOTOS) {
-      throw new AppError('POLICY', msg('photoLimit', { n: MAX_PHOTOS }));
+    const { photoLimit } = await entitlementsFor(ctx.plan);
+    if (readPhotos(profile.photos).length >= photoLimit) {
+      throw new AppError('POLICY', msg('photoLimit', { n: photoLimit }));
     }
     return signUpload(ctx.tenantId);
   });
@@ -94,11 +96,12 @@ export async function addPhotoAction(
     }
     const image = await getImage(publicId);
     if (!image) throw new AppError('VALIDATION', msg('photoMissing'));
+    const { photoLimit } = await entitlementsFor(ctx.plan);
 
     const added = await withTransaction(async (tx) => {
       const photos = await lockPhotos(tx, ctx.tenantId);
       if (photos.some((p) => p.publicId === publicId)) return false;
-      if (photos.length >= MAX_PHOTOS) return null;
+      if (photos.length >= photoLimit) return null;
       await savePhotos(tx, ctx.tenantId, [...photos, { id: randomUUID(), ...image }]);
       await audit(
         {
@@ -117,7 +120,7 @@ export async function addPhotoAction(
     if (added === null) {
       // Lost a race for the last slot: don't leave the upload behind.
       await deleteImage(publicId);
-      throw new AppError('POLICY', msg('photoLimit', { n: MAX_PHOTOS }));
+      throw new AppError('POLICY', msg('photoLimit', { n: photoLimit }));
     }
     // Saved: no longer an abandoned upload for the daily cleanup.
     await removePendingTag(publicId);

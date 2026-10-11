@@ -9,6 +9,8 @@ import { enforceRateLimit } from '@/lib/rate-limit';
 import { nameSchema, optionalTextSchema, parseInput, uuidSchema } from '@/lib/validation';
 import { now } from '@/lib/time';
 import { audit } from '@/modules/audit/audit';
+import { canAddStaff } from '@/modules/plans/features';
+import { entitlementsFor } from '@/modules/plans/service';
 import { msg } from '@/i18n/message-ref';
 
 const staffSchema = z.object({
@@ -28,7 +30,24 @@ export async function saveStaffAction(
     const ctx = await requireTenant(tenantSlug, 'staff.manage');
     await enforceRateLimit('dashboardWriteByUser', ctx.userId);
     const input = parseInput(staffSchema, raw);
+    const plan = await entitlementsFor(ctx.plan);
     const result = await withTransaction(async (tx) => {
+      // Plan staff limit, checked when this save would add an active member.
+      if (input.isActive && plan.staffLimit !== null) {
+        // Serialize concurrent saves for this business so the count can't race.
+        await tx.$queryRaw`SELECT 1 FROM "app"."tenants" WHERE "id" = ${ctx.tenantId}::uuid FOR UPDATE`;
+        const othersActive = await tx.staff.count({
+          where: {
+            tenantId: ctx.tenantId,
+            isActive: true,
+            deletedAt: null,
+            ...(input.id ? { id: { not: input.id } } : {}),
+          },
+        });
+        if (!canAddStaff(plan, othersActive)) {
+          throw new AppError('POLICY', msg('staffLimit', { n: plan.staffLimit }));
+        }
+      }
       const svcCount = await tx.service.count({
         where: { tenantId: ctx.tenantId, id: { in: input.serviceIds }, deletedAt: null },
       });

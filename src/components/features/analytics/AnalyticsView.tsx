@@ -17,8 +17,12 @@ import {
 import type { Bucket, Totals } from '@/modules/analytics/aggregate';
 import type { ResolvedRange } from '@/modules/analytics/service';
 import { useI18n } from '@/i18n/client';
+import { UpgradeCard } from '@/components/features/plans/UpgradeCard';
+import type { PlanKey } from '@/modules/plans/features';
 
 interface Props {
+  /** Set when the plan lacks full analytics: short ranges only, no filters. */
+  locked: { plan: PlanKey | null } | null;
   rangeKey: string;
   range: ResolvedRange;
   granularity: 'hour' | 'day' | 'week' | 'month';
@@ -90,17 +94,21 @@ export function AnalyticsView(p: Props) {
       >
         <Segmented
           label={an.dateRange}
-          items={(['7d', '30d', '90d', '12m'] as const).map((k) => ({
-            key: k,
-            label: an.ranges[k],
-            selected: p.rangeKey === k,
-            href: href({ range: k === '30d' ? null : k, from: null, to: null }),
-          }))}
+          items={(p.locked ? (['7d', '30d'] as const) : (['7d', '30d', '90d', '12m'] as const)).map(
+            (k) => ({
+              key: k,
+              label: an.ranges[k],
+              selected: p.rangeKey === k,
+              href: href({ range: k === '30d' ? null : k, from: null, to: null }),
+            }),
+          )}
         />
       </PageHeader>
       <PageContent>
+        {p.locked ? <UpgradeCard plan={p.locked.plan} body={t.app.plans.analyticsLimited} /> : null}
         <div className={tbl.toolbar}>
           <select
+            hidden={p.locked !== null}
             className={tbl.select}
             aria-label={an.staff}
             value={p.filters.staffId ?? ''}
@@ -116,6 +124,7 @@ export function AnalyticsView(p: Props) {
             ))}
           </select>
           <select
+            hidden={p.locked !== null}
             className={tbl.select}
             aria-label={an.service}
             value={p.filters.serviceId ?? ''}

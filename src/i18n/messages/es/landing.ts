@@ -208,7 +208,6 @@ export const landing: Messages['landing'] = {
     plans: [
       {
         name: 'Starter',
-        price: { monthly: '₡8 500', annual: '₡7 100' },
         for: 'Para una persona que recibe reservas.',
         feats: [
           'Una página de reservas',
@@ -220,7 +219,6 @@ export const landing: Messages['landing'] = {
       },
       {
         name: 'Growth',
-        price: { monthly: '₡15 000', annual: '₡12 500' },
         for: 'Para un equipo pequeño con horarios fijos.',
         feats: [
           'Todo lo de Starter',
@@ -232,7 +230,6 @@ export const landing: Messages['landing'] = {
       },
       {
         name: 'Business',
-        price: { monthly: '₡30 000', annual: '₡25 000' },
         for: 'Para equipos con mucho movimiento y varias sedes.',
         feats: [
           'Todo lo de Growth',

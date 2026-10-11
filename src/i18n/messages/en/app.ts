@@ -8,6 +8,15 @@ export const app = {
   platformAdmin: 'Platform admin ↗',
   signOut: 'Sign out',
   newAppointment: '+ New appointment',
+  plans: {
+    availableFrom: ({ plan }: { plan: string }) => `Available on the ${plan} plan`,
+    upgradeBody: 'Upgrade your plan to unlock this and more.',
+    seePlans: 'See plans',
+    customersBody:
+      'Keep a customer directory with visit history, spend and upcoming bookings for everyone who books with you.',
+    analyticsLimited:
+      'Your plan shows the last 30 days. Upgrade for longer ranges and filters by staff and service.',
+  },
   billing: {
     trialDays: ({ n }: { n: number }) =>
       n === 1 ? 'Free trial: 1 day left' : `Free trial: ${n} days left`,
