@@ -1279,7 +1279,7 @@ export function Landing() {
                       className={styles.display}
                       style={{ fontSize: 48, letterSpacing: '-.04em' }}
                     >
-                      $ —
+                      {annual ? p.price.annual : p.price.monthly}
                     </span>
                     <span style={{ fontSize: 14, opacity: 0.7 }}>
                       {annual ? L.pricing.perMonthYearly : L.pricing.perMonth}

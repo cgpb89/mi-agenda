@@ -177,7 +177,7 @@ export const landing = {
   },
   pricing: {
     title: 'Start free. Grow into it.',
-    sample: 'Sample plans. Final prices are set at launch.',
+    sample: 'Free 30-day trial. Pay yearly and get 2 months free.',
     billing: 'Billing',
     monthly: 'Monthly',
     annual: 'Annual',
@@ -191,6 +191,7 @@ export const landing = {
     plans: [
       {
         name: 'Starter',
+        price: { monthly: '$17', annual: '$14' },
         for: 'For one person taking bookings.',
         feats: [
           'One booking page',
@@ -202,6 +203,7 @@ export const landing = {
       },
       {
         name: 'Growth',
+        price: { monthly: '$39', annual: '$33' },
         for: 'For a small team with set schedules.',
         feats: [
           'Everything in Starter',
@@ -213,6 +215,7 @@ export const landing = {
       },
       {
         name: 'Business',
+        price: { monthly: '$79', annual: '$66' },
         for: 'For busy teams and multiple locations.',
         feats: [
           'Everything in Growth',

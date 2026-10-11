@@ -194,7 +194,7 @@ export const landing: Messages['landing'] = {
   },
   pricing: {
     title: 'Empieza gratis. Crece a tu ritmo.',
-    sample: 'Planes de ejemplo. Los precios finales se definirán en el lanzamiento.',
+    sample: 'Prueba gratis por 30 días. Con el pago anual, 2 meses gratis.',
     billing: 'Facturación',
     monthly: 'Mensual',
     annual: 'Anual',
@@ -208,6 +208,7 @@ export const landing: Messages['landing'] = {
     plans: [
       {
         name: 'Starter',
+        price: { monthly: '₡8 900', annual: '₡7 400' },
         for: 'Para una persona que recibe reservas.',
         feats: [
           'Una página de reservas',
@@ -219,6 +220,7 @@ export const landing: Messages['landing'] = {
       },
       {
         name: 'Growth',
+        price: { monthly: '₡19 900', annual: '₡16 600' },
         for: 'Para un equipo pequeño con horarios fijos.',
         feats: [
           'Todo lo de Starter',
@@ -230,6 +232,7 @@ export const landing: Messages['landing'] = {
       },
       {
         name: 'Business',
+        price: { monthly: '₡39 900', annual: '₡33 300' },
         for: 'Para equipos con mucho movimiento y varias sedes.',
         feats: [
           'Todo lo de Growth',
