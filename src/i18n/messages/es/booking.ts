@@ -99,6 +99,14 @@ export const booking: Messages['booking'] = {
     confirmation: 'Confirmación',
     sentTo: ({ email }) => ` · enviada a ${email}`,
     willConfirm: ({ business }) => ` · ${business} la confirmará`,
+    depositTitle: 'Depósito por SINPE Móvil',
+    depositPay: ({ amount, phone, name }) =>
+      `Para reservar, envía un depósito de ${amount} por SINPE Móvil al ${phone}${name ? ` (${name})` : ''} y escribe abajo el número de comprobante.`,
+    depositRef: 'Número de comprobante SINPE',
+    depositRefHint: 'Lo encuentras en la app de tu banco después de la transferencia.',
+    depositRefInvalid: 'Escribe el número de comprobante SINPE (de 4 a 40 letras o dígitos).',
+    depositReceived: ({ business }) =>
+      ` · Recibimos tu comprobante. ${business} lo revisará y confirmará tu cita.`,
     cancelledTitle: 'Cita cancelada',
     cancelledBody: ({ code }) =>
       `La cita ${code} se canceló. El horario quedó libre para que otra persona lo reserve.`,

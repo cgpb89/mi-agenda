@@ -78,6 +78,7 @@ export default async function AppointmentsPage({
         currency: true,
         status: true,
         source: true,
+        depositStatus: true,
         staff: { select: { displayName: true } },
         payments: { select: { kind: true, amountMinor: true, voidedAt: true } },
       },
@@ -106,6 +107,7 @@ export default async function AppointmentsPage({
         status: r.status,
         source: r.source,
         collectedMinor: netCollectedMinor(r.payments),
+        depositToCheck: r.depositStatus === 'AWAITING' && r.status === 'PENDING',
       }))}
       total={total}
       hasMore={rows.length > limit}

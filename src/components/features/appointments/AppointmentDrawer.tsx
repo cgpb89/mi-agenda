@@ -16,6 +16,8 @@ import {
   moneyFmt,
 } from '@/components/features/shared/format';
 import {
+  confirmDepositAction,
+  rejectDepositAction,
   rescheduleAppointmentAction,
   transitionAppointmentAction,
 } from '@/modules/bookings/actions';
@@ -29,6 +31,7 @@ import { addDaysIso, dayOptions, fmtMin } from './time-options';
 import styles from './AppointmentDrawer.module.scss';
 import { useI18n } from '@/i18n/client';
 import { CUSTOMER_CANCEL_REASON } from '@/modules/bookings/rules';
+import { DEPOSIT_EXPIRED_REASON } from '@/modules/deposits/rules';
 
 /** Hook used by lists/calendar to open the drawer via `?appt=<id>`. */
 export function useOpenAppointment() {
@@ -70,7 +73,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
-  const [confirm, setConfirm] = useState<'cancel' | 'no_show' | null>(null);
+  const [confirm, setConfirm] = useState<'cancel' | 'no_show' | 'rejectDeposit' | null>(null);
   const [cancelReason, setCancelReason] = useState(dr.cancelReasons[0]!);
   const [resched, setResched] = useState<{ date: string; startMin: number } | null>(null);
   const [options, setOptions] = useState<{ startMin: number; available: boolean }[]>([]);
@@ -182,6 +185,20 @@ function AppointmentDrawerBody({ id }: { id: string }) {
   }
 
   const started = d ? new Date(d.startAt).getTime() <= nowMs : false;
+  function reviewDeposit(ok: boolean) {
+    if (!d) return;
+    setActionError(null);
+    startTransition(async () => {
+      const res = ok
+        ? await confirmDepositAction(data.tenant.slug, { appointmentId: d.id })
+        : await rejectDepositAction(data.tenant.slug, { appointmentId: d.id });
+      setConfirm(null);
+      if (!res.ok) return setActionError(res.error.message);
+      afterChange(ok ? dr.toastDepositConfirmed : dr.toastDepositRejected);
+    });
+  }
+
+  const awaitingDeposit = d?.deposit?.status === 'AWAITING' && d.status === 'PENDING';
   const active = d ? d.status === 'PENDING' || d.status === 'CONFIRMED' : false;
   const payLabel = !d
     ? ''
@@ -198,14 +215,37 @@ function AppointmentDrawerBody({ id }: { id: string }) {
   if (d && d.can.manage) {
     if (d.status === 'PENDING' && !started) {
       actions.push(
-        <Button
-          key="confirm"
-          variant="primary"
-          disabled={pending}
-          onClick={() => transition('confirm')}
-        >
-          {dr.confirm}
-        </Button>,
+        awaitingDeposit ? (
+          <Button
+            key="confirm-deposit"
+            variant="primary"
+            disabled={pending || !d.can.pay}
+            onClick={() => reviewDeposit(true)}
+          >
+            {dr.confirmDeposit}
+          </Button>
+        ) : (
+          <Button
+            key="confirm"
+            variant="primary"
+            disabled={pending}
+            onClick={() => transition('confirm')}
+          >
+            {dr.confirm}
+          </Button>
+        ),
+        ...(awaitingDeposit
+          ? [
+              <Button
+                key="reject-deposit"
+                variant="danger"
+                disabled={pending}
+                onClick={() => setConfirm('rejectDeposit')}
+              >
+                {dr.rejectDeposit}
+              </Button>,
+            ]
+          : []),
         <Button
           key="resched"
           disabled={pending}
@@ -353,7 +393,24 @@ function AppointmentDrawerBody({ id }: { id: string }) {
                 <span>{dr.payment}</span>
                 <span>{payLabel}</span>
               </div>
+              {d.deposit ? (
+                <div className={styles.tile}>
+                  <span>{dr.deposit}</span>
+                  <span>
+                    {dr.depositLine({
+                      amount: money(d.deposit.minor, d.currency),
+                      ref: d.deposit.reference,
+                    })}
+                  </span>
+                  <span className={styles.small}>
+                    {dr.depositStatus[d.deposit.status] ?? d.deposit.status}
+                  </span>
+                </div>
+              ) : null}
             </div>
+            {awaitingDeposit && d.can.manage ? (
+              <FormMessage kind="warning">{dr.depositCheck}</FormMessage>
+            ) : null}
             {actionError ? <FormMessage kind="error">{actionError}</FormMessage> : null}
             {d.status === 'CANCELLED' && d.cancelReason ? (
               <span className={styles.small}>
@@ -361,7 +418,9 @@ function AppointmentDrawerBody({ id }: { id: string }) {
                   reason:
                     d.cancelReason === CUSTOMER_CANCEL_REASON
                       ? dr.cancelledByCustomer
-                      : d.cancelReason,
+                      : d.cancelReason === DEPOSIT_EXPIRED_REASON
+                        ? dr.depositStatus.EXPIRED!
+                        : d.cancelReason,
                 })}
               </span>
             ) : null}
@@ -575,6 +634,22 @@ function AppointmentDrawerBody({ id }: { id: string }) {
             )}
           </Field>
         </div>
+      </AlertDialog>
+
+      <AlertDialog
+        open={confirm === 'rejectDeposit'}
+        onClose={() => setConfirm(null)}
+        title={dr.rejectDepositTitle}
+        actions={
+          <>
+            <Button onClick={() => setConfirm(null)}>{dr.goBack}</Button>
+            <Button variant="dangerSolid" disabled={pending} onClick={() => reviewDeposit(false)}>
+              {dr.rejectDeposit}
+            </Button>
+          </>
+        }
+      >
+        {dr.rejectDepositBody}
       </AlertDialog>
 
       <AlertDialog

@@ -59,6 +59,14 @@ export const settings: Messages['settings'] = {
   policyPlaceholder:
     'Cancelación gratuita hasta 4 horas antes. Si llegas más de 15 minutos tarde, puede que tengas que reprogramar.',
   savePolicy: 'Guardar política',
+  deposit: 'Depósito por SINPE Móvil',
+  depositHint:
+    'Los clientes pagan el depósito por SINPE Móvil y escriben el número de comprobante al reservar. La cita queda pendiente hasta que confirmes el depósito; las que no se verifican se cancelan a las 24 horas.',
+  depositModes: { NONE: 'Sin depósito', FIXED: 'Monto fijo', PERCENT: 'Porcentaje del precio' },
+  depositAmount: ({ currency }) => `Depósito (${currency})`,
+  depositPercent: 'Depósito (%)',
+  sinpePhone: 'Número de SINPE Móvil',
+  sinpeName: 'Nombre del titular',
   policySaved: 'Política de reservas guardada',
   business: 'Negocio',
   businessName: 'Nombre del negocio',

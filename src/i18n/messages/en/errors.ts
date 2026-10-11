@@ -157,6 +157,12 @@ export const errors = {
       ? 'Your plan includes 1 active staff member. Upgrade to add more.'
       : `Your plan includes up to ${n} active staff members. Upgrade to add more.`,
 
+  // Deposits
+  sinpePhoneRequired: 'Add the SINPE Móvil number customers should pay to.',
+  depositValue: 'Enter a deposit amount (or a percentage from 1 to 100).',
+  depositReference: 'Enter the SINPE receipt number (4 to 40 letters or digits).',
+  depositNotAwaiting: 'This deposit was already handled.',
+
   // Billing
   storeClosed: 'This business is closed until its plan is paid.',
 

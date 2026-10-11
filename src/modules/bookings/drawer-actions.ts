@@ -70,6 +70,10 @@ export async function getAppointmentDetailsAction(
         note: p.note,
       })),
       collectedMinor: netCollectedMinor(a.payments),
+      deposit:
+        a.depositMinor && a.depositStatus
+          ? { minor: a.depositMinor, reference: a.depositReference ?? '', status: a.depositStatus }
+          : null,
       can: {
         manage:
           can(ctx.role, 'appointments.manage.any') ||

@@ -60,6 +60,14 @@ export const settings = {
   policyPlaceholder:
     'Free cancellation up to 4 hours before. Late arrivals over 15 minutes may need to rebook.',
   savePolicy: 'Save policy',
+  deposit: 'SINPE Móvil deposit',
+  depositHint:
+    'Customers pay the deposit by SINPE Móvil and type the receipt number when booking. Bookings stay pending until you confirm the deposit; unverified ones are cancelled after 24 hours.',
+  depositModes: { NONE: 'No deposit', FIXED: 'Fixed amount', PERCENT: 'Percentage of the price' },
+  depositAmount: ({ currency }: { currency: string }) => `Deposit (${currency})`,
+  depositPercent: 'Deposit (%)',
+  sinpePhone: 'SINPE Móvil number',
+  sinpeName: 'Account holder name',
   policySaved: 'Booking policy saved',
   business: 'Business',
   businessName: 'Business name',

@@ -98,6 +98,14 @@ export const booking = {
     confirmation: 'Confirmation',
     sentTo: ({ email }: { email: string }) => ` · sent to ${email}`,
     willConfirm: ({ business }: { business: string }) => ` · ${business} will confirm it`,
+    depositTitle: 'Deposit by SINPE Móvil',
+    depositPay: ({ amount, phone, name }: { amount: string; phone: string; name: string }) =>
+      `To book, send a ${amount} deposit by SINPE Móvil to ${phone}${name ? ` (${name})` : ''}, then type the receipt number below.`,
+    depositRef: 'SINPE receipt number',
+    depositRefHint: 'You can find it in your bank app after the transfer.',
+    depositRefInvalid: 'Enter the SINPE receipt number (4 to 40 letters or digits).',
+    depositReceived: ({ business }: { business: string }) =>
+      ` · We got your deposit receipt. ${business} will check it and confirm your appointment.`,
     cancelledTitle: 'Appointment cancelled',
     cancelledBody: ({ code }: { code: string }) =>
       `${code} was cancelled. The time is open for others to book.`,

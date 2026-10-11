@@ -26,6 +26,8 @@ export interface ApptRowView {
   status: Status;
   source: 'ONLINE' | 'PHONE' | 'WALK_IN';
   collectedMinor: number;
+  /** A SINPE deposit is waiting for staff to verify it. */
+  depositToCheck: boolean;
 }
 
 const CHIPS: (Status | null)[] = [
@@ -200,6 +202,13 @@ export function AppointmentsView({
                   </td>
                   <td>
                     <StatusPill status={r.status} size="sm" />
+                    {r.depositToCheck ? (
+                      <div
+                        style={{ fontSize: 11, fontWeight: 700, color: '#a3570f', marginTop: 4 }}
+                      >
+                        {al.depositToCheck}
+                      </div>
+                    ) : null}
                   </td>
                   <td className={tbl.muted}>{al.source[r.source]}</td>
                   {showPayments ? (

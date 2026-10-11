@@ -113,4 +113,40 @@ ${address}
 Need to reschedule or cancel? Use this link (it replaces earlier ones):
 ${link}
 `,
+  // Customer: booking confirmed by the business (incl. deposit verified)
+  confirmedSubject: ({ service, business }: { service: string; business: string }) =>
+    `Confirmed: ${service} at ${business}`,
+  confirmedBody: ({
+    service,
+    staff,
+    when,
+    timezone,
+    address,
+    deposit,
+    link,
+  }: {
+    service: string;
+    staff: string;
+    when: string;
+    timezone: string;
+    address: string;
+    deposit: string;
+    link: string;
+  }) =>
+    `Your appointment is confirmed.\n\n${service} with ${staff}\n${when} (${timezone})\n${address}\n${deposit ? `Deposit received: ${deposit}\n` : ''}\nView, reschedule or cancel (this link replaces earlier ones):\n${link}\n`,
+  // Customer: deposit not verified (rejected by the business or expired)
+  depositFailedSubject: ({ service, business }: { service: string; business: string }) =>
+    `Booking cancelled: ${service} at ${business}`,
+  depositFailedBody: ({
+    service,
+    business,
+    when,
+    expired,
+  }: {
+    service: string;
+    business: string;
+    when: string;
+    expired: boolean;
+  }) =>
+    `Your booking for ${service} on ${when} was cancelled because ${expired ? `the SINPE deposit couldn't be verified within 24 hours` : `${business} couldn't verify the SINPE deposit`}.\n\nIf you already paid, please contact ${business} directly.\n`,
 };

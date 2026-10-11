@@ -151,6 +151,7 @@ enum PaymentMethod {
   CASH
   CARD
   OTHER
+  SINPE
 
   @@schema("app")
 }
@@ -346,6 +347,11 @@ model BookingPolicy {
   /// Online bookings start CONFIRMED when true, PENDING otherwise.
   autoConfirm                   Boolean  @default(true) @map("auto_confirm")
   policyText                    String?  @map("policy_text") @db.VarChar(600)
+  /// SINPE Móvil deposit (plan feature `sinpeDeposits`): NONE | FIXED (minor units) | PERCENT (1-100).
+  depositMode                   String   @default("NONE") @map("deposit_mode") @db.VarChar(8)
+  depositValue                  Int      @default(0) @map("deposit_value")
+  sinpePhone                    String?  @map("sinpe_phone") @db.VarChar(32)
+  sinpeName                     String?  @map("sinpe_name") @db.VarChar(120)
   updatedByUserId               String?  @map("updated_by_user_id") @db.Uuid
   updatedAt                     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -535,6 +541,11 @@ model Appointment {
   locale              String?           @db.VarChar(5)
   /// When the 24-hour email reminder was sent (hourly reminders job).
   reminderSentAt      DateTime?         @map("reminder_sent_at") @db.Timestamptz(3)
+  /// SINPE deposit asked at booking, the customer's SINPE reference, and its review state
+  /// (AWAITING | CONFIRMED | REJECTED | EXPIRED).
+  depositMinor        Int?              @map("deposit_minor")
+  depositReference    String?           @map("deposit_reference") @db.VarChar(40)
+  depositStatus       String?           @map("deposit_status") @db.VarChar(10)
   internalNote        String?           @map("internal_note") @db.VarChar(1000)
   /// HMAC of the customer's self-service link token.
   manageTokenHash     String?           @unique @map("manage_token_hash") @db.VarChar(64)

@@ -3,6 +3,12 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
 import { flowTheme, glassVars, type TemplateKey } from './themes';
+import {
+  DEPOSIT_REFERENCE,
+  depositFor,
+  normalizeDepositReference,
+  type DepositPolicy,
+} from '@/modules/deposits/rules';
 import { demoAvailability, type DemoBusiness } from '@/components/features/landing/demo-data';
 import styles from './BookingFlow.module.scss';
 import { LOCALE_HEADER } from '@/i18n/config';
@@ -55,6 +61,8 @@ interface Props {
   country: string;
   address: string | null;
   policyText: string | null;
+  /** SINPE deposit settings when the business asks for one (plan feature). */
+  deposit?: DepositPolicy & { sinpeName: string | null };
   requireEmail: boolean;
   minNoticeMin: number;
   cancellationWindowMin: number;
@@ -79,6 +87,8 @@ interface Done {
   priceMinor: number;
   managePath: string | null;
   emailed: boolean;
+  /** Deposit asked with this booking (minor units), awaiting staff confirmation. */
+  depositMinor?: number | null;
 }
 
 interface Availability {
@@ -172,6 +182,7 @@ export function BookingFlow(props: Props) {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitErr, setSubmitErr] = useState('');
+  const [depositRef, setDepositRef] = useState('');
   const [avail, setAvail] = useState<Availability | null>(null);
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState<Done | null>(
@@ -197,6 +208,10 @@ export function BookingFlow(props: Props) {
   const detailsShownAt = useRef<number | null>(null);
 
   const svc = props.services.find((s) => s.id === svcId) ?? null;
+  const depositMinor =
+    !resched && !props.existing && props.deposit && svc
+      ? depositFor(props.deposit, svc.priceMinor, props.currency)
+      : null;
   const dur = svc?.durationMin ?? props.existing?.durationMin ?? 30;
   const canModify = props.existing ? props.existing.canModify && !cancelled : !cancelled;
 
@@ -286,6 +301,10 @@ export function BookingFlow(props: Props) {
   }
 
   async function confirm() {
+    if (depositMinor && !DEPOSIT_REFERENCE.test(normalizeDepositReference(depositRef))) {
+      setSubmitErr(f.depositRefInvalid);
+      return;
+    }
     if (props.demo) {
       setSubmitting(true);
       await new Promise((r) => setTimeout(r, 700));
@@ -348,6 +367,7 @@ export function BookingFlow(props: Props) {
           idempotencyKey: idemKey.current,
           website: form.website,
           startedAt: detailsShownAt.current ?? undefined,
+          depositReference: depositMinor ? normalizeDepositReference(depositRef) : undefined,
         }),
       });
       const data = await res.json();
@@ -831,6 +851,31 @@ export function BookingFlow(props: Props) {
               ))}
             </div>
             {props.policyText ? <div className={styles.small}>{props.policyText}</div> : null}
+            {depositMinor && props.deposit ? (
+              <div className={styles.deposit}>
+                <strong>{f.depositTitle}</strong>
+                <span>
+                  {f.depositPay({
+                    amount: money(depositMinor, props.currency),
+                    phone: props.deposit.sinpePhone ?? '',
+                    name: props.deposit.sinpeName ?? '',
+                  })}
+                </span>
+                <label className={styles.label}>
+                  {f.depositRef}
+                  <input
+                    className={styles.input}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={40}
+                    value={depositRef}
+                    aria-invalid={submitErr === f.depositRefInvalid ? true : undefined}
+                    onChange={(e) => setDepositRef(e.target.value)}
+                  />
+                  <span className={styles.small}>{f.depositRefHint}</span>
+                </label>
+              </div>
+            ) : null}
             {submitErr ? (
               <div role="alert" className={styles.alert}>
                 {submitErr}
@@ -864,7 +909,11 @@ export function BookingFlow(props: Props) {
                 <div className={styles.small} style={{ fontSize: 14 }}>
                   {f.confirmation} <span className={styles.mono}>{done.confirmationCode}</span>
                   {done.emailed ? f.sentTo({ email: form.email }) : ''}
-                  {done.status === 'PENDING' ? f.willConfirm({ business: props.businessName }) : ''}
+                  {done.status === 'PENDING'
+                    ? done.depositMinor
+                      ? f.depositReceived({ business: props.businessName })
+                      : f.willConfirm({ business: props.businessName })
+                    : ''}
                 </div>
               </div>
             ) : (

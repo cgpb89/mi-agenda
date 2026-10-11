@@ -31,5 +31,7 @@ export interface AppointmentDetails {
     note: string | null;
   }[];
   collectedMinor: number;
+  /** SINPE deposit asked at booking, if any. */
+  deposit: { minor: number; reference: string; status: string } | null;
   can: { manage: boolean; pay: boolean; void: boolean; rebook: boolean };
 }

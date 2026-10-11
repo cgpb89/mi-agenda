@@ -141,6 +141,10 @@ export const errors: Messages['errors'] = {
     n === 1
       ? 'Tu plan incluye 1 miembro activo del equipo. Mejora tu plan para agregar más.'
       : `Tu plan incluye hasta ${n} miembros activos del equipo. Mejora tu plan para agregar más.`,
+  sinpePhoneRequired: 'Agrega el número de SINPE Móvil al que deben pagar los clientes.',
+  depositValue: 'Indica el monto del depósito (o un porcentaje de 1 a 100).',
+  depositReference: 'Escribe el número de comprobante SINPE (de 4 a 40 letras o dígitos).',
+  depositNotAwaiting: 'Este depósito ya fue gestionado.',
   storeClosed: 'Este negocio está cerrado hasta que se pague su plan.',
   alreadySuspended: 'Ya está suspendido.',
   notSuspended: 'Este negocio no está suspendido.',

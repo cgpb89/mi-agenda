@@ -55,4 +55,10 @@ ${address}
 ¿Necesitas reprogramar o cancelar? Usa este enlace (reemplaza los anteriores):
 ${link}
 `,
+  confirmedSubject: ({ service, business }) => `Confirmada: ${service} en ${business}`,
+  confirmedBody: ({ service, staff, when, timezone, address, deposit, link }) =>
+    `Tu cita está confirmada.\n\n${service} con ${staff}\n${when} (${timezone})\n${address}\n${deposit ? `Depósito recibido: ${deposit}\n` : ''}\nVer, reprogramar o cancelar (este enlace reemplaza los anteriores):\n${link}\n`,
+  depositFailedSubject: ({ service, business }) => `Reserva cancelada: ${service} en ${business}`,
+  depositFailedBody: ({ service, business, when, expired }) =>
+    `Tu reserva de ${service} para el ${when} se canceló porque ${expired ? 'no se pudo verificar el depósito por SINPE en 24 horas' : `${business} no pudo verificar el depósito por SINPE`}.\n\nSi ya pagaste, comunícate directamente con ${business}.\n`,
 };

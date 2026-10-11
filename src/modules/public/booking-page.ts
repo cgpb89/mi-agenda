@@ -10,6 +10,7 @@ import {
 } from '@/modules/businesses/page-content';
 import { readLogo, readPhotos } from '@/modules/businesses/photos';
 import { hasFeature } from '@/modules/plans/features';
+import type { DepositMode, DepositPolicy } from '@/modules/deposits/rules';
 import { entitlementsFor } from '@/modules/plans/service';
 
 /**
@@ -51,6 +52,8 @@ export interface PublicPage {
     policyText: string | null;
     cancellationWindowMin: number;
     minNoticeMin: number;
+    /** SINPE deposit settings, when the plan includes them and the business asks for one. */
+    deposit: (DepositPolicy & { sinpeName: string | null }) | null;
   };
   services: {
     id: string;
@@ -143,6 +146,10 @@ export async function loadPublicPage(
           policyText: true,
           cancellationWindowMin: true,
           minNoticeMin: true,
+          depositMode: true,
+          depositValue: true,
+          sinpePhone: true,
+          sinpeName: true,
         },
       },
     },
@@ -225,7 +232,21 @@ export async function loadPublicPage(
         : summarizeHours(rules, locale),
       content,
     },
-    policy: t.policy,
+    policy: {
+      requireEmail: t.policy.requireEmail,
+      policyText: t.policy.policyText,
+      cancellationWindowMin: t.policy.cancellationWindowMin,
+      minNoticeMin: t.policy.minNoticeMin,
+      deposit:
+        hasFeature(plan, 'sinpeDeposits') && t.policy.depositMode !== 'NONE' && t.policy.sinpePhone
+          ? {
+              mode: t.policy.depositMode as DepositMode,
+              value: t.policy.depositValue,
+              sinpePhone: t.policy.sinpePhone,
+              sinpeName: t.policy.sinpeName,
+            }
+          : null,
+    },
     services: services
       .map((s) => ({
         id: s.id,

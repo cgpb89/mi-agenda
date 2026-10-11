@@ -17,10 +17,12 @@ import { formatPhone } from '@/lib/phone';
 import { LOCAL_DATE_RE } from '@/modules/scheduling/time';
 import { createAppointment, rescheduleAppointment } from './engine';
 import { transitionAppointment } from './lifecycle';
+import { sendConfirmedEmail, sendDepositFailedEmail } from './notify';
+import { confirmDeposit, rejectDeposit } from '@/modules/deposits/service';
 import { checkStaffSlot, type SlotCheck } from './staff-check';
 import { appointmentRef } from './rules';
 import { msg } from '@/i18n/message-ref';
-import { getLocale } from '@/i18n/server';
+import { getI18n, getLocale } from '@/i18n/server';
 
 /*
  * Dashboard appointment actions. Every action:
@@ -171,7 +173,71 @@ export async function transitionAppointmentAction(
         ),
     });
     revalidatePath(`/app/${tenantSlug}`, 'layout');
+    if (input.action === 'confirm') await sendConfirmedEmail(input.appointmentId);
     return { status: updated.status };
+  });
+}
+
+const depositSchema = z.object({
+  appointmentId: uuidSchema,
+  reason: optionalTextSchema(200),
+});
+
+/** SINPE deposit verified: records the payment and confirms the booking. */
+export async function confirmDepositAction(
+  tenantSlug: string,
+  raw: unknown,
+): Promise<ActionResult<undefined>> {
+  return runAction('confirmDeposit', async () => {
+    const ctx = await requireTenant(tenantSlug, 'appointments.read');
+    await enforceRateLimit('dashboardWriteByUser', ctx.userId);
+    const { appointmentId } = parseInput(depositSchema, raw);
+    await confirmDeposit({
+      tenantId: ctx.tenantId,
+      appointmentId,
+      actorUserId: ctx.userId,
+      guard: (appt) => {
+        assertCanManageAssigned(
+          ctx,
+          'appointments.manage.any',
+          'appointments.manage.own',
+          appt.staffId,
+        );
+        assertCanManageAssigned(ctx, 'payments.record.any', 'payments.record.own', appt.staffId);
+      },
+    });
+    revalidatePath(`/app/${tenantSlug}`, 'layout');
+    await sendConfirmedEmail(appointmentId);
+    return undefined;
+  });
+}
+
+/** SINPE deposit couldn't be verified: cancels the booking and tells the customer. */
+export async function rejectDepositAction(
+  tenantSlug: string,
+  raw: unknown,
+): Promise<ActionResult<undefined>> {
+  return runAction('rejectDeposit', async () => {
+    const ctx = await requireTenant(tenantSlug, 'appointments.read');
+    await enforceRateLimit('dashboardWriteByUser', ctx.userId);
+    const { appointmentId, reason } = parseInput(depositSchema, raw);
+    const { t } = await getI18n();
+    await rejectDeposit({
+      tenantId: ctx.tenantId,
+      appointmentId,
+      actorUserId: ctx.userId,
+      reason: reason ?? t.appointments.drawer.depositRejectedReason,
+      guard: (appt) =>
+        assertCanManageAssigned(
+          ctx,
+          'appointments.manage.any',
+          'appointments.manage.own',
+          appt.staffId,
+        ),
+    });
+    revalidatePath(`/app/${tenantSlug}`, 'layout');
+    await sendDepositFailedEmail(appointmentId, false);
+    return undefined;
   });
 }
 

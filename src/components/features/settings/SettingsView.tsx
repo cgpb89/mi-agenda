@@ -20,6 +20,8 @@ import {
 } from '@/modules/tenants/actions';
 import { useI18n } from '@/i18n/client';
 import { countryName } from '@/i18n/format';
+import { DEPOSIT_MODES, type DepositMode } from '@/modules/deposits/rules';
+import type { PlanKey } from '@/modules/plans/features';
 
 type Role = 'OWNER' | 'MANAGER' | 'STAFF';
 
@@ -42,7 +44,13 @@ export function SettingsView(props: {
     autoConfirm: boolean;
     policyText: string;
     updatedAt: string;
+    depositMode: DepositMode;
+    depositValue: string;
+    sinpePhone: string;
+    sinpeName: string;
   };
+  /** Undefined when the plan includes deposits; otherwise the plan that unlocks them. */
+  depositsLockedPlan?: PlanKey | null;
   canPolicy: boolean;
   canRoles: boolean;
   canInvite: boolean;
@@ -175,6 +183,92 @@ export function SettingsView(props: {
               />
               {se.autoConfirm}
             </label>
+            <fieldset
+              disabled={!props.canPolicy || props.depositsLockedPlan !== undefined}
+              style={{
+                border: 0,
+                padding: 0,
+                margin: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 10,
+              }}
+            >
+              {props.depositsLockedPlan !== undefined ? (
+                <span style={{ fontSize: 12, color: '#c4581f', fontWeight: 600 }}>
+                  {t.app.plans.availableFrom({
+                    plan: props.depositsLockedPlan
+                      ? (t.settings.plans[props.depositsLockedPlan] ?? props.depositsLockedPlan)
+                      : '—',
+                  })}
+                </span>
+              ) : null}
+              <div className={formStyles.grid2}>
+                <Field label={se.deposit}>
+                  {(p) => (
+                    <Select
+                      {...p}
+                      value={policy.depositMode}
+                      onChange={(e) =>
+                        setPolicy({ ...policy, depositMode: e.target.value as DepositMode })
+                      }
+                    >
+                      {DEPOSIT_MODES.map((m) => (
+                        <option key={m} value={m}>
+                          {se.depositModes[m]}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                </Field>
+                {policy.depositMode !== 'NONE' ? (
+                  <Field
+                    label={
+                      policy.depositMode === 'FIXED'
+                        ? se.depositAmount({ currency: props.business.currency })
+                        : se.depositPercent
+                    }
+                  >
+                    {(p) => (
+                      <Input
+                        {...p}
+                        type="number"
+                        min={1}
+                        max={policy.depositMode === 'PERCENT' ? 100 : undefined}
+                        value={policy.depositValue}
+                        onChange={(e) => setPolicy({ ...policy, depositValue: e.target.value })}
+                      />
+                    )}
+                  </Field>
+                ) : null}
+              </div>
+              {policy.depositMode !== 'NONE' ? (
+                <div className={formStyles.grid2}>
+                  <Field label={se.sinpePhone}>
+                    {(p) => (
+                      <Input
+                        {...p}
+                        maxLength={32}
+                        placeholder="8888 8888"
+                        value={policy.sinpePhone}
+                        onChange={(e) => setPolicy({ ...policy, sinpePhone: e.target.value })}
+                      />
+                    )}
+                  </Field>
+                  <Field label={se.sinpeName} hint={se.optional}>
+                    {(p) => (
+                      <Input
+                        {...p}
+                        maxLength={120}
+                        value={policy.sinpeName}
+                        onChange={(e) => setPolicy({ ...policy, sinpeName: e.target.value })}
+                      />
+                    )}
+                  </Field>
+                </div>
+              ) : null}
+              <span style={{ fontSize: 12, color: '#6b6358' }}>{se.depositHint}</span>
+            </fieldset>
             <Field label={se.policyText} hint={se.optional}>
               {(p) => (
                 <Textarea
@@ -203,6 +297,16 @@ export function SettingsView(props: {
                           requireEmail: policy.requireEmail,
                           autoConfirm: policy.autoConfirm,
                           policyText: policy.policyText,
+                          ...(props.depositsLockedPlan === undefined
+                            ? {
+                                deposit: {
+                                  mode: policy.depositMode,
+                                  value: policy.depositValue || 0,
+                                  sinpePhone: policy.sinpePhone,
+                                  sinpeName: policy.sinpeName,
+                                },
+                              }
+                            : {}),
                         }),
                       se.policySaved,
                     )

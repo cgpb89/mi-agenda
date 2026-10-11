@@ -4,6 +4,9 @@ import { requireTenantPage } from '@/lib/auth/authorize';
 import { can } from '@/lib/auth/permissions';
 import { SettingsView } from '@/components/features/settings/SettingsView';
 import { getI18n } from '@/i18n/server';
+import type { DepositMode } from '@/modules/deposits/rules';
+import { cheapestPlanWith, hasFeature } from '@/modules/plans/features';
+import { entitlementsFor, getPlanCatalog } from '@/modules/plans/service';
 
 export async function generateMetadata(): Promise<Metadata> {
   const { t } = await getI18n();
@@ -15,6 +18,7 @@ export default async function SettingsPage({ params }: { params: Promise<{ tenan
   const { t: tr } = await getI18n();
   const ctx = await requireTenantPage(tenant, 'business.manage');
   const db = getDb();
+  const [plan, catalog] = await Promise.all([entitlementsFor(ctx.plan), getPlanCatalog()]);
   const [t, policy, members, invites, events] = await Promise.all([
     db.tenant.findUniqueOrThrow({
       where: { id: ctx.tenantId },
@@ -76,7 +80,18 @@ export default async function SettingsPage({ params }: { params: Promise<{ tenan
         autoConfirm: policy.autoConfirm,
         policyText: policy.policyText ?? '',
         updatedAt: policy.updatedAt.toISOString(),
+        depositMode: policy.depositMode as DepositMode,
+        // FIXED is shown in major units, PERCENT as-is.
+        depositValue:
+          policy.depositMode === 'FIXED'
+            ? String(policy.depositValue / 100)
+            : String(policy.depositValue || ''),
+        sinpePhone: policy.sinpePhone ?? '',
+        sinpeName: policy.sinpeName ?? '',
       }}
+      depositsLockedPlan={
+        hasFeature(plan, 'sinpeDeposits') ? undefined : cheapestPlanWith(catalog, 'sinpeDeposits')
+      }
       canPolicy={can(ctx.role, 'policy.manage')}
       canRoles={can(ctx.role, 'team.roles')}
       canInvite={can(ctx.role, 'team.invite')}

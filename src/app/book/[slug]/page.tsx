@@ -48,6 +48,7 @@ export default async function BookingPage({ params, searchParams }: Params) {
       country={page.country}
       address={page.profile.address}
       policyText={page.policy.policyText}
+      deposit={page.policy.deposit ?? undefined}
       requireEmail={page.policy.requireEmail}
       minNoticeMin={page.policy.minNoticeMin}
       cancellationWindowMin={page.policy.cancellationWindowMin}

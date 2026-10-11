@@ -12,6 +12,7 @@ import { nameSchema, optionalEmailSchema, optionalTextSchema, parseInput } from 
 import { audit } from '@/modules/audit/audit';
 import { MAX_ACTIVE_PER_PHONE_MAX, MAX_ACTIVE_PER_PHONE_MIN } from '@/modules/bookings/rules';
 import { pageContentSchema, readPageContent } from './page-content';
+import { DEPOSIT_MODES } from '@/modules/deposits/rules';
 import { hasFeature } from '@/modules/plans/features';
 import { entitlementsFor } from '@/modules/plans/service';
 import { msg } from '@/i18n/message-ref';
@@ -153,6 +154,22 @@ const policySchema = z.object({
   requireEmail: z.boolean(),
   autoConfirm: z.boolean(),
   policyText: optionalTextSchema(600, true),
+  /** SINPE Móvil deposit (plan feature `sinpeDeposits`). FIXED value is in major units. */
+  deposit: z
+    .object({
+      mode: z.enum(DEPOSIT_MODES),
+      value: z.coerce.number().min(0).max(1_000_000),
+      sinpePhone: optionalTextSchema(32),
+      sinpeName: optionalTextSchema(120),
+    })
+    .superRefine((d, ctx) => {
+      if (d.mode === 'NONE') return;
+      if (!d.sinpePhone)
+        ctx.addIssue({ code: 'custom', path: ['sinpePhone'], message: msg('sinpePhoneRequired') });
+      const ok = d.mode === 'PERCENT' ? d.value >= 1 && d.value <= 100 : d.value >= 1;
+      if (!ok) ctx.addIssue({ code: 'custom', path: ['value'], message: msg('depositValue') });
+    })
+    .optional(),
 });
 
 /** Owner-configured booking policy, including the per-phone active-appointment limit. Audited. */
@@ -162,14 +179,35 @@ export async function savePolicyAction(
 ): Promise<ActionResult<undefined>> {
   return runAction('savePolicy', async () => {
     const ctx = await requireTenant(tenantSlug, 'policy.manage');
-    const input = parseInput(policySchema, raw);
+    const { deposit, ...input } = parseInput(policySchema, raw);
+    const plan = await entitlementsFor(ctx.plan);
+    // Without the feature, deposit settings are kept as they are (not shown or used).
+    const depositData =
+      deposit && hasFeature(plan, 'sinpeDeposits')
+        ? {
+            depositMode: deposit.mode,
+            depositValue:
+              deposit.mode === 'NONE'
+                ? 0
+                : deposit.mode === 'FIXED'
+                  ? Math.round(deposit.value * 100)
+                  : Math.round(deposit.value),
+            sinpePhone: deposit.sinpePhone ?? null,
+            sinpeName: deposit.sinpeName ?? null,
+          }
+        : {};
     await withTransaction(async (tx) => {
       const before = await tx.bookingPolicy.findUniqueOrThrow({
         where: { tenantId: ctx.tenantId },
       });
       await tx.bookingPolicy.update({
         where: { tenantId: ctx.tenantId },
-        data: { ...input, policyText: input.policyText ?? null, updatedByUserId: ctx.userId },
+        data: {
+          ...input,
+          ...depositData,
+          policyText: input.policyText ?? null,
+          updatedByUserId: ctx.userId,
+        },
       });
       await audit(
         {
@@ -190,6 +228,9 @@ export async function savePolicyAction(
             },
             requireEmail: input.requireEmail,
             autoConfirm: input.autoConfirm,
+            ...('depositMode' in depositData
+              ? { deposit: { mode: depositData.depositMode, value: depositData.depositValue } }
+              : {}),
           },
         },
         tx,

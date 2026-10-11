@@ -24,6 +24,14 @@ import {
   wouldExceedPhoneLimit,
 } from './rules';
 import { isClosed } from '@/modules/billing/access';
+import {
+  DEPOSIT_REFERENCE,
+  depositFor,
+  normalizeDepositReference,
+  type DepositMode,
+} from '@/modules/deposits/rules';
+import { hasFeature, type PlanKey } from '@/modules/plans/features';
+import { entitlementsFor } from '@/modules/plans/service';
 import { msg } from '@/i18n/message-ref';
 
 /**
@@ -66,6 +74,8 @@ export interface CreateAppointmentInput {
   customerNote?: string;
   /** Customer's language (public bookings), for reminders. */
   locale?: string;
+  /** SINPE receipt number typed by the customer (public bookings with a deposit). */
+  depositReference?: string;
   internalNote?: string;
   source: 'ONLINE' | 'PHONE' | 'WALK_IN';
   idempotencyKey?: string;
@@ -88,6 +98,8 @@ export interface CreatedAppointment {
   currency: string;
   /** Raw manage-link token. Returned once; only its HMAC is stored. */
   manageToken: string | null;
+  /** SINPE deposit asked with the booking (minor units), if any. */
+  depositMinor: number | null;
   replayed: boolean;
 }
 
@@ -122,6 +134,7 @@ interface TenantBits {
   country: string;
   status: string;
   accessUntil: Date;
+  plan: PlanKey;
   pageStatus: string | null;
   policy: {
     maxActiveAppointmentsPerPhone: number;
@@ -130,6 +143,9 @@ interface TenantBits {
     maxAdvanceDays: number;
     autoConfirm: boolean;
     requireEmail: boolean;
+    depositMode: string;
+    depositValue: number;
+    sinpePhone: string | null;
   };
 }
 
@@ -143,6 +159,7 @@ async function loadTenant(tx: Tx, tenantId: string): Promise<TenantBits> {
       country: true,
       status: true,
       accessUntil: true,
+      plan: true,
       profile: { select: { pageStatus: true } },
       policy: true,
     },
@@ -155,6 +172,7 @@ async function loadTenant(tx: Tx, tenantId: string): Promise<TenantBits> {
     country: t.country,
     status: t.status,
     accessUntil: t.accessUntil,
+    plan: t.plan,
     pageStatus: t.profile?.pageStatus ?? null,
     policy: t.policy,
   };
@@ -263,6 +281,7 @@ async function replayIdempotent(
     quotedPriceMinor: existing.quotedPriceMinor,
     currency: existing.currency,
     manageToken,
+    depositMinor: existing.depositMinor,
     replayed: true,
   };
 }
@@ -447,7 +466,32 @@ async function createInTx(tx: Tx, input: CreateAppointmentInput): Promise<Create
   }
 
   const manageToken = input.mode === 'public' ? generateToken(32) : null;
-  const status = input.mode === 'public' && !tenant.policy.autoConfirm ? 'PENDING' : 'CONFIRMED';
+  // SINPE deposit: decided here from the policy and plan, never from the client.
+  // A booking with a deposit stays PENDING until staff confirm the payment.
+  const depositMinor =
+    input.mode === 'public' && hasFeature(await entitlementsFor(tenant.plan), 'sinpeDeposits')
+      ? depositFor(
+          {
+            mode: tenant.policy.depositMode as DepositMode,
+            value: tenant.policy.depositValue,
+            sinpePhone: tenant.policy.sinpePhone,
+          },
+          service.priceMinor,
+          service.currency,
+        )
+      : null;
+  const depositReference = depositMinor
+    ? normalizeDepositReference(input.depositReference ?? '')
+    : null;
+  if (depositMinor && !DEPOSIT_REFERENCE.test(depositReference ?? '')) {
+    throw new AppError('VALIDATION', msg('depositReference'), {
+      fieldErrors: { depositReference: msg('depositReference') },
+    });
+  }
+  const status =
+    input.mode === 'public' && (depositMinor || !tenant.policy.autoConfirm)
+      ? 'PENDING'
+      : 'CONFIRMED';
 
   const created = await tx.appointment.create({
     data: {
@@ -474,6 +518,9 @@ async function createInTx(tx: Tx, input: CreateAppointmentInput): Promise<Create
       idempotencyKey: input.idempotencyKey ?? null,
       createdByUserId: input.actorUserId ?? null,
       confirmedAt: status === 'CONFIRMED' ? now : null,
+      depositMinor,
+      depositReference,
+      depositStatus: depositMinor ? 'AWAITING' : null,
     },
   });
 
@@ -509,6 +556,7 @@ async function createInTx(tx: Tx, input: CreateAppointmentInput): Promise<Create
     quotedPriceMinor: service.priceMinor,
     currency: service.currency,
     manageToken,
+    depositMinor,
     replayed: false,
   };
 }

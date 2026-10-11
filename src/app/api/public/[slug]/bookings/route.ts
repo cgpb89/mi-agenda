@@ -31,6 +31,8 @@ const bodySchema = z.object({
   phone: z.string().max(32),
   phoneCountry: z.string().length(2),
   notes: optionalTextSchema(500),
+  /** SINPE receipt number when the business asks for a deposit. */
+  depositReference: z.string().trim().max(40).optional(),
   idempotencyKey: uuidSchema,
   /** Honeypot: real users never fill this hidden field. */
   website: z.string().max(200).optional(),
@@ -82,6 +84,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
         email: body.email,
       },
       customerNote: body.notes,
+      depositReference: body.depositReference,
       source: 'ONLINE',
       locale: (await getI18n()).locale,
       idempotencyKey: body.idempotencyKey,
@@ -123,6 +126,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
         currency: created.currency,
         managePath,
         emailed,
+        depositMinor: created.depositMinor,
       },
       { status: created.replayed ? 200 : 201 },
     );
