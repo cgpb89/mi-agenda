@@ -25,10 +25,10 @@ ALTER TABLE "app"."plan_settings"
 
 -- Defaults agreed for launch. Trial gets the Growth features.
 INSERT INTO "app"."plan_settings" ("plan", "price_crc_minor", "price_usd_minor", "staff_limit", "photo_limit", "features") VALUES
-  ('TRIAL',    0,        0,    5,    6,  '["customerDirectory","fullAnalytics","brandColors","glassStyle","emailReminders","sinpeDeposits","waitlist"]'),
+  ('TRIAL',    0,        0,    5,    5,  '["customerDirectory","fullAnalytics","brandColors","glassStyle","emailReminders","sinpeDeposits","waitlist"]'),
   ('STARTER',  850000,   1700, 1,    3,  '[]'),
-  ('GROWTH',   1500000,  2900, 5,    6,  '["customerDirectory","fullAnalytics","brandColors","glassStyle","emailReminders","sinpeDeposits","waitlist"]'),
-  ('BUSINESS', 3000000,  5900, NULL, 10, '["customerDirectory","fullAnalytics","brandColors","glassStyle","emailReminders","sinpeDeposits","waitlist","hideBranding"]');
+  ('GROWTH',   1500000,  2900, 5,    5,  '["customerDirectory","fullAnalytics","brandColors","glassStyle","emailReminders","sinpeDeposits","waitlist"]'),
+  ('BUSINESS', 3000000,  5900, NULL, 8, '["customerDirectory","fullAnalytics","brandColors","glassStyle","emailReminders","sinpeDeposits","waitlist","hideBranding"]');
 
 -- Photo count is now a per-plan limit; keep a hard ceiling in the database.
 ALTER TABLE "app"."business_profiles" DROP CONSTRAINT "business_profiles_photos_max";
