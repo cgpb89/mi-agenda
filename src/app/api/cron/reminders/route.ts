@@ -4,6 +4,7 @@ import { sendDepositFailedEmail } from '@/modules/bookings/notify';
 import { DEPOSIT_EXPIRED_REASON } from '@/modules/deposits/rules';
 import { expireDeposits } from '@/modules/deposits/service';
 import { sendDueReminders } from '@/modules/reminders/service';
+import { notifyWaitlistFor } from '@/modules/waitlist/service';
 
 /**
  * Hourly job, triggered by Supabase pg_cron (see prisma/sql/cron.sql; Vercel's
@@ -19,7 +20,10 @@ export async function GET(req: NextRequest) {
 
   // Unverified SINPE deposits: cancel, free the slot, tell the customer.
   const expired = await expireDeposits(DEPOSIT_EXPIRED_REASON);
-  for (const e of expired) await sendDepositFailedEmail(e.id, true);
+  for (const e of expired) {
+    await sendDepositFailedEmail(e.id, true);
+    await notifyWaitlistFor(e.tenantId, e.startAt);
+  }
 
   return NextResponse.json(
     { ok: true, remindersSent, depositsExpired: expired.length },

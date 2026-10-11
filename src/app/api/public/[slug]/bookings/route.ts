@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { after } from 'next/server';
+import { markWaitlistFulfilled } from '@/modules/waitlist/service';
 import { DateTime } from 'luxon';
 import { getDb } from '@/lib/db/client';
 import { getEnv } from '@/lib/env';
@@ -90,6 +92,14 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       idempotencyKey: body.idempotencyKey,
     });
 
+    after(() =>
+      markWaitlistFulfilled({
+        tenantId: tenant.id,
+        serviceId: body.serviceId,
+        date: body.date,
+        email: body.email,
+      }),
+    );
     const managePath = created.manageToken ? `/book/${slug}/manage/${created.manageToken}` : null;
     let emailed = false;
     if (body.email && managePath && !created.replayed) {

@@ -163,6 +163,9 @@ export const errors = {
   depositReference: 'Enter the SINPE receipt number (4 to 40 letters or digits).',
   depositNotAwaiting: 'This deposit was already handled.',
 
+  // Waitlist
+  waitlistFull: 'The waitlist for this day is full. Try another day.',
+
   // Billing
   storeClosed: 'This business is closed until its plan is paid.',
 

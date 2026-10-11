@@ -61,4 +61,14 @@ ${link}
   depositFailedSubject: ({ service, business }) => `Reserva cancelada: ${service} en ${business}`,
   depositFailedBody: ({ service, business, when, expired }) =>
     `Tu reserva de ${service} para el ${when} se canceló porque ${expired ? 'no se pudo verificar el depósito por SINPE en 24 horas' : `${business} no pudo verificar el depósito por SINPE`}.\n\nSi ya pagaste, comunícate directamente con ${business}.\n`,
+  waitlistSubject: ({ business }) => `Se liberó un espacio en ${business}`,
+  waitlistBody: ({ name, service, day, link }) =>
+    `Hola ${name}:
+
+Se liberó un espacio para ${service} el ${day}. Es para quien reserve primero, así que reserva pronto:
+${link}
+
+Recibes este correo porque te anotaste en la lista de espera.
+`,
+  waitlistDayFormat: "cccc d 'de' LLLL",
 };

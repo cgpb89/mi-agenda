@@ -11,6 +11,7 @@ import { logger } from '@/lib/observability/logger';
 import { audit } from '@/modules/audit/audit';
 import { GRACE_MONTHS } from '@/modules/billing/access';
 import { sendOwnerNotices } from '@/modules/billing/notices';
+import { deletePastWaitlistEntries } from '@/modules/waitlist/service';
 
 /**
  * Daily billing job (Vercel Cron, see vercel.json). Permanently deletes stores
@@ -81,8 +82,10 @@ export async function GET(req: NextRequest) {
     if (res.deleted) logger.info('billing: deleted abandoned uploads', { count: res.deleted });
   }
 
+  const waitlistCleaned = await deletePastWaitlistEntries();
+
   return NextResponse.json(
-    { ok: true, noticesSent, deleted: deleted.length, pendingDeleted },
+    { ok: true, noticesSent, deleted: deleted.length, pendingDeleted, waitlistCleaned },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

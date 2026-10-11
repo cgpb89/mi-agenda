@@ -9,7 +9,10 @@ import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { I18nProvider } from '@/i18n/client';
 import { getI18n, i18nFor } from '@/i18n/server';
 
-type Params = { params: Promise<{ slug: string }>; searchParams: Promise<{ preview?: string }> };
+type Params = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ preview?: string; service?: string; date?: string; staff?: string }>;
+};
 
 async function load(slug: string, preview: boolean) {
   const user = preview ? await getSessionUser() : null;
@@ -30,12 +33,24 @@ export async function generateMetadata({ params, searchParams }: Params): Promis
 
 export default async function BookingPage({ params, searchParams }: Params) {
   const { slug } = await params;
-  const preview = (await searchParams).preview === '1';
+  const sp = await searchParams;
+  const preview = sp.preview === '1';
   const page = await load(slug, preview);
   // Unknown, suspended and unpublished businesses are indistinguishable.
   if (!page) notFound();
   const { t } = i18nFor(page.locale);
   const Template = TEMPLATES[page.template];
+  // Prefill from a waitlist email link (?service=…&date=…&staff=…), only with known ids.
+  const initial =
+    sp.service &&
+    page.services.some((x) => x.id === sp.service) &&
+    /^d{4}-d{2}-d{2}$/.test(sp.date ?? '')
+      ? {
+          serviceId: sp.service,
+          staffId: sp.staff && page.staff.some((x) => x.id === sp.staff) ? sp.staff : null,
+          date: sp.date!,
+        }
+      : undefined;
   const flow = (
     <BookingFlow
       slug={page.slug}
@@ -49,6 +64,8 @@ export default async function BookingPage({ params, searchParams }: Params) {
       address={page.profile.address}
       policyText={page.policy.policyText}
       deposit={page.policy.deposit ?? undefined}
+      waitlist={page.waitlist}
+      initial={initial}
       requireEmail={page.policy.requireEmail}
       minNoticeMin={page.policy.minNoticeMin}
       cancellationWindowMin={page.policy.cancellationWindowMin}

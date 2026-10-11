@@ -61,6 +61,10 @@ interface Props {
   country: string;
   address: string | null;
   policyText: string | null;
+  /** Waitlist on full days (plan feature, needs working email). */
+  waitlist?: boolean;
+  /** Open on the time step with these picked (e.g. from a waitlist email link). */
+  initial?: { serviceId: string; staffId: string | null; date: string };
   /** SINPE deposit settings when the business asks for one (plan feature). */
   deposit?: DepositPolicy & { sinpeName: string | null };
   requireEmail: boolean;
@@ -166,10 +170,17 @@ export function BookingFlow(props: Props) {
   const day = (iso: string, opts: Intl.DateTimeFormatOptions) => dateLabel(iso, opts, intl);
   const LONG_DAY: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'long', day: 'numeric' };
 
-  const [step, setStep] = useState(props.existing ? 5 : 0);
-  const [svcId, setSvcId] = useState<string | null>(props.existing?.serviceId ?? null);
-  const [staffSel, setStaffSel] = useState<string | null>(props.existing?.staffId ?? null); // 'any' | id
-  const [date, setDate] = useState<string | null>(null);
+  const [step, setStep] = useState(props.existing ? 5 : props.initial ? 2 : 0);
+  const [svcId, setSvcId] = useState<string | null>(
+    props.existing?.serviceId ?? props.initial?.serviceId ?? null,
+  );
+  const [staffSel, setStaffSel] = useState<string | null>(
+    props.existing?.staffId ?? (props.initial ? (props.initial.staffId ?? 'any') : null),
+  ); // 'any' | id
+  const [date, setDate] = useState<string | null>(props.initial?.date ?? null);
+  const [wait, setWait] = useState({ name: '', email: '', website: '' });
+  const [waitState, setWaitState] = useState<'idle' | 'sending' | 'joined'>('idle');
+  const [waitErr, setWaitErr] = useState('');
   const [time, setTime] = useState<number | null>(null);
   const [form, setForm] = useState({
     name: '',
@@ -263,9 +274,46 @@ export function BookingFlow(props: Props) {
     if (step === 3 && detailsShownAt.current === null) detailsShownAt.current = Date.now();
   }, [step]);
 
+  useEffect(() => {
+    if (!props.initial) return;
+    // Mount only: load the day the customer's link points to. Deferred a tick so
+    // the loading state isn't set synchronously inside the effect.
+    const t = setTimeout(() => void fetchAvailability(svcId, staffSel, date), 0);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function joinWaitlist() {
+    if (!svcId || !date) return;
+    setWaitErr('');
+    setWaitState('sending');
+    try {
+      const res = await fetch(`/api/public/${props.slug}/waitlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', [LOCALE_HEADER]: locale },
+        body: JSON.stringify({
+          serviceId: svcId,
+          staffId: staffSel === 'any' ? null : staffSel,
+          date,
+          name: wait.name,
+          email: wait.email.trim(),
+          website: wait.website,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error?.message ?? f.genericError);
+      setWaitState('joined');
+    } catch (err) {
+      setWaitErr(err instanceof Error ? err.message : f.genericError);
+      setWaitState('idle');
+    }
+  }
+
   const pickDate = (d: string) => {
     setDate(d);
     setTime(null);
+    setWaitState('idle');
+    setWaitErr('');
     void fetchAvailability(svcId, staffSel, d);
   };
 
@@ -709,6 +757,66 @@ export function BookingFlow(props: Props) {
                 ) : (
                   <span className={styles.small}>{f.noOpenings}</span>
                 )}
+                {props.waitlist && date && !resched && !props.existing ? (
+                  waitState === 'joined' ? (
+                    <div className={styles.deposit} role="status">
+                      {f.waitlistJoined({ day: day(date, LONG_DAY) })}
+                    </div>
+                  ) : (
+                    <div className={styles.deposit}>
+                      <span>{f.waitlistPrompt}</span>
+                      <div className={styles.fields}>
+                        <label className={styles.label}>
+                          {f.waitlistName}
+                          <input
+                            className={styles.input}
+                            autoComplete="name"
+                            maxLength={120}
+                            value={wait.name}
+                            onChange={(e) => setWait({ ...wait, name: e.target.value })}
+                          />
+                        </label>
+                        <label className={styles.label}>
+                          {f.waitlistEmail}
+                          <input
+                            className={styles.input}
+                            type="email"
+                            autoComplete="email"
+                            maxLength={254}
+                            value={wait.email}
+                            onChange={(e) => setWait({ ...wait, email: e.target.value })}
+                          />
+                        </label>
+                      </div>
+                      <label className={styles.hp} aria-hidden="true">
+                        Website
+                        <input
+                          tabIndex={-1}
+                          autoComplete="off"
+                          value={wait.website}
+                          onChange={(e) => setWait({ ...wait, website: e.target.value })}
+                        />
+                      </label>
+                      {waitErr ? (
+                        <div role="alert" className={styles.alert}>
+                          {waitErr}
+                        </div>
+                      ) : null}
+                      <button
+                        type="button"
+                        className={styles.ghost}
+                        disabled={
+                          waitState === 'sending' ||
+                          wait.name.trim().length < 2 ||
+                          !/^\S+@\S+\.\S+$/.test(wait.email.trim())
+                        }
+                        onClick={() => void joinWaitlist()}
+                      >
+                        {f.waitlistJoin}
+                      </button>
+                    </div>
+                  )
+                ) : null}
               </div>
             ) : null}
             {!loading

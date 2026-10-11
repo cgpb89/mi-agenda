@@ -261,6 +261,7 @@ model Tenant {
   appointments Appointment[]
   payments     PaymentRecord[]
   auditEvents  AuditLog[]
+  waitlist     WaitlistEntry[]
 
   @@index([status])
   @@index([accessUntil])
@@ -387,9 +388,10 @@ model Service {
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  tenant       Tenant         @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  tenant       Tenant          @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   staff        StaffService[]
   appointments Appointment[]
+  waitlist     WaitlistEntry[]
 
   @@unique([tenantId, id])
   @@index([tenantId, isActive])
@@ -419,6 +421,7 @@ model Staff {
   rules        AvailabilityRule[]
   exceptions   AvailabilityException[]
   appointments Appointment[]
+  waitlist     WaitlistEntry[]
 
   @@unique([tenantId, id])
   @@unique([tenantId, userId])
@@ -663,6 +666,32 @@ model PlatformSettings {
   updatedBy User? @relation(fields: [updatedByUserId], references: [id], onDelete: SetNull)
 
   @@map("platform_settings")
+  @@schema("app")
+}
+
+/// Customers waiting for a slot on a full day (plan feature `waitlist`).
+model WaitlistEntry {
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
+  serviceId   String    @map("service_id") @db.Uuid
+  /// Preferred staff member, or null for anyone.
+  staffId     String?   @map("staff_id") @db.Uuid
+  date        DateTime  @db.Date
+  name        String    @db.VarChar(120)
+  /// Normalised (trimmed, lower-cased).
+  email       String    @db.VarChar(254)
+  locale      String?   @db.VarChar(5)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  notifiedAt  DateTime? @map("notified_at") @db.Timestamptz(3)
+  fulfilledAt DateTime? @map("fulfilled_at") @db.Timestamptz(3)
+
+  tenant  Tenant  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
+  service Service @relation(fields: [tenantId, serviceId], references: [tenantId, id], onDelete: Cascade)
+  staff   Staff?  @relation(fields: [tenantId, staffId], references: [tenantId, id], onDelete: Cascade)
+
+  @@unique([tenantId, serviceId, date, email], map: "waitlist_entries_unique")
+  @@index([tenantId, date], map: "waitlist_entries_tenant_date_idx")
+  @@map("waitlist_entries")
   @@schema("app")
 }
 

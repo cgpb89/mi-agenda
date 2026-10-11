@@ -98,6 +98,12 @@ export const booking = {
     confirmation: 'Confirmation',
     sentTo: ({ email }: { email: string }) => ` · sent to ${email}`,
     willConfirm: ({ business }: { business: string }) => ` · ${business} will confirm it`,
+    waitlistPrompt: 'Want this day? Join the waitlist and we’ll email you if a time opens up.',
+    waitlistName: 'Your name',
+    waitlistEmail: 'Email',
+    waitlistJoin: 'Notify me',
+    waitlistJoined: ({ day }: { day: string }) =>
+      `You’re on the waitlist for ${day}. We’ll email you if a time opens up — first to book gets it.`,
     depositTitle: 'Deposit by SINPE Móvil',
     depositPay: ({ amount, phone, name }: { amount: string; phone: string; name: string }) =>
       `To book, send a ${amount} deposit by SINPE Móvil to ${phone}${name ? ` (${name})` : ''}, then type the receipt number below.`,

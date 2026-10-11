@@ -149,4 +149,25 @@ ${link}
     expired: boolean;
   }) =>
     `Your booking for ${service} on ${when} was cancelled because ${expired ? `the SINPE deposit couldn't be verified within 24 hours` : `${business} couldn't verify the SINPE deposit`}.\n\nIf you already paid, please contact ${business} directly.\n`,
+  // Waitlist: a slot opened up
+  waitlistSubject: ({ business }: { business: string }) => `A time just opened up at ${business}`,
+  waitlistBody: ({
+    name,
+    service,
+    day,
+    link,
+  }: {
+    name: string;
+    service: string;
+    day: string;
+    link: string;
+  }) =>
+    `Hi ${name},
+
+A time just opened up for ${service} on ${day}. It goes to whoever books first, so book soon:
+${link}
+
+You're receiving this because you joined the waitlist.
+`,
+  waitlistDayFormat: 'cccc, LLLL d',
 };

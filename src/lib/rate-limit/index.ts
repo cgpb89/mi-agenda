@@ -27,6 +27,8 @@ export const LIMITS = {
   inviteByTenant: { limit: 20, windowSec: 60 * 60 },
   dashboardWriteByUser: { limit: 600, windowSec: 10 * 60 },
   photoUploadByTenant: { limit: 10, windowSec: 60 * 60 },
+  waitlistByIp: { limit: 10, windowSec: 60 * 60 },
+  waitlistByTenant: { limit: 100, windowSec: 60 * 60 },
 } as const;
 
 export type LimitName = keyof typeof LIMITS;

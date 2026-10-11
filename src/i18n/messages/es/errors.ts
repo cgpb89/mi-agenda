@@ -145,6 +145,7 @@ export const errors: Messages['errors'] = {
   depositValue: 'Indica el monto del depósito (o un porcentaje de 1 a 100).',
   depositReference: 'Escribe el número de comprobante SINPE (de 4 a 40 letras o dígitos).',
   depositNotAwaiting: 'Este depósito ya fue gestionado.',
+  waitlistFull: 'La lista de espera de este día está llena. Prueba otro día.',
   storeClosed: 'Este negocio está cerrado hasta que se pague su plan.',
   alreadySuspended: 'Ya está suspendido.',
   notSuspended: 'Este negocio no está suspendido.',

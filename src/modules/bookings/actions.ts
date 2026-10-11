@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { z } from 'zod';
 import { getDb } from '@/lib/db/client';
 import { AppError, runAction, type ActionResult } from '@/lib/errors';
@@ -19,6 +20,7 @@ import { createAppointment, rescheduleAppointment } from './engine';
 import { transitionAppointment } from './lifecycle';
 import { sendConfirmedEmail, sendDepositFailedEmail } from './notify';
 import { confirmDeposit, rejectDeposit } from '@/modules/deposits/service';
+import { notifyWaitlistFor } from '@/modules/waitlist/service';
 import { checkStaffSlot, type SlotCheck } from './staff-check';
 import { appointmentRef } from './rules';
 import { msg } from '@/i18n/message-ref';
@@ -174,6 +176,7 @@ export async function transitionAppointmentAction(
     });
     revalidatePath(`/app/${tenantSlug}`, 'layout');
     if (input.action === 'confirm') await sendConfirmedEmail(input.appointmentId);
+    if (input.action === 'cancel') after(() => notifyWaitlistFor(ctx.tenantId, updated.startAt));
     return { status: updated.status };
   });
 }
@@ -222,7 +225,7 @@ export async function rejectDepositAction(
     await enforceRateLimit('dashboardWriteByUser', ctx.userId);
     const { appointmentId, reason } = parseInput(depositSchema, raw);
     const { t } = await getI18n();
-    await rejectDeposit({
+    const rejected = await rejectDeposit({
       tenantId: ctx.tenantId,
       appointmentId,
       actorUserId: ctx.userId,
@@ -237,6 +240,7 @@ export async function rejectDepositAction(
     });
     revalidatePath(`/app/${tenantSlug}`, 'layout');
     await sendDepositFailedEmail(appointmentId, false);
+    after(() => notifyWaitlistFor(ctx.tenantId, rejected.startAt));
     return undefined;
   });
 }
@@ -257,7 +261,7 @@ export async function rescheduleAppointmentAction(
     const input = parseInput(rescheduleSchema, raw);
     const appt = await getDb().appointment.findFirst({
       where: { id: input.appointmentId, tenantId: ctx.tenantId },
-      select: { staffId: true },
+      select: { staffId: true, startAt: true },
     });
     if (!appt) throw new AppError('NOT_FOUND', msg('appointmentNotFound'));
     assertCanManageAssigned(
@@ -275,6 +279,8 @@ export async function rescheduleAppointmentAction(
       actorUserId: ctx.userId,
     });
     revalidatePath(`/app/${tenantSlug}`, 'layout');
+    // The old time is free now.
+    after(() => notifyWaitlistFor(ctx.tenantId, appt.startAt));
     return { startAt: updated.startAt.toISOString() };
   });
 }

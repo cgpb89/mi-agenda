@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { after } from 'next/server';
+import { notifyWaitlistFor } from '@/modules/waitlist/service';
 import { AppError } from '@/lib/errors';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { assertSameOrigin, clientIpFrom } from '@/lib/security/request';
@@ -50,6 +52,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
         actorType: 'customer',
         reason: CUSTOMER_CANCEL_REASON,
       });
+      after(() => notifyWaitlistFor(appt.tenantId, appt.startAt));
       return ok({ status: 'CANCELLED' });
     }
     const updated = await rescheduleAppointment({
@@ -59,6 +62,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       startMin: body.startMin,
       mode: 'public',
     });
+    after(() => notifyWaitlistFor(appt.tenantId, appt.startAt));
     return ok({
       status: updated.status,
       startAt: updated.startAt.toISOString(),

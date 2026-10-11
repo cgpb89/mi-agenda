@@ -2,7 +2,7 @@ import 'server-only';
 import { getDb } from '@/lib/db/client';
 import { isClosed } from '@/modules/billing/access';
 import { cloudName, imageUrl } from '@/lib/cloudinary';
-import { isCloudinaryConfigured } from '@/lib/env';
+import { getEnv, isCloudinaryConfigured, isEmailConfigured } from '@/lib/env';
 import {
   GLASS_TEMPLATES,
   readPageContent,
@@ -34,6 +34,8 @@ export interface PublicPage {
   glass: boolean;
   /** Plan includes hiding the "Powered by Tempo" line. */
   hideBranding: boolean;
+  /** Waitlist on full days (plan feature; needs email delivery in production). */
+  waitlist: boolean;
   /** Brand color and logo (plan feature `brandColors`); null when not set or not included. */
   brand: { accent: string | null; logo: PublicLogo | null } | null;
   published: boolean;
@@ -215,6 +217,8 @@ export async function loadPublicPage(
       GLASS_TEMPLATES.includes(t.profile.template) &&
       content.style === 'glass',
     hideBranding: hasFeature(plan, 'hideBranding'),
+    waitlist:
+      hasFeature(plan, 'waitlist') && (isEmailConfigured() || getEnv().NODE_ENV !== 'production'),
     brand: hasFeature(plan, 'brandColors') ? publicBrand(content.accent, t.profile.logo) : null,
     published,
     profile: {

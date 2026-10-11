@@ -99,6 +99,13 @@ export const booking: Messages['booking'] = {
     confirmation: 'Confirmación',
     sentTo: ({ email }) => ` · enviada a ${email}`,
     willConfirm: ({ business }) => ` · ${business} la confirmará`,
+    waitlistPrompt:
+      '¿Quieres este día? Anótate en la lista de espera y te escribimos si se libera un espacio.',
+    waitlistName: 'Tu nombre',
+    waitlistEmail: 'Correo',
+    waitlistJoin: 'Avísame',
+    waitlistJoined: ({ day }) =>
+      `Estás en la lista de espera del ${day}. Te escribimos si se libera un espacio; es para quien reserve primero.`,
     depositTitle: 'Depósito por SINPE Móvil',
     depositPay: ({ amount, phone, name }) =>
       `Para reservar, envía un depósito de ${amount} por SINPE Móvil al ${phone}${name ? ` (${name})` : ''} y escribe abajo el número de comprobante.`,
