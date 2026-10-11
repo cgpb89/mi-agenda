@@ -65,6 +65,22 @@ const GLASS: Partial<Record<TemplateKey, Partial<FlowTheme> & { shadow: string }
     panelRadius: '18px',
     shadow: 'rgba(20, 35, 58, 0.25)',
   },
+  fitness: {
+    surface: 'rgba(21, 22, 15, 0.45)',
+    line: 'rgba(242, 245, 234, 0.16)',
+    field: 'rgba(255, 255, 255, 0.06)',
+    slotOff: 'rgba(255, 255, 255, 0.04)',
+    sel: 'rgba(200, 245, 66, 0.16)',
+    shadow: 'rgba(0, 0, 0, 0.75)',
+  },
+  services: {
+    surface: 'rgba(255, 255, 255, 0.6)',
+    line: 'rgba(29, 31, 34, 0.1)',
+    field: 'rgba(255, 255, 255, 0.75)',
+    slotOff: 'rgba(255, 255, 255, 0.5)',
+    sel: 'rgba(251, 238, 232, 0.85)',
+    shadow: 'rgba(29, 31, 34, 0.25)',
+  },
 };
 
 export function flowTheme(template: TemplateKey, glass = false): FlowTheme {

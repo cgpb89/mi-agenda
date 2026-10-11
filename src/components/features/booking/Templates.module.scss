@@ -858,6 +858,50 @@
   }
 }
 
+// Fitness · glass style: dark, hard-edged "tech glass" with a lime glow, over a
+// darkened cover photo or a lime/green gradient. Square corners stay.
+.fGlass {
+  position: relative;
+  isolation: isolate;
+  background: #0b0c09;
+
+  .fCta {
+    box-shadow: 0 0 24px rgba(200, 245, 66, 0.35);
+  }
+  .fBand {
+    box-shadow: 0 30px 60px -30px rgba(0, 0, 0, 0.8);
+  }
+  // Sessions, coaches and gallery column.
+  .fBook > div:first-child {
+    @include glass-panel(
+      rgb(21, 22, 15),
+      0.42,
+      rgba(242, 245, 234, 0.14),
+      rgba(200, 245, 66, 0.12),
+      rgba(0, 0, 0, 0.75),
+      #15160f
+    );
+    padding: clamp(18px, 3cqw, 28px);
+    align-self: start;
+  }
+  .fSession:first-child {
+    border-top: 0;
+  }
+}
+
+.fBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, rgba(11, 12, 9, 0.4), rgba(11, 12, 9, 0.78) 50%, rgba(11, 12, 9, 0.92)),
+    var(--backdrop, none) center / cover no-repeat,
+    radial-gradient(circle at 85% 6%, rgba(200, 245, 66, 0.3), transparent 42%),
+    radial-gradient(circle at 10% 45%, rgba(90, 160, 60, 0.28), transparent 48%),
+    radial-gradient(circle at 70% 92%, rgba(200, 245, 66, 0.18), transparent 50%),
+    #0e0f0c;
+}
+
 // ── 5. General services ──────────────────────────────────────────────────────
 .services {
   background: #efefec;
@@ -988,6 +1032,63 @@
 .sFrom {
   font-size: 15px;
   font-weight: 700;
+}
+
+// General services · glass style: neutral light glass with a warm orange tint
+// over a washed-out cover photo or a peach/orange gradient. The dark contact
+// tile becomes smoky glass.
+@mixin glass-panel-neutral($alpha: 0.6) {
+  @include glass-panel(
+    rgb(255, 255, 255),
+    $alpha,
+    rgba(255, 255, 255, 0.75),
+    rgba(255, 255, 255, 0.9),
+    rgba(29, 31, 34, 0.22),
+    #fff
+  );
+}
+
+.sGlass {
+  position: relative;
+  isolation: isolate;
+  background: #ecebe7;
+
+  .sIntro,
+  .sCard {
+    @include glass-panel-neutral;
+  }
+  .sContact {
+    @include glass-panel(
+      rgb(29, 31, 34),
+      0.62,
+      rgba(255, 255, 255, 0.12),
+      rgba(255, 255, 255, 0.08),
+      rgba(29, 31, 34, 0.4),
+      #1d1f22
+    );
+  }
+  .sPhoto,
+  .sGallery > div {
+    box-shadow: 0 24px 48px -30px rgba(29, 31, 34, 0.4);
+  }
+}
+
+.sBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(239, 239, 236, 0.5),
+      rgba(239, 239, 236, 0.76) 50%,
+      rgba(239, 239, 236, 0.9)
+    ),
+    var(--backdrop, none) center / cover no-repeat,
+    radial-gradient(circle at 12% 6%, rgba(217, 83, 42, 0.26), transparent 45%),
+    radial-gradient(circle at 88% 32%, rgba(240, 170, 110, 0.32), transparent 50%),
+    radial-gradient(circle at 30% 92%, rgba(217, 83, 42, 0.16), transparent 50%),
+    #efefec;
 }
 
 // Uploaded photo filling a `position: relative` slot.

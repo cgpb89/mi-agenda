@@ -383,7 +383,8 @@ export function FitnessTemplate({ page, flow }: TemplateProps) {
   const headline = (c.headline ?? tp.fitnessHeadline).trim();
   const lastSpace = headline.lastIndexOf(' ');
   return (
-    <div className={s.fitness}>
+    <div className={[s.fitness, page.glass && s.fGlass].filter(Boolean).join(' ')}>
+      {page.glass ? <GlassBackdrop className={s.fBackdrop} cover={cover} /> : null}
       <div className={s.fHead}>
         <span className={s.fLogo}>
           {words[0]}
@@ -466,7 +467,8 @@ export function ServicesTemplate({ page, flow }: TemplateProps) {
   const p = page.profile;
   const c = p.content;
   return (
-    <div className={s.services}>
+    <div className={[s.services, page.glass && s.sGlass].filter(Boolean).join(' ')}>
+      {page.glass ? <GlassBackdrop className={s.sBackdrop} cover={cover} /> : null}
       <div className={s.sBento}>
         <div className={s.sIntro}>
           <div className={s.sBrand}>
