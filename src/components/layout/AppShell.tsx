@@ -59,6 +59,8 @@ export interface ShellData {
     daysLeft: number;
     accessUntil: string;
     supportEmail: string | null;
+    /** Link to the owner billing page (owners only). */
+    billingHref: string | null;
   };
 }
 
@@ -275,7 +277,11 @@ function AccessBanner({ billing }: { billing: ShellData['billing'] }) {
           ? b.trialEnds({ date: billing.accessUntil })
           : b.renewEnds({ date: billing.accessUntil })}
       </span>
-      {billing.supportEmail ? <a href={`mailto:${billing.supportEmail}`}>{b.contact}</a> : null}
+      {billing.billingHref ? (
+        <Link href={billing.billingHref}>{t.app.billingPage.seeBilling}</Link>
+      ) : billing.supportEmail ? (
+        <a href={`mailto:${billing.supportEmail}`}>{b.contact}</a>
+      ) : null}
     </div>
   );
 }

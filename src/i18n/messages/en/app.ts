@@ -8,6 +8,33 @@ export const app = {
   platformAdmin: 'Platform admin ↗',
   signOut: 'Sign out',
   newAppointment: '+ New appointment',
+  billingPage: {
+    title: 'Plan & billing',
+    yourPlan: 'Your plan',
+    trialUntil: ({ date, n }: { date: string; n: number }) =>
+      `Free trial until ${date} · ${n === 1 ? '1 day left' : `${n} days left`}`,
+    paidUntil: ({ date, n }: { date: string; n: number }) =>
+      `Paid until ${date} · ${n === 1 ? '1 day left' : `${n} days left`}`,
+    closedSince: ({ date }: { date: string }) => `Closed since ${date} (unpaid)`,
+    staff: ({ n }: { n: string }) => `Active staff: ${n}`,
+    photos: ({ n }: { n: number }) => `Booking-page photos: ${n}`,
+    unlimited: 'unlimited',
+    included: 'Included',
+    plans: 'Plans',
+    perMonth: 'per month',
+    current: 'Current',
+    howToPay: 'How to pay',
+    sinpeTo: 'Send the plan amount by SINPE Móvil to:',
+    reference: 'Use this as the payment description:',
+    afterPaying:
+      'After paying, send us the SINPE receipt. We record the payment and your access is extended (1 month or 1 year).',
+    whatsapp: 'Send receipt by WhatsApp',
+    email: 'Send receipt by email',
+    whatsappText: ({ business, ref }: { business: string; ref: string }) =>
+      `Hi, I paid the Tempo plan for ${business} (reference ${ref}). Here is the SINPE receipt.`,
+    notConfigured: 'Payment details will appear here soon. Contact support to pay your plan.',
+    seeBilling: 'Plan & billing',
+  },
   plans: {
     availableFrom: ({ plan }: { plan: string }) => `Available on the ${plan} plan`,
     upgradeBody: 'Upgrade your plan to unlock this and more.',
@@ -50,6 +77,7 @@ export const app = {
     'booking-page': 'Booking page',
     availability: 'Availability',
     settings: 'Business settings',
+    billing: 'Plan & billing',
   },
   roles: { OWNER: 'Owner', MANAGER: 'Manager', STAFF: 'Staff' },
   pageUnpublished: 'Unpublished',

@@ -143,6 +143,7 @@ const PLATFORM_ACTIONS = [
   'user.reactivated',
   'feature_flag.toggled',
   'plan.updated',
+  'platform.settings_updated',
   'tenant.payment_recorded',
   'tenant.deleted',
   'platform.admin_granted',

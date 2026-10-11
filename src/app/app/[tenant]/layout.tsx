@@ -4,7 +4,8 @@ import { can } from '@/lib/auth/permissions';
 import { AppShell, type ShellData } from '@/components/layout/AppShell';
 import { todayIn } from '@/modules/scheduling/time';
 import { StoreClosed } from '@/components/features/billing/StoreClosed';
-import { getEnv } from '@/lib/env';
+import { PayInstructions } from '@/components/features/billing/PayInstructions';
+import { getPlatformSettings } from '@/modules/platform/settings';
 import { accessState } from '@/modules/billing/access';
 import { getI18n } from '@/i18n/server';
 
@@ -34,7 +35,8 @@ export default async function TenantLayout({
   const closed = access.phase === 'closed';
   const fmtDate = (d: Date) =>
     new Intl.DateTimeFormat(intl, { dateStyle: 'long', timeZone: ctx.timezone }).format(d);
-  const supportEmail = getEnv().SUPPORT_EMAIL || null;
+  const platform = await getPlatformSettings();
+  const supportEmail = platform.supportEmail;
   const db = getDb();
 
   const [memberships, profile, services, staff] = await Promise.all([
@@ -88,6 +90,7 @@ export default async function TenantLayout({
     { key: 'booking-page', perm: 'bookingPage.manage' },
     { key: 'availability', perm: 'availability.manage' },
     { key: 'settings', perm: 'business.manage' },
+    { key: 'billing', perm: 'billing.view' },
   ];
 
   const pageSub = (status: string | undefined, s: string) =>
@@ -144,6 +147,7 @@ export default async function TenantLayout({
       daysLeft: access.daysLeft,
       accessUntil: fmtDate(access.accessUntil),
       supportEmail,
+      billingHref: can(ctx.role, 'billing.view') ? `${base}/billing` : null,
     },
   };
 
@@ -156,6 +160,16 @@ export default async function TenantLayout({
           deleteOn={fmtDate(access.deleteOn)}
           daysUntilDeletion={access.daysUntilDeletion}
           supportEmail={supportEmail}
+          pay={
+            can(ctx.role, 'billing.view') ? (
+              <PayInstructions
+                t={t.app.billingPage}
+                settings={platform}
+                slug={ctx.tenantSlug}
+                business={ctx.tenantName}
+              />
+            ) : null
+          }
         />
       ) : (
         children

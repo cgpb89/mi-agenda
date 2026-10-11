@@ -57,6 +57,7 @@ export type AuditAction =
   // platform
   | 'feature_flag.toggled'
   | 'plan.updated'
+  | 'platform.settings_updated'
   | 'platform.admin_granted';
 
 export interface AuditEntry {

@@ -8,6 +8,7 @@ import { AdminHeader } from './AdminShell';
 import s from './Admin.module.scss';
 import { useI18n } from '@/i18n/client';
 import type { Messages } from '@/i18n/messages';
+import { PaymentSettingsCard, type PaymentSettings } from './PaymentSettingsCard';
 
 function describe(
   a: { action: string; business: string | null; metadata: Record<string, unknown> },
@@ -55,7 +56,9 @@ export function PlatformSettingsView({
   flags,
   audit,
   health,
+  payment,
 }: {
+  payment: PaymentSettings;
   flags: { key: string; name: string; note: string; enabled: boolean }[];
   audit: {
     id: string;
@@ -81,6 +84,7 @@ export function PlatformSettingsView({
     <>
       <AdminHeader title={st.title} />
       <div className={s.content}>
+        <PaymentSettingsCard initial={payment} />
         <div className={s.grid3} style={{ alignItems: 'start' }}>
           <div className={s.card} style={{ gap: 10 }}>
             <span className={s.cardTitle}>{st.flags}</span>

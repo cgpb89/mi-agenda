@@ -10,6 +10,7 @@ import { getEnv, isCloudinaryConfigured } from '@/lib/env';
 import { logger } from '@/lib/observability/logger';
 import { audit } from '@/modules/audit/audit';
 import { GRACE_MONTHS } from '@/modules/billing/access';
+import { sendOwnerNotices } from '@/modules/billing/notices';
 
 /**
  * Daily billing job (Vercel Cron, see vercel.json). Permanently deletes stores
@@ -31,6 +32,9 @@ export async function GET(req: NextRequest) {
   const secret = getEnv().CRON_SECRET;
   if (!secret) return NextResponse.json({ ok: false, error: 'not configured' }, { status: 503 });
   if (!authorized(req, secret)) return NextResponse.json({ ok: false }, { status: 401 });
+
+  // Owner warnings first (7 days before the end, on closing, before deletion).
+  const noticesSent = await sendOwnerNotices();
 
   const db = getDb();
   const expired = await db.$queryRaw<{ id: string; slug: string; name: string }[]>`
@@ -86,7 +90,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json(
-    { ok: true, deleted: deleted.length, pendingDeleted },
+    { ok: true, noticesSent, deleted: deleted.length, pendingDeleted },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

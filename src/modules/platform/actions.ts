@@ -150,6 +150,10 @@ export async function recordPaymentAction(
         where: { id: t.id },
         data: {
           accessUntil: next,
+          // New period: owner warnings can go out again before it ends.
+          notifiedEndingAt: null,
+          notifiedClosedAt: null,
+          notifiedDeletionAt: null,
           ...(t.status === 'TRIAL' ? { status: 'ACTIVE' as const } : {}),
         },
       });
@@ -243,6 +247,48 @@ export async function savePlanSettingsAction(raw: unknown): Promise<ActionResult
           tx,
         );
       }
+    });
+    revalidatePath('/', 'layout');
+    return undefined;
+  });
+}
+
+const optional = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .transform((v) => v || null);
+
+const platformSettingsSchema = z.object({
+  supportEmail: z.union([z.literal(''), z.email(msg('enterEmail'))]).transform((v) => v || null),
+  supportWhatsapp: optional(32),
+  sinpePhone: optional(32),
+  sinpeName: optional(120),
+  paymentNote: optional(600),
+});
+
+/** Payment instructions and support contacts shown to business owners. */
+export async function savePlatformSettingsAction(raw: unknown): Promise<ActionResult<undefined>> {
+  return runAction('platform.saveSettings', async () => {
+    const admin = await requirePlatformAdmin();
+    const input = parseInput(platformSettingsSchema, raw);
+    await withTransaction(async (tx) => {
+      await tx.platformSettings.upsert({
+        where: { id: 1 },
+        create: { id: 1, ...input, updatedByUserId: admin.userId },
+        update: { ...input, updatedByUserId: admin.userId },
+      });
+      await audit(
+        {
+          actorUserId: admin.userId,
+          actorType: 'user',
+          action: 'platform.settings_updated',
+          targetType: 'platform',
+          metadata: input,
+        },
+        tx,
+      );
     });
     revalidatePath('/', 'layout');
     return undefined;

@@ -9,6 +9,33 @@ export const app: Messages['app'] = {
   platformAdmin: 'Administración de la plataforma ↗',
   signOut: 'Cerrar sesión',
   newAppointment: '+ Nueva cita',
+  billingPage: {
+    title: 'Plan y facturación',
+    yourPlan: 'Tu plan',
+    trialUntil: ({ date, n }) =>
+      `Prueba gratis hasta el ${date} · ${n === 1 ? 'queda 1 día' : `quedan ${n} días`}`,
+    paidUntil: ({ date, n }) =>
+      `Pagado hasta el ${date} · ${n === 1 ? 'queda 1 día' : `quedan ${n} días`}`,
+    closedSince: ({ date }) => `Cerrado desde el ${date} (sin pago)`,
+    staff: ({ n }) => `Miembros activos del equipo: ${n}`,
+    photos: ({ n }) => `Fotos de la página de reservas: ${n}`,
+    unlimited: 'ilimitado',
+    included: 'Incluye',
+    plans: 'Planes',
+    perMonth: 'por mes',
+    current: 'Actual',
+    howToPay: 'Cómo pagar',
+    sinpeTo: 'Envía el monto del plan por SINPE Móvil a:',
+    reference: 'Usa esto como descripción del pago:',
+    afterPaying:
+      'Después de pagar, envíanos el comprobante de SINPE. Registramos el pago y se extiende tu acceso (1 mes o 1 año).',
+    whatsapp: 'Enviar comprobante por WhatsApp',
+    email: 'Enviar comprobante por correo',
+    whatsappText: ({ business, ref }) =>
+      `Hola, pagué el plan de Tempo para ${business} (referencia ${ref}). Adjunto el comprobante de SINPE.`,
+    notConfigured: 'Pronto verás aquí los datos de pago. Contacta a soporte para pagar tu plan.',
+    seeBilling: 'Plan y facturación',
+  },
   plans: {
     availableFrom: ({ plan }) => `Disponible en el plan ${plan}`,
     upgradeBody: 'Mejora tu plan para desbloquear esta y otras funciones.',
@@ -50,6 +77,7 @@ export const app: Messages['app'] = {
     'booking-page': 'Página de reservas',
     availability: 'Disponibilidad',
     settings: 'Configuración del negocio',
+    billing: 'Plan y facturación',
   },
   roles: { OWNER: 'Propietario', MANAGER: 'Administrador', STAFF: 'Equipo' },
   pageUnpublished: 'Sin publicar',

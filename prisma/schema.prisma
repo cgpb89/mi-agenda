@@ -169,16 +169,17 @@ model User {
   createdAt    DateTime     @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime     @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  sessions       Session[]
-  resetTokens    PasswordResetToken[]
-  memberships    Membership[]
-  staffProfiles  Staff[]
-  invitationsBy  Invitation[]         @relation("InvitedBy")
-  paymentsBy     PaymentRecord[]      @relation("RecordedBy")
-  paymentsVoided PaymentRecord[]      @relation("VoidedBy")
-  policyUpdates  BookingPolicy[]
-  planUpdates    PlanSettings[]
-  auditEvents    AuditLog[]
+  sessions                Session[]
+  resetTokens             PasswordResetToken[]
+  memberships             Membership[]
+  staffProfiles           Staff[]
+  invitationsBy           Invitation[]         @relation("InvitedBy")
+  paymentsBy              PaymentRecord[]      @relation("RecordedBy")
+  paymentsVoided          PaymentRecord[]      @relation("VoidedBy")
+  policyUpdates           BookingPolicy[]
+  planUpdates             PlanSettings[]
+  platformSettingsUpdates PlatformSettings[]
+  auditEvents             AuditLog[]
 
   @@map("users")
   @@schema("app")
@@ -220,27 +221,31 @@ model PasswordResetToken {
 // ───────────────────────────── Tenancy ─────────────────────────────
 
 model Tenant {
-  id          String           @id @default(uuid()) @db.Uuid
-  name        String           @db.VarChar(120)
+  id                 String           @id @default(uuid()) @db.Uuid
+  name               String           @db.VarChar(120)
   /// Public booking identifier: /book/{slug}
-  slug        String           @unique @db.VarChar(48)
-  status      TenantStatus     @default(TRIAL)
-  plan        Plan             @default(TRIAL)
-  category    BusinessCategory @default(SERVICES)
+  slug               String           @unique @db.VarChar(48)
+  status             TenantStatus     @default(TRIAL)
+  plan               Plan             @default(TRIAL)
+  category           BusinessCategory @default(SERVICES)
   /// IANA timezone, e.g. America/New_York
-  timezone    String           @db.VarChar(64)
+  timezone           String           @db.VarChar(64)
   /// BCP-47 locale, e.g. en-US
-  locale      String           @default("en-US") @db.VarChar(16)
+  locale             String           @default("en-US") @db.VarChar(16)
   /// ISO-4217
-  currency    String           @default("USD") @db.Char(3)
+  currency           String           @default("USD") @db.Char(3)
   /// ISO-3166-1 alpha-2, default country for phone parsing
-  country     String           @default("US") @db.Char(2)
+  country            String           @default("US") @db.Char(2)
   /// End of the free trial or of the last paid period. After it the store is
   /// closed; one month later it is deleted (see modules/billing/access.ts).
-  accessUntil DateTime         @default(dbgenerated("(now() + '1 mon'::interval)")) @map("access_until") @db.Timestamptz(3)
-  suspendedAt DateTime?        @map("suspended_at") @db.Timestamptz(3)
-  createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
+  accessUntil        DateTime         @default(dbgenerated("(now() + '1 mon'::interval)")) @map("access_until") @db.Timestamptz(3)
+  /// Owner warning emails already sent for the current period (billing job).
+  notifiedEndingAt   DateTime?        @map("notified_ending_at") @db.Timestamptz(3)
+  notifiedClosedAt   DateTime?        @map("notified_closed_at") @db.Timestamptz(3)
+  notifiedDeletionAt DateTime?        @map("notified_deletion_at") @db.Timestamptz(3)
+  suspendedAt        DateTime?        @map("suspended_at") @db.Timestamptz(3)
+  createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   memberships  Membership[]
   invitations  Invitation[]
@@ -626,6 +631,23 @@ model PlanSettings {
   updatedBy User? @relation(fields: [updatedByUserId], references: [id], onDelete: SetNull)
 
   @@map("plan_settings")
+  @@schema("app")
+}
+
+/// Platform-wide settings (one row, id = 1): how businesses pay, support contacts.
+model PlatformSettings {
+  id              Int      @id @default(1)
+  supportEmail    String?  @map("support_email") @db.VarChar(254)
+  supportWhatsapp String?  @map("support_whatsapp") @db.VarChar(32)
+  sinpePhone      String?  @map("sinpe_phone") @db.VarChar(32)
+  sinpeName       String?  @map("sinpe_name") @db.VarChar(120)
+  paymentNote     String?  @map("payment_note") @db.VarChar(600)
+  updatedAt       DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(3)
+  updatedByUserId String?  @map("updated_by_user_id") @db.Uuid
+
+  updatedBy User? @relation(fields: [updatedByUserId], references: [id], onDelete: SetNull)
+
+  @@map("platform_settings")
   @@schema("app")
 }
 

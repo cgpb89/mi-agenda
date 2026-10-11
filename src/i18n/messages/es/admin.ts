@@ -212,6 +212,18 @@ export const admin: Messages['admin'] = {
       ],
     },
   },
+  payment: {
+    title: 'Pagos del plan y soporte',
+    sub: 'Se muestran a los dueños en su página de facturación, el aviso de prueba y la pantalla de negocio cerrado.',
+    sinpePhone: 'Número de SINPE Móvil',
+    sinpeName: 'Nombre del titular',
+    supportWhatsapp: 'WhatsApp de soporte',
+    supportEmail: 'Correo de soporte',
+    paymentNote: 'Instrucciones de pago adicionales',
+    paymentNoteHint: 'Opcional. P. ej. datos de transferencia bancaria u horario de atención.',
+    save: 'Guardar',
+    saved: 'Datos de pago y soporte guardados',
+  },
   settings: {
     title: 'Configuración y auditoría',
     flags: 'Funciones en desarrollo',

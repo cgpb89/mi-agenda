@@ -69,3 +69,31 @@ export function extendAccess(accessUntil: Date, months: number, now: Date = new 
   const from = accessUntil.getTime() > now.getTime() ? accessUntil : now;
   return DateTime.fromJSDate(from, { zone: 'utc' }).plus({ months }).toJSDate();
 }
+
+/** Owner warning emails sent by the daily billing job. */
+export type OwnerNotice = 'ending' | 'closed' | 'deletion';
+/** Days ahead of the end of access / of deletion that the warnings go out. */
+export const NOTICE_DAYS = 7;
+
+/**
+ * Which warning (if any) is due now. At most one per run, in lifecycle order,
+ * and each only once per period (the `notified*` timestamps reset on payment).
+ */
+export function dueOwnerNotice(
+  t: {
+    accessUntil: Date;
+    notifiedEndingAt: Date | null;
+    notifiedClosedAt: Date | null;
+    notifiedDeletionAt: Date | null;
+  },
+  now: Date = new Date(),
+): OwnerNotice | null {
+  if (!isClosed(t.accessUntil, now)) {
+    return daysUntil(t.accessUntil, now) <= NOTICE_DAYS && !t.notifiedEndingAt ? 'ending' : null;
+  }
+  if (!t.notifiedClosedAt) return 'closed';
+  if (daysUntil(deletionDate(t.accessUntil), now) <= NOTICE_DAYS && !t.notifiedDeletionAt) {
+    return 'deletion';
+  }
+  return null;
+}

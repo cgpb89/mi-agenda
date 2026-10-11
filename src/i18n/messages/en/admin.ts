@@ -211,6 +211,18 @@ export const admin = {
       hideBranding: ['Hide "Powered by Tempo"', 'Removes the Tempo line from booking pages'],
     } as Record<string, [string, string]>,
   },
+  payment: {
+    title: 'Plan payments & support',
+    sub: 'Shown to business owners on their billing page, the trial banner and the closed screen.',
+    sinpePhone: 'SINPE Móvil number',
+    sinpeName: 'Account holder name',
+    supportWhatsapp: 'Support WhatsApp',
+    supportEmail: 'Support email',
+    paymentNote: 'Extra payment instructions',
+    paymentNoteHint: 'Optional. E.g. bank transfer details or office hours.',
+    save: 'Save',
+    saved: 'Payment and support settings saved',
+  },
   settings: {
     title: 'Settings & audit log',
     flags: 'Feature flags',

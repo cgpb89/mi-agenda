@@ -26,7 +26,8 @@ export type Permission =
   | 'team.roles'
   | 'analytics.read'
   | 'revenue.read'
-  | 'audit.read';
+  | 'audit.read'
+  | 'billing.view'; // plan and payments of the business (owners only)
 
 const STAFF: Permission[] = [
   'dashboard.view',
@@ -55,7 +56,7 @@ const MANAGER: Permission[] = [
   'audit.read',
 ];
 
-const OWNER: Permission[] = [...MANAGER, 'team.roles'];
+const OWNER: Permission[] = [...MANAGER, 'team.roles', 'billing.view'];
 
 const MATRIX: Record<MembershipRole, ReadonlySet<Permission>> = {
   OWNER: new Set(OWNER),

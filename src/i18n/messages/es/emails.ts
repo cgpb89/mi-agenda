@@ -11,4 +11,37 @@ export const emails: Messages['emails'] = {
   bookedWhenFormat: "cccc d 'de' LLLL 'a las' h:mm a",
   bookedBody: ({ service, staff, when, timezone, address, code, link }) =>
     `Tu cita quedó reservada.\n\n${service} con ${staff}\n${when} (${timezone})\n${address}\nConfirmación ${code}\n\nVer, reprogramar o cancelar:\n${link}\n`,
+  ownerEndingSubject: ({ business, n }) =>
+    `${business}: tu plan vence en ${n === 1 ? '1 día' : `${n} días`}`,
+  ownerEndingBody: ({ business, date, link }) =>
+    `Hola:
+
+El período de prueba o pagado de ${business} en Tempo termina el ${date}. Después de esa fecha tu página de reservas queda fuera de línea y los clientes no pueden reservar hasta que se pague el plan.
+
+Mira tu plan y cómo pagar:
+${link}
+`,
+  ownerClosedSubject: ({ business }) =>
+    `${business} está cerrado: tu página de reservas está fuera de línea`,
+  ownerClosedBody: ({ business, deleteOn, link }) =>
+    `Hola:
+
+El plan de ${business} no se pagó, así que el negocio está cerrado y su página de reservas está fuera de línea.
+
+Paga antes del ${deleteOn} para reabrirlo con todo tal como lo dejaste. Después de esa fecha, el negocio y todos sus datos (citas, clientes, servicios) se eliminan permanentemente.
+
+Cómo pagar:
+${link}
+`,
+  ownerDeletionSubject: ({ business, deleteOn }) =>
+    `Último aviso: ${business} se eliminará el ${deleteOn}`,
+  ownerDeletionBody: ({ business, deleteOn, link }) =>
+    `Hola:
+
+${business} sigue cerrado por falta de pago. El ${deleteOn}, el negocio y todos sus datos (citas, clientes, servicios, fotos) se eliminarán permanentemente. No se puede deshacer.
+
+Paga antes para conservarlo todo:
+${link}
+`,
+  ownerDateFormat: "d 'de' LLLL 'de' yyyy",
 };

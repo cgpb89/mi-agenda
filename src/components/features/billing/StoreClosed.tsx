@@ -1,6 +1,7 @@
 import { PageContent, PageHeader } from '@/components/layout/AppShell';
 import { Card } from '@/components/ui/Card';
 import { FormMessage } from '@/components/ui/Form';
+import type { ReactNode } from 'react';
 import type { Messages } from '@/i18n/messages';
 
 /** Shown instead of every dashboard page while the store is closed (unpaid). */
@@ -10,12 +11,15 @@ export function StoreClosed({
   deleteOn,
   daysUntilDeletion,
   supportEmail,
+  pay,
 }: {
   t: Messages['app']['billing'];
   closedOn: string;
   deleteOn: string;
   daysUntilDeletion: number;
   supportEmail: string | null;
+  /** Payment instructions (owners only). */
+  pay?: ReactNode;
 }) {
   return (
     <>
@@ -37,6 +41,7 @@ export function StoreClosed({
             ) : null}
           </p>
         </Card>
+        {pay}
       </PageContent>
     </>
   );

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { requirePlatformAdminPage } from '@/lib/auth/authorize';
 import { listFlags, platformAuditLog } from '@/modules/platform/service';
+import { getPlatformSettings } from '@/modules/platform/settings';
 import { PlatformSettingsView } from '@/components/features/admin/PlatformSettingsView';
 import { isEmailConfigured } from '@/lib/env';
 import { getDb } from '@/lib/db/client';
@@ -13,7 +14,11 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PlatformSettingsPage() {
   await requirePlatformAdminPage();
-  const [flags, audit] = await Promise.all([listFlags(), platformAuditLog()]);
+  const [flags, audit, payment] = await Promise.all([
+    listFlags(),
+    platformAuditLog(),
+    getPlatformSettings(),
+  ]);
   let dbUp = true;
   try {
     await getDb().$queryRaw`SELECT 1`;
@@ -22,6 +27,13 @@ export default async function PlatformSettingsPage() {
   }
   return (
     <PlatformSettingsView
+      payment={{
+        supportEmail: payment.supportEmail ?? '',
+        supportWhatsapp: payment.supportWhatsapp ?? '',
+        sinpePhone: payment.sinpePhone ?? '',
+        sinpeName: payment.sinpeName ?? '',
+        paymentNote: payment.paymentNote ?? '',
+      }}
       flags={flags.map((f) => ({
         key: f.key,
         name: f.name,

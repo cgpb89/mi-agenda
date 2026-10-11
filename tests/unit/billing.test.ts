@@ -5,6 +5,7 @@ import {
   deletionDate,
   extendAccess,
   isClosed,
+  dueOwnerNotice,
 } from '@/modules/billing/access';
 
 const d = (iso: string) => new Date(iso);
@@ -50,5 +51,42 @@ describe('store access lifecycle', () => {
 
   it('never reports negative days', () => {
     expect(daysUntil(d('2026-01-01T00:00:00Z'), now)).toBe(0);
+  });
+});
+
+describe('owner warning emails', () => {
+  const now = new Date('2026-10-11T12:00:00Z');
+  const none = { notifiedEndingAt: null, notifiedClosedAt: null, notifiedDeletionAt: null };
+  const at = new Date('2026-10-01T00:00:00Z');
+
+  it('warns 7 days before access ends, once', () => {
+    expect(
+      dueOwnerNotice({ accessUntil: new Date('2026-10-30T00:00:00Z'), ...none }, now),
+    ).toBeNull();
+    expect(dueOwnerNotice({ accessUntil: new Date('2026-10-17T00:00:00Z'), ...none }, now)).toBe(
+      'ending',
+    );
+    expect(
+      dueOwnerNotice(
+        { accessUntil: new Date('2026-10-17T00:00:00Z'), ...none, notifiedEndingAt: at },
+        now,
+      ),
+    ).toBeNull();
+  });
+
+  it('then on closing, then 7 days before deletion', () => {
+    const closed = new Date('2026-10-05T00:00:00Z'); // deletion on 2026-11-05
+    expect(dueOwnerNotice({ accessUntil: closed, ...none }, now)).toBe('closed');
+    expect(dueOwnerNotice({ accessUntil: closed, ...none, notifiedClosedAt: at }, now)).toBeNull();
+    const soon = new Date('2026-09-15T00:00:00Z'); // deletion on 2026-10-15
+    expect(dueOwnerNotice({ accessUntil: soon, ...none, notifiedClosedAt: at }, now)).toBe(
+      'deletion',
+    );
+    expect(
+      dueOwnerNotice(
+        { accessUntil: soon, ...none, notifiedClosedAt: at, notifiedDeletionAt: at },
+        now,
+      ),
+    ).toBeNull();
   });
 });

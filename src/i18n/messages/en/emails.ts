@@ -36,4 +36,54 @@ export const emails = {
     link: string;
   }) =>
     `You're booked.\n\n${service} with ${staff}\n${when} (${timezone})\n${address}\nConfirmation ${code}\n\nView, reschedule or cancel:\n${link}\n`,
+  // Owner warnings (daily billing job)
+  ownerEndingSubject: ({ business, n }: { business: string; n: number }): string =>
+    `${business}: your plan ends in ${n === 1 ? '1 day' : `${n} days`}`,
+  ownerEndingBody: ({ business, date, link }: { business: string; date: string; link: string }) =>
+    `Hi,
+
+The trial or paid period of ${business} on Tempo ends on ${date}. After that date your booking page goes offline and customers can't book until the plan is paid.
+
+See your plan and how to pay:
+${link}
+`,
+  ownerClosedSubject: ({ business }: { business: string }) =>
+    `${business} is closed: your booking page is offline`,
+  ownerClosedBody: ({
+    business,
+    deleteOn,
+    link,
+  }: {
+    business: string;
+    deleteOn: string;
+    link: string;
+  }) =>
+    `Hi,
+
+${business}'s plan wasn't paid, so the business is closed and its booking page is offline.
+
+Pay before ${deleteOn} to reopen it with everything as you left it. After that date the business and all its data (appointments, customers, services) are permanently deleted.
+
+How to pay:
+${link}
+`,
+  ownerDeletionSubject: ({ business, deleteOn }: { business: string; deleteOn: string }) =>
+    `Last notice: ${business} will be deleted on ${deleteOn}`,
+  ownerDeletionBody: ({
+    business,
+    deleteOn,
+    link,
+  }: {
+    business: string;
+    deleteOn: string;
+    link: string;
+  }) =>
+    `Hi,
+
+${business} is still closed for non-payment. On ${deleteOn} the business and all its data (appointments, customers, services, photos) will be permanently deleted. This can't be undone.
+
+Pay before then to keep everything:
+${link}
+`,
+  ownerDateFormat: 'LLLL d, yyyy',
 };
