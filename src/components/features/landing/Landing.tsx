@@ -56,8 +56,8 @@ const TPL: Record<
   }
 > = {
   barber: {
-    biz: 'Northside Barber Co.',
-    slug: 'northside-barber',
+    biz: 'Barbería Del Norte',
+    slug: 'barberia-del-norte',
     font: 'var(--font-anton), sans-serif',
     weight: 400,
     style: 'normal',
