@@ -64,6 +64,8 @@ export interface CreateAppointmentInput {
   startMin: number;
   customer: CustomerInput;
   customerNote?: string;
+  /** Customer's language (public bookings), for reminders. */
+  locale?: string;
   internalNote?: string;
   source: 'ONLINE' | 'PHONE' | 'WALK_IN';
   idempotencyKey?: string;
@@ -466,6 +468,7 @@ async function createInTx(tx: Tx, input: CreateAppointmentInput): Promise<Create
       contactName,
       contactEmail,
       customerNote: input.customerNote ?? null,
+      locale: input.locale ?? null,
       internalNote: input.internalNote ?? null,
       manageTokenHash: manageToken ? manageTokenHash(manageToken) : null,
       idempotencyKey: input.idempotencyKey ?? null,

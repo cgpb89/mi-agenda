@@ -85,3 +85,30 @@ The app fails fast with a list of missing or invalid variable **names**, never v
 - **Rate-limit table:** expired windows are swept opportunistically. If the table grows large, run `DELETE FROM app.rate_limit_buckets WHERE expires_at < now() - interval '1 day'`.
 - **Sessions:** expired sessions are deleted when presented. A periodic `DELETE FROM app.sessions WHERE expires_at < now()` keeps the table small.
 - **Dependencies:** keep them current. Re-run `npm audit`, then the full test suite, after upgrades.
+
+## 7. Scheduled jobs and email
+
+Two jobs run on a schedule. Both authenticate with `Authorization: Bearer <CRON_SECRET>`; without `CRON_SECRET` they refuse to run.
+
+| Job | Route | Schedule | Triggered by |
+|---|---|---|---|
+| Billing | `/api/cron/billing` | Daily, 09:00 UTC | Vercel Cron (`vercel.json`) |
+| Reminders | `/api/cron/reminders` | Hourly, minute 5 | Supabase pg_cron (`prisma/sql/cron.sql`) |
+
+- **Billing** emails owners before their trial or paid period ends, when the store closes, and before deletion. It then deletes stores one month after closing, and removes abandoned photo uploads.
+- **Reminders** emails customers 24 hours before their appointment, for plans with the `emailReminders` feature. It needs the customer's email.
+- **Setting up the hourly job:** Vercel's free plan only allows daily crons. Run `prisma/sql/cron.sql` once in the Supabase SQL editor of the production project, after filling in the app URL and `CRON_SECRET`. The script stores both in Supabase Vault and explains how to check, rotate and remove the job.
+
+**Email delivery.** Email goes out through SMTP. With [Resend](https://resend.com):
+
+```
+EMAIL_SERVER_HOST=smtp.resend.com
+EMAIL_SERVER_PORT=465
+EMAIL_SERVER_USER=resend
+EMAIL_SERVER_PASSWORD=<Resend API key>
+EMAIL_FROM="Tempo <reservas@your-domain>"
+```
+
+Until your sending domain is verified in Resend, it only delivers to the Resend account owner's own address.
+
+Without SMTP in production, nothing is sent. The jobs also leave reminders and owner warnings unclaimed in that case, so they still go out once email is configured.

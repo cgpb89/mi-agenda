@@ -531,6 +531,10 @@ model Appointment {
   contactName         String            @map("contact_name") @db.VarChar(120)
   contactEmail        String?           @map("contact_email") @db.VarChar(254)
   customerNote        String?           @map("customer_note") @db.VarChar(500)
+  /// Customer's language when booking (en | es), used for reminders and notices.
+  locale              String?           @db.VarChar(5)
+  /// When the 24-hour email reminder was sent (hourly reminders job).
+  reminderSentAt      DateTime?         @map("reminder_sent_at") @db.Timestamptz(3)
   internalNote        String?           @map("internal_note") @db.VarChar(1000)
   /// HMAC of the customer's self-service link token.
   manageTokenHash     String?           @unique @map("manage_token_hash") @db.VarChar(64)

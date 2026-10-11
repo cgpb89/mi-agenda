@@ -83,6 +83,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
       },
       customerNote: body.notes,
       source: 'ONLINE',
+      locale: (await getI18n()).locale,
       idempotencyKey: body.idempotencyKey,
     });
 

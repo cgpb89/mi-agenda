@@ -44,4 +44,15 @@ Paga antes para conservarlo todo:
 ${link}
 `,
   ownerDateFormat: "d 'de' LLLL 'de' yyyy",
+  reminderSubject: ({ service, business }) => `Recordatorio: ${service} en ${business} mañana`,
+  reminderBody: ({ service, staff, when, timezone, address, link }) =>
+    `¡Te esperamos!
+
+${service} con ${staff}
+${when} (${timezone})
+${address}
+
+¿Necesitas reprogramar o cancelar? Usa este enlace (reemplaza los anteriores):
+${link}
+`,
 };

@@ -1,4 +1,3 @@
-import { createHash, timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
 import {
   deleteImagesByPrefix,
@@ -6,7 +5,8 @@ import {
   tenantPhotoFolder,
 } from '@/lib/cloudinary';
 import { getDb } from '@/lib/db/client';
-import { getEnv, isCloudinaryConfigured } from '@/lib/env';
+import { isCloudinaryConfigured } from '@/lib/env';
+import { rejectUnlessCron } from '@/lib/security/cron';
 import { logger } from '@/lib/observability/logger';
 import { audit } from '@/modules/audit/audit';
 import { GRACE_MONTHS } from '@/modules/billing/access';
@@ -21,17 +21,9 @@ import { sendOwnerNotices } from '@/modules/billing/notices';
  */
 export const dynamic = 'force-dynamic';
 
-function authorized(req: NextRequest, secret: string): boolean {
-  const given = req.headers.get('authorization') ?? '';
-  const a = createHash('sha256').update(given).digest();
-  const b = createHash('sha256').update(`Bearer ${secret}`).digest();
-  return timingSafeEqual(a, b);
-}
-
 export async function GET(req: NextRequest) {
-  const secret = getEnv().CRON_SECRET;
-  if (!secret) return NextResponse.json({ ok: false, error: 'not configured' }, { status: 503 });
-  if (!authorized(req, secret)) return NextResponse.json({ ok: false }, { status: 401 });
+  const rejected = rejectUnlessCron(req);
+  if (rejected) return rejected;
 
   // Owner warnings first (7 days before the end, on closing, before deletion).
   const noticesSent = await sendOwnerNotices();

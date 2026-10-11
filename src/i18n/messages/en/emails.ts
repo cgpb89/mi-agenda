@@ -86,4 +86,31 @@ Pay before then to keep everything:
 ${link}
 `,
   ownerDateFormat: 'LLLL d, yyyy',
+  // Customer reminder (24 h before)
+  reminderSubject: ({ service, business }: { service: string; business: string }) =>
+    `Reminder: ${service} at ${business} tomorrow`,
+  reminderBody: ({
+    service,
+    staff,
+    when,
+    timezone,
+    address,
+    link,
+  }: {
+    service: string;
+    staff: string;
+    when: string;
+    timezone: string;
+    address: string;
+    link: string;
+  }) =>
+    `See you soon!
+
+${service} with ${staff}
+${when} (${timezone})
+${address}
+
+Need to reschedule or cancel? Use this link (it replaces earlier ones):
+${link}
+`,
 };
