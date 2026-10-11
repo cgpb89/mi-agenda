@@ -310,6 +310,9 @@ model BusinessProfile {
   /// Template-specific copy (category strip, info cards, prep notes...).
   /// Validated server-side by a zod schema before every write.
   pageContent Json            @default("{}") @map("page_content")
+  /// Up to 3 Cloudinary photos in display order (first = cover).
+  /// Shape: modules/businesses/photos.ts; length capped by a CHECK constraint.
+  photos      Json            @default("[]")
   updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)

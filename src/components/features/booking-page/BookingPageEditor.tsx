@@ -9,6 +9,7 @@ import { Field, FormMessage, Input, Select, Textarea, formStyles } from '@/compo
 import { StatusPill } from '@/components/ui/StatusPill';
 import { useToast } from '@/components/ui/Toast';
 import { saveBookingPageAction, setPageStatusAction } from '@/modules/businesses/actions';
+import { PhotoManager, type EditorPhoto } from './PhotoManager';
 import type { PageContent as Content } from '@/modules/businesses/page-content';
 import { useI18n } from '@/i18n/client';
 import { LOCALES, LOCALE_NAMES, type Locale } from '@/i18n/config';
@@ -88,10 +89,14 @@ export function BookingPageEditor({
   initial,
   pageStatus,
   ready,
+  photos,
+  uploadsEnabled,
 }: {
   initial: Form;
   pageStatus: string;
   ready: { services: boolean; hours: boolean };
+  photos: EditorPhoto[];
+  uploadsEnabled: boolean;
 }) {
   const { data } = useShell();
   const slug = data.tenant.slug;
@@ -443,9 +448,10 @@ export function BookingPageEditor({
                 />
               )}
             </Field>
-            <span style={{ fontSize: 12, color: '#6b6358' }}>{bp.photosNote}</span>
           </Card>
         </div>
+
+        <PhotoManager photos={photos} enabled={uploadsEnabled} />
 
         {error ? <FormMessage kind="error">{error}</FormMessage> : null}
         {dirty ? (

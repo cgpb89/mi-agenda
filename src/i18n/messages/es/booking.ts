@@ -143,6 +143,7 @@ export const booking: Messages['booking'] = {
     visitUpper: 'VISÍTANOS',
     hoursUpper: 'HORARIOS',
     minUpper: 'MIN',
+    photoAlt: ({ business, n }) => `${business}: foto ${n}`,
     wellnessHeadline: 'Una hora de calma, reservada para ti.',
     minutes: ({ n }) => `${n} minutos`,
     bookTreatment: 'Reserva un tratamiento',

@@ -129,6 +129,9 @@ export const errors: Messages['errors'] = {
   alreadyVoided: 'Este movimiento ya está anulado.',
   voidRefundFirst: 'Primero anula el reembolso relacionado.',
 
+  photoLimit: ({ n }) => `Puedes agregar hasta ${n} fotos. Elimina una para agregar otra.`,
+  photosUnavailable: 'La carga de fotos no está disponible en este momento.',
+  photoMissing: 'No encontramos esa carga. Inténtalo de nuevo.',
   alreadySuspended: 'Ya está suspendido.',
   notSuspended: 'Este negocio no está suspendido.',
   alreadyCurrentPlan: 'Ese ya es el plan actual.',

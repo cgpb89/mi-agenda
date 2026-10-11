@@ -141,6 +141,11 @@ export const errors = {
   alreadyVoided: 'This entry is already voided.',
   voidRefundFirst: 'Void the related refund first.',
 
+  // Booking-page photos
+  photoLimit: ({ n }: { n: number }) => `You can add up to ${n} photos. Remove one to add another.`,
+  photosUnavailable: 'Photo uploads are not available right now.',
+  photoMissing: "We couldn't find that upload. Please try again.",
+
   // Platform admin
   alreadySuspended: 'Already suspended.',
   notSuspended: 'This business is not suspended.',

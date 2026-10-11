@@ -1,13 +1,15 @@
 import type { ReactNode } from 'react';
 import { formatPrice } from '@/i18n/format';
 import { messages } from '@/i18n/messages';
-import type { PublicPage } from '@/modules/public/booking-page';
+import type { PublicPage, PublicPhoto } from '@/modules/public/booking-page';
 import s from './Templates.module.scss';
 
 /**
  * Five page templates over ONE booking engine. Templates only differ in
  * layout, type and copy; every one embeds the same <BookingFlow /> passed in
  * as `flow`. All text is business-provided and rendered as plain text.
+ * Photo areas render only when the business has uploaded photos (max 3; the
+ * first is the cover, the rest fill the template's gallery).
  */
 export interface TemplateProps {
   page: PublicPage;
@@ -18,7 +20,64 @@ function copyFor(page: PublicPage) {
   const t = messages[page.locale].booking;
   const price = (minor: number) =>
     minor === 0 ? t.flow.free : formatPrice(minor, page.currency, page.locale);
-  return { tp: t.page, price, min: t.flow.min };
+  const photoAlt = (n: number) => t.page.photoAlt({ business: page.profile.displayName, n });
+  return { tp: t.page, price, min: t.flow.min, photoAlt };
+}
+
+/** A photo filling its (position: relative) slot. */
+function Photo({
+  photo,
+  alt,
+  sizes,
+  priority,
+}: {
+  photo: PublicPhoto;
+  alt: string;
+  sizes: string;
+  priority?: boolean;
+}) {
+  return (
+    // Cloudinary already resizes and picks the format (f_auto), so a plain <img> is enough.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className={s.photo}
+      src={photo.src}
+      srcSet={photo.srcSet}
+      sizes={sizes}
+      alt={alt}
+      width={photo.width}
+      height={photo.height}
+      loading={priority ? 'eager' : 'lazy'}
+      fetchPriority={priority ? 'high' : undefined}
+      decoding="async"
+    />
+  );
+}
+
+/** Photos from index `from` on (default: after the cover). Renders nothing when empty. */
+function Gallery({
+  page,
+  className,
+  sizes,
+  from = 1,
+}: {
+  page: PublicPage;
+  className?: string;
+  sizes: string;
+  from?: number;
+}) {
+  const { photoAlt } = copyFor(page);
+  const rest = page.photos.slice(from);
+  if (!rest.length) return null;
+  return (
+    <div className={className}>
+      {rest.map((p, i) => (
+        <div key={p.id}>
+          <Photo photo={p} alt={photoAlt(from + i + 1)} sizes={sizes} />
+        </div>
+      ))}
+    </div>
+  );
 }
 
 function Lines({ lines }: { lines: (string | null | undefined)[] }) {
@@ -35,9 +94,17 @@ function Lines({ lines }: { lines: (string | null | undefined)[] }) {
   );
 }
 
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  return (
+    (parts[0]?.[0] ?? '') + (parts.length > 1 ? (parts.at(-1)?.[0] ?? '') : '')
+  ).toUpperCase();
+}
+
 // ── 1. Barber & hair ─────────────────────────────────────────────────────────
 export function BarberTemplate({ page, flow }: TemplateProps) {
-  const { tp, price } = copyFor(page);
+  const { tp, price, photoAlt } = copyFor(page);
+  const cover = page.photos[0];
   const p = page.profile;
   const c = p.content;
   const words = p.displayName.split(/\s+/);
@@ -63,7 +130,16 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
             <p className={s.bLead}>{c.intro ?? p.description}</p>
           ) : null}
         </div>
-        <div className={s.bPhoto} aria-hidden="true" />
+        {cover ? (
+          <div className={s.bPhoto}>
+            <Photo
+              photo={cover}
+              alt={photoAlt(1)}
+              sizes="(min-width: 800px) 50vw, 100vw"
+              priority
+            />
+          </div>
+        ) : null}
       </div>
       <div id="book" className={s.bBookRow}>
         <div className={s.bCol}>
@@ -88,7 +164,6 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
               <div className={s.bTeam}>
                 {page.staff.map((m) => (
                   <div key={m.id} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                    <div className={s.bPortrait} aria-hidden="true" />
                     <span style={{ fontWeight: 700, fontSize: 15 }}>{m.name}</span>
                     {m.title ? (
                       <span style={{ fontSize: 12, color: '#b0a393', marginTop: -6 }}>
@@ -116,10 +191,7 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
             <Lines lines={p.hoursLines} />
           </span>
         </div>
-        <div className={s.bGallery} aria-hidden="true">
-          <div />
-          <div />
-        </div>
+        <Gallery page={page} className={s.bGallery} sizes="(min-width: 800px) 20vw, 50vw" />
       </div>
     </div>
   );
@@ -127,7 +199,8 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
 
 // ── 2. Beauty & wellness ─────────────────────────────────────────────────────
 export function WellnessTemplate({ page, flow }: TemplateProps) {
-  const { tp } = copyFor(page);
+  const { tp, photoAlt } = copyFor(page);
+  const cover = page.photos[0];
   const p = page.profile;
   const c = p.content;
   const headline = c.headline ?? tp.wellnessHeadline;
@@ -157,7 +230,16 @@ export function WellnessTemplate({ page, flow }: TemplateProps) {
         <a href="#book" className={s.wCta}>
           {c.ctaLabel ?? tp.bookTreatment}
         </a>
-        <div className={s.wArch} aria-hidden="true" />
+        {cover ? (
+          <div className={s.wArch}>
+            <Photo
+              photo={cover}
+              alt={photoAlt(1)}
+              sizes="(min-width: 560px) 520px, 100vw"
+              priority
+            />
+          </div>
+        ) : null}
       </div>
       {highlights.length ? (
         <div className={s.wCats}>
@@ -169,6 +251,7 @@ export function WellnessTemplate({ page, flow }: TemplateProps) {
           ))}
         </div>
       ) : null}
+      <Gallery page={page} className={s.wGallery} sizes="(min-width: 800px) 50vw, 100vw" />
       <div id="book" className={s.wBook}>
         <div>{flow}</div>
       </div>
@@ -235,12 +318,20 @@ export function ConsultTemplate({ page, flow }: TemplateProps) {
               ))}
             </div>
           ) : null}
+          <Gallery
+            page={page}
+            from={0}
+            className={s.cGallery}
+            sizes="(min-width: 900px) 25vw, 50vw"
+          />
           {page.staff.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <h2 style={{ margin: 0, fontSize: 20 }}>{tp.practitioners}</h2>
               {page.staff.map((m) => (
                 <div key={m.id} className={s.cPerson}>
-                  <div className={s.cAvatar} aria-hidden="true" />
+                  <div className={s.cAvatar} aria-hidden="true">
+                    {initials(m.name)}
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
                     <span style={{ fontWeight: 700 }}>{m.name}</span>
                     {m.title ? (
@@ -269,7 +360,8 @@ export function ConsultTemplate({ page, flow }: TemplateProps) {
 
 // ── 4. Fitness & coaching ────────────────────────────────────────────────────
 export function FitnessTemplate({ page, flow }: TemplateProps) {
-  const { tp, price, min } = copyFor(page);
+  const { tp, price, min, photoAlt } = copyFor(page);
+  const cover = page.photos[0];
   const p = page.profile;
   const c = p.content;
   const words = p.displayName.split(/\s+/);
@@ -308,7 +400,11 @@ export function FitnessTemplate({ page, flow }: TemplateProps) {
           <span className={s.mono}>{[p.address, p.hoursLines[0]].filter(Boolean).join(' · ')}</span>
         </div>
       </div>
-      <div className={s.fBand} aria-hidden="true" />
+      {cover ? (
+        <div className={s.fBand}>
+          <Photo photo={cover} alt={photoAlt(1)} sizes="100vw" priority />
+        </div>
+      ) : null}
       <div id="book" className={s.fBook}>
         <div style={{ display: 'flex', flexDirection: 'column' }}>
           {page.services.map((x, i) => (
@@ -328,7 +424,6 @@ export function FitnessTemplate({ page, flow }: TemplateProps) {
             <div className={s.fCoaches}>
               {page.staff.map((m) => (
                 <div key={m.id}>
-                  <div className={s.fCoachImg} aria-hidden="true" />
                   <span className={s.fName} style={{ fontSize: 22 }}>
                     {m.name}
                   </span>
@@ -341,6 +436,7 @@ export function FitnessTemplate({ page, flow }: TemplateProps) {
               ))}
             </div>
           ) : null}
+          <Gallery page={page} className={s.fGallery} sizes="(min-width: 900px) 25vw, 50vw" />
         </div>
         <div className={s.sticky}>{flow}</div>
       </div>
@@ -350,7 +446,8 @@ export function FitnessTemplate({ page, flow }: TemplateProps) {
 
 // ── 5. General services ──────────────────────────────────────────────────────
 export function ServicesTemplate({ page, flow }: TemplateProps) {
-  const { tp, price, min } = copyFor(page);
+  const { tp, price, min, photoAlt } = copyFor(page);
+  const cover = page.photos[0];
   const p = page.profile;
   const c = p.content;
   return (
@@ -368,7 +465,16 @@ export function ServicesTemplate({ page, flow }: TemplateProps) {
             ) : null}
           </div>
         </div>
-        <div className={s.sPhoto} aria-hidden="true" />
+        {cover ? (
+          <div className={s.sPhoto}>
+            <Photo
+              photo={cover}
+              alt={photoAlt(1)}
+              sizes="(min-width: 1100px) 33vw, 100vw"
+              priority
+            />
+          </div>
+        ) : null}
         <div className={s.sContact}>
           <span className={s.sContactLabel}>{tp.contact}</span>
           {p.address ? (
@@ -377,9 +483,9 @@ export function ServicesTemplate({ page, flow }: TemplateProps) {
           <span style={{ fontSize: 15, lineHeight: 1.7, color: '#d1d3d6' }}>
             <Lines lines={[p.phone, p.email, ...p.hoursLines]} />
           </span>
-          <div className={s.sMap} aria-hidden="true" />
         </div>
       </div>
+      <Gallery page={page} className={s.sGallery} sizes="(min-width: 800px) 50vw, 100vw" />
       <div className={s.sRow}>
         <div className={s.sCatalog}>
           {page.services.map((x) => (

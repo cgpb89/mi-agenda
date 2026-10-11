@@ -32,6 +32,8 @@ export const settings: Messages['settings'] = {
     'availability.updated': 'Horarios actualizados',
     'booking_page.updated': 'Página de reservas editada',
     'booking_page.published': 'Estado de la página de reservas modificado',
+    'booking_page.photo_added': 'Foto agregada a la página de reservas',
+    'booking_page.photo_removed': 'Foto eliminada de la página de reservas',
     'tenant.suspended': 'Negocio suspendido por Tempo',
     'tenant.reactivated': 'Negocio reactivado por Tempo',
     'tenant.plan_changed': 'Plan modificado',

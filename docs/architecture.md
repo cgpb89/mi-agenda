@@ -19,7 +19,7 @@ src/modules/<domain>/   business rules + server actions ('use server' files expo
   auth · tenants · businesses · services · staff · scheduling · bookings · customers · payments
   analytics · audit · platform · public
 src/lib/                env · db (client, tx/retry, error mapping) · auth (session, authorize, permissions,
-                        password) · security · rate-limit · validation · phone · mail · observability
+                        password) · security · rate-limit · validation · phone · mail · cloudinary · observability
 src/i18n/               config (locales, cookie) · server (getI18n) · client (useI18n) · format ·
                         message-ref (msg tokens) · messages/{en,es}/<namespace>.ts
 src/components/         ui/ (design-system primitives) · layout/ (AppShell) · features/<screen>/
@@ -69,7 +69,7 @@ All tables live in the PostgreSQL schema `app`; see [`prisma/schema.prisma`](../
   - `memberships` — role and status.
   - `invitations`.
 - **Configuration:**
-  - `business_profiles` — one per tenant: explicit columns plus Zod-validated `page_content` JSON.
+  - `business_profiles` — one per tenant: explicit columns plus Zod-validated `page_content` JSON and `photos` JSON (up to 3 Cloudinary images, first = cover; uploaded browser→Cloudinary with a server signature, then verified via the Admin API before saving).
   - `booking_policies` — one per tenant: phone limit, interval, notice, advance window, cancellation window, require-email, auto-confirm.
   - `services` — money stored as integer minor units.
   - `staff` and `staff_services`.

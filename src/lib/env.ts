@@ -49,6 +49,14 @@ const schema = z
     EMAIL_SERVER_USER: z.string().optional(),
     EMAIL_SERVER_PASSWORD: z.string().optional(),
     LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+    // Cloudinary stores booking-page photos. Optional: without it, uploads are off.
+    CLOUDINARY_CLOUD_NAME: z
+      .string()
+      .regex(/^[a-z0-9_-]+$/i, 'must be the cloud name only, not a URL')
+      .optional()
+      .or(z.literal('')),
+    CLOUDINARY_API_KEY: z.string().optional(),
+    CLOUDINARY_API_SECRET: z.string().optional(),
   })
   .superRefine((env, ctx) => {
     // The Postgres URLs must belong to the same Supabase project as the API URL.
@@ -107,6 +115,10 @@ export function getEnv(): Env {
   }
   cached = parsed.data;
   return cached;
+}
+
+export function isCloudinaryConfigured(env: Env = getEnv()): boolean {
+  return Boolean(env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET);
 }
 
 export function isEmailConfigured(env: Env = getEnv()): boolean {

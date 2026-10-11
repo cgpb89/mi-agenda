@@ -141,6 +141,7 @@ export const booking = {
     visitUpper: 'VISIT',
     hoursUpper: 'HOURS',
     minUpper: 'MIN',
+    photoAlt: ({ business, n }: { business: string; n: number }) => `${business} — photo ${n}`,
     wellnessHeadline: 'A quieter hour, set aside for you.',
     minutes: ({ n }: { n: number }) => `${n} minutes`,
     bookTreatment: 'Book a treatment',

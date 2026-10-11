@@ -1,6 +1,9 @@
 import 'server-only';
 import { getDb } from '@/lib/db/client';
+import { cloudName, imageUrl } from '@/lib/cloudinary';
+import { isCloudinaryConfigured } from '@/lib/env';
 import { readPageContent, type PageContent } from '@/modules/businesses/page-content';
+import { readPhotos } from '@/modules/businesses/photos';
 
 /**
  * Data for the PUBLIC booking page. Only fields that are meant to be public
@@ -45,6 +48,33 @@ export interface PublicPage {
     staffIds: string[];
   }[];
   staff: { id: string; name: string; title: string | null; bio: string | null }[];
+  /** Business photos in display order (first = cover). Empty when none or uploads are off. */
+  photos: PublicPhoto[];
+}
+
+export interface PublicPhoto {
+  id: string;
+  src: string;
+  srcSet: string;
+  width: number;
+  height: number;
+}
+
+const PHOTO_WIDTHS = [640, 1200, 1800];
+
+function publicPhotos(raw: unknown): PublicPhoto[] {
+  const photos = readPhotos(raw);
+  if (!photos.length || !isCloudinaryConfigured()) return [];
+  const cloud = cloudName();
+  return photos.map((p) => ({
+    id: p.id,
+    src: imageUrl(cloud, p.publicId, p.version, { width: 1200 }),
+    srcSet: PHOTO_WIDTHS.map(
+      (w) => `${imageUrl(cloud, p.publicId, p.version, { width: w })} ${w}w`,
+    ).join(', '),
+    width: p.width,
+    height: p.height,
+  }));
 }
 
 export { summarizeHours } from './booking-page-pure';
@@ -160,5 +190,6 @@ export async function loadPublicPage(
       }))
       .filter((s) => s.staffIds.length > 0),
     staff: staff.map((s) => ({ id: s.id, name: s.displayName, title: s.title, bio: s.bio })),
+    photos: publicPhotos(t.profile.photos),
   };
 }

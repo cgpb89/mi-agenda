@@ -29,6 +29,8 @@ export type AuditAction =
   | 'policy.updated'
   | 'booking_page.updated'
   | 'booking_page.published'
+  | 'booking_page.photo_added'
+  | 'booking_page.photo_removed'
   | 'service.created'
   | 'service.updated'
   | 'service.deactivated'

@@ -12,9 +12,11 @@ export function proxy(request: NextRequest) {
     `default-src 'self'`,
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${isDev ? ` 'unsafe-eval'` : ''}`,
     `style-src 'self' 'unsafe-inline'`,
-    `img-src 'self' blob: data:`,
+    // Cloudinary: booking-page photos are delivered from res.* and uploaded
+    // straight from the browser to api.* (see lib/cloudinary).
+    `img-src 'self' blob: data: https://res.cloudinary.com`,
     `font-src 'self'`,
-    `connect-src 'self'${isDev ? ' ws:' : ''}`,
+    `connect-src 'self' https://api.cloudinary.com${isDev ? ' ws:' : ''}`,
     `object-src 'none'`,
     `base-uri 'self'`,
     `form-action 'self'`,

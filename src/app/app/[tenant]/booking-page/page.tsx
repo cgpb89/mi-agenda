@@ -1,7 +1,10 @@
 import type { Metadata } from 'next';
 import { getDb } from '@/lib/db/client';
 import { requireTenantPage } from '@/lib/auth/authorize';
+import { cloudName, imageUrl } from '@/lib/cloudinary';
+import { isCloudinaryConfigured } from '@/lib/env';
 import { readPageContent } from '@/modules/businesses/page-content';
+import { readPhotos } from '@/modules/businesses/photos';
 import { BookingPageEditor } from '@/components/features/booking-page/BookingPageEditor';
 import { getI18n } from '@/i18n/server';
 import { DEFAULT_LOCALE, toLocale } from '@/i18n/config';
@@ -24,6 +27,13 @@ export default async function BookingPageSettings({
     db.service.count({ where: { tenantId: ctx.tenantId, isActive: true, isOnline: true } }),
     db.availabilityRule.count({ where: { tenantId: ctx.tenantId, staffId: null } }),
   ]);
+  const uploadsEnabled = isCloudinaryConfigured();
+  const photos = uploadsEnabled
+    ? readPhotos(profile.photos).map((p) => ({
+        id: p.id,
+        thumb: imageUrl(cloudName(), p.publicId, p.version, { width: 480, height: 360 }),
+      }))
+    : [];
   return (
     <BookingPageEditor
       initial={{
@@ -40,6 +50,8 @@ export default async function BookingPageSettings({
       }}
       pageStatus={profile.pageStatus}
       ready={{ services: onlineServices > 0, hours: rules > 0 }}
+      photos={photos}
+      uploadsEnabled={uploadsEnabled}
     />
   );
 }
