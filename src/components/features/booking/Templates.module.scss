@@ -1,5 +1,7 @@
 // Five public booking-page templates (design/project/Booking Pages.dc.html).
 // The page wrapper is an inline-size container so type scales with `cqw`.
+// Brand color (Growth+): the wrapper may set --accent and --accent-ink inline;
+// every accent below falls back to the template's own color.
 
 .frame {
   container-type: inline-size;
@@ -81,8 +83,8 @@
   }
 }
 .bBook {
-  background: #d6a15c;
-  color: #16120f !important;
+  background: var(--accent, #d6a15c);
+  color: var(--accent-ink, #16120f) !important;
   padding: 9px 14px;
 }
 .bHero {
@@ -99,7 +101,7 @@
 }
 .bEyebrow {
   font-size: 12px;
-  color: #d6a15c;
+  color: var(--accent, #d6a15c);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -165,7 +167,7 @@
 .bPrice {
   font-size: 17px;
   font-weight: 600;
-  color: #d6a15c;
+  color: var(--accent, #d6a15c);
 }
 .bTeam {
   display: grid;
@@ -353,8 +355,8 @@
 }
 .wCta {
   text-decoration: none;
-  background: #7f6545;
-  color: #fbf8f2 !important;
+  background: var(--accent, #7f6545);
+  color: var(--accent-ink, #fbf8f2) !important;
   padding: 14px 28px;
   border-radius: 999px;
   font-size: 15px;
@@ -540,8 +542,8 @@
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: #1f5fbf;
-  color: #fff;
+  background: var(--accent, #1f5fbf);
+  color: var(--accent-ink, #fff);
   display: grid;
   place-items: center;
   font-weight: 700;
@@ -617,7 +619,7 @@
   height: 72px;
   border-radius: 50%;
   background: #e6edf6;
-  color: #1f5fbf;
+  color: var(--accent, #1f5fbf);
   display: grid;
   place-items: center;
   font-weight: 700;
@@ -739,13 +741,13 @@
   letter-spacing: -0.01em;
   text-transform: uppercase;
   span {
-    color: #c8f542;
+    color: var(--accent, #c8f542);
   }
 }
 .fCta {
   text-decoration: none;
-  background: #c8f542;
-  color: #0e0f0c !important;
+  background: var(--accent, #c8f542);
+  color: var(--accent-ink, #0e0f0c) !important;
   padding: 10px 16px;
   font-weight: 800;
   font-size: 13px;
@@ -770,7 +772,7 @@
   text-transform: uppercase;
   overflow-wrap: anywhere;
   span {
-    color: #c8f542;
+    color: var(--accent, #c8f542);
   }
 }
 .fMeta {
@@ -827,7 +829,7 @@
   border-top: 1px solid rgba(242, 245, 234, 0.14);
 }
 .fNum {
-  color: #c8f542;
+  color: var(--accent, #c8f542);
   font-size: 13px;
 }
 .fName {
@@ -934,7 +936,7 @@
     width: 28px;
     height: 28px;
     border-radius: 7px;
-    background: #d9532a;
+    background: var(--accent, #d9532a);
     display: inline-block;
   }
 }
@@ -1014,7 +1016,7 @@
 .sDur {
   font-size: 12px;
   font-weight: 700;
-  color: #d9532a;
+  color: var(--accent, #d9532a);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
@@ -1099,4 +1101,13 @@
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+// Business logo in the template header (brand feature).
+.logoImg {
+  display: block;
+  height: 40px;
+  width: auto;
+  max-width: min(220px, 50cqw);
+  object-fit: contain;
 }

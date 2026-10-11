@@ -11,7 +11,9 @@ import { enforceRateLimit } from '@/lib/rate-limit';
 import { nameSchema, optionalEmailSchema, optionalTextSchema, parseInput } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
 import { MAX_ACTIVE_PER_PHONE_MAX, MAX_ACTIVE_PER_PHONE_MIN } from '@/modules/bookings/rules';
-import { pageContentSchema } from './page-content';
+import { pageContentSchema, readPageContent } from './page-content';
+import { hasFeature } from '@/modules/plans/features';
+import { entitlementsFor } from '@/modules/plans/service';
 import { msg } from '@/i18n/message-ref';
 import { INTL_LOCALE, LOCALES } from '@/i18n/config';
 
@@ -37,7 +39,22 @@ export async function saveBookingPageAction(
     const ctx = await requireTenant(tenantSlug, 'bookingPage.manage');
     await enforceRateLimit('dashboardWriteByUser', ctx.userId);
     const input = parseInput(bookingPageSchema, raw);
+    const plan = await entitlementsFor(ctx.plan);
     await withTransaction(async (tx) => {
+      // Brand color and glass are plan features: without them, keep whatever is
+      // already stored (it simply isn't shown) instead of accepting changes.
+      if (!hasFeature(plan, 'brandColors') || !hasFeature(plan, 'glassStyle')) {
+        const current = readPageContent(
+          (
+            await tx.businessProfile.findUniqueOrThrow({
+              where: { tenantId: ctx.tenantId },
+              select: { pageContent: true },
+            })
+          ).pageContent,
+        );
+        if (!hasFeature(plan, 'brandColors')) input.content.accent = current.accent;
+        if (!hasFeature(plan, 'glassStyle')) input.content.style = current.style;
+      }
       await tx.businessProfile.update({
         where: { tenantId: ctx.tenantId },
         data: {

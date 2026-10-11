@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { HEX_COLOR } from '@/lib/color';
 
 /**
  * Template copy stored in BusinessProfile.pageContent (JSON). Always validated
@@ -22,6 +23,8 @@ export const pageContentSchema = z.object({
     .optional(),
   notes: z.array(text(200)).max(5).optional(),
   notesTitle: text(60).optional(),
+  /** Brand accent color (#rrggbb). Applied only with the `brandColors` feature. */
+  accent: z.string().regex(HEX_COLOR).optional(),
   /** Visual style. 'glass' only takes effect on GLASS_TEMPLATES. */
   style: z.enum(['classic', 'glass']).optional(),
 });

@@ -47,6 +47,8 @@ interface Props {
   template: TemplateKey;
   /** Translucent "glass" surfaces (templates in GLASS_TEMPLATES). */
   glass?: boolean;
+  /** Business brand color (plan feature `brandColors`). */
+  accent?: string | null;
   businessName: string;
   timezone: string;
   currency: string;
@@ -142,7 +144,7 @@ function newKey() {
 }
 
 export function BookingFlow(props: Props) {
-  const t = flowTheme(props.template, props.glass);
+  const t = flowTheme(props.template, props.glass, props.accent);
   const { locale, intl, t: tr } = useI18n();
   const f = tr.booking.flow;
   const copy = tr.booking.vocab[props.template];

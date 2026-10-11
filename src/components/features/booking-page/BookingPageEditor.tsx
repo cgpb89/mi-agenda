@@ -11,6 +11,8 @@ import { Switch } from '@/components/ui/Switch';
 import { useToast } from '@/components/ui/Toast';
 import { saveBookingPageAction, setPageStatusAction } from '@/modules/businesses/actions';
 import { PhotoManager, type EditorPhoto } from './PhotoManager';
+import { BrandCard } from './BrandCard';
+import type { PlanKey } from '@/modules/plans/features';
 import { GLASS_TEMPLATES, type PageContent as Content } from '@/modules/businesses/page-content';
 import { useI18n } from '@/i18n/client';
 import { LOCALES, LOCALE_NAMES, type Locale } from '@/i18n/config';
@@ -93,6 +95,8 @@ export function BookingPageEditor({
   photos,
   uploadsEnabled,
   photoLimit,
+  brand,
+  glassLockedPlan,
 }: {
   initial: Form;
   pageStatus: string;
@@ -100,6 +104,10 @@ export function BookingPageEditor({
   photos: EditorPhoto[];
   uploadsEnabled: boolean;
   photoLimit: number;
+  /** Brand color + logo; `locked` set when the plan lacks `brandColors`. */
+  brand: { locked: { plan: PlanKey | null } | null; logo: { src: string } | null };
+  /** Undefined when the plan includes glass; otherwise the plan that unlocks it. */
+  glassLockedPlan?: PlanKey | null;
 }) {
   const { data } = useShell();
   const slug = data.tenant.slug;
@@ -149,6 +157,7 @@ export function BookingPageEditor({
   }
 
   const published = pageStatus === 'PUBLISHED';
+  const currentTemplate = TEMPLATES.find((tp) => tp.key === form.template) ?? TEMPLATES[0]!;
 
   return (
     <>
@@ -246,7 +255,8 @@ export function BookingPageEditor({
           {GLASS_TEMPLATES.includes(form.template) ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <Switch
-                checked={c.style === 'glass'}
+                checked={glassLockedPlan === undefined && c.style === 'glass'}
+                disabled={glassLockedPlan !== undefined}
                 labelledBy="glass-style-label"
                 // Off is stored as "no style" so toggling back doesn't count as an edit.
                 onChange={(on) => setC({ style: on ? 'glass' : undefined })}
@@ -255,11 +265,29 @@ export function BookingPageEditor({
                 <span id="glass-style-label" style={{ fontWeight: 600 }}>
                   {bp.glassStyle}
                 </span>
-                <span style={{ fontSize: 12, color: '#6b6358' }}>{bp.glassHint}</span>
+                <span style={{ fontSize: 12, color: '#6b6358' }}>
+                  {glassLockedPlan !== undefined
+                    ? bp.glassLocked({
+                        plan: glassLockedPlan
+                          ? (t.settings.plans[glassLockedPlan] ?? glassLockedPlan)
+                          : '—',
+                      })
+                    : bp.glassHint}
+                </span>
               </span>
             </div>
           ) : null}
         </Card>
+
+        <BrandCard
+          locked={brand.locked}
+          accent={c.accent}
+          onAccent={(accent) => setC({ accent })}
+          templateAccent={currentTemplate.accent}
+          templateBg={currentTemplate.bg}
+          logo={brand.logo}
+          uploadsEnabled={uploadsEnabled}
+        />
 
         <div
           style={{

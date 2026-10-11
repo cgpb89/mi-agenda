@@ -29,6 +29,23 @@ export const bookingPage: Messages['bookingPage'] = {
   template: 'Plantilla',
   templateNote:
     'Cada plantilla cambia el diseño, la tipografía y el estilo. Los servicios, el equipo y la disponibilidad funcionan igual por debajo.',
+  brand: 'Marca',
+  brandBody:
+    'Usa tu propio color y logo en tu página y formulario de reservas. El color reemplaza el acento de la plantilla (botones, destacados, precios).',
+  accent: 'Color de marca',
+  accentHint: 'Se guarda con "Guardar cambios"',
+  accentReset: 'Usar color de la plantilla',
+  accentLowContrast:
+    'Este color tiene poco contraste con el fondo de la página, así que los botones y destacados pueden verse mal. Prueba un tono más oscuro o más claro.',
+  logo: 'Logo',
+  logoHint:
+    'Funciona mejor un PNG con fondo transparente. Se muestra en el encabezado. Máx. 10 MB.',
+  uploadLogo: 'Subir logo',
+  replaceLogo: 'Cambiar logo',
+  removeLogo: 'Quitar logo',
+  toastLogoSaved: 'Logo guardado',
+  toastLogoRemoved: 'Logo quitado',
+  glassLocked: ({ plan }) => `Disponible en el plan ${plan}`,
   glassStyle: 'Estilo vidrio',
   glassHint:
     'Paneles translúcidos tipo vidrio esmerilado sobre una versión difuminada de tu foto de portada (o un degradado cálido si no tienes fotos).',

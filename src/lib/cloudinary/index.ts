@@ -48,10 +48,10 @@ export interface SignedUpload {
  * Cloudinary rejects signatures older than one hour. The upload is tagged
  * `pending` until addPhotoAction saves it (see removePendingTag).
  */
-export function signUpload(tenantId: string): SignedUpload {
+export function signUpload(tenantId: string, name: string = randomUUID()): SignedUpload {
   const { cloudName, apiKey, apiSecret } = config();
   const params = uploadParams(
-    `${tenantPhotoFolder(tenantId)}/${randomUUID()}`,
+    `${tenantPhotoFolder(tenantId)}/${name}`,
     Math.floor(Date.now() / 1000),
   );
   return {

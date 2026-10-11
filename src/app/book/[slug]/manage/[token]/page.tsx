@@ -52,6 +52,7 @@ export default async function ManagePage({
             <BookingFlow
               slug={page.slug}
               template={page.template}
+              accent={page.brand?.accent ?? null}
               businessName={page.profile.displayName}
               timezone={page.timezone}
               currency={page.currency}

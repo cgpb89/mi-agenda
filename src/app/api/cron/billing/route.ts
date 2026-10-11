@@ -74,7 +74,11 @@ export async function GET(req: NextRequest) {
       const rows = await db.$queryRaw<{ id: string }[]>`
         SELECT DISTINCT p->>'publicId' AS id
         FROM "app"."business_profiles" bp, jsonb_array_elements(bp.photos) AS p
-        WHERE p->>'publicId' = ANY(${ids}::text[])`;
+        WHERE p->>'publicId' = ANY(${ids}::text[])
+        UNION
+        SELECT bp.logo->>'publicId' AS id
+        FROM "app"."business_profiles" bp
+        WHERE bp.logo->>'publicId' = ANY(${ids}::text[])`;
       return new Set(rows.map((r) => r.id));
     });
     pendingDeleted = res.deleted;

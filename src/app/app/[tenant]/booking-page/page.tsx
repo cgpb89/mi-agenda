@@ -4,8 +4,9 @@ import { requireTenantPage } from '@/lib/auth/authorize';
 import { cloudName, imageUrl } from '@/lib/cloudinary';
 import { isCloudinaryConfigured } from '@/lib/env';
 import { readPageContent } from '@/modules/businesses/page-content';
-import { readPhotos } from '@/modules/businesses/photos';
-import { entitlementsFor } from '@/modules/plans/service';
+import { readLogo, readPhotos } from '@/modules/businesses/photos';
+import { cheapestPlanWith, hasFeature } from '@/modules/plans/features';
+import { entitlementsFor, getPlanCatalog } from '@/modules/plans/service';
 import { BookingPageEditor } from '@/components/features/booking-page/BookingPageEditor';
 import { getI18n } from '@/i18n/server';
 import { DEFAULT_LOCALE, toLocale } from '@/i18n/config';
@@ -29,7 +30,8 @@ export default async function BookingPageSettings({
     db.availabilityRule.count({ where: { tenantId: ctx.tenantId, staffId: null } }),
   ]);
   const uploadsEnabled = isCloudinaryConfigured();
-  const plan = await entitlementsFor(ctx.plan);
+  const [plan, catalog] = await Promise.all([entitlementsFor(ctx.plan), getPlanCatalog()]);
+  const logo = readLogo(profile.logo);
   const photos = uploadsEnabled
     ? readPhotos(profile.photos).map((p) => ({
         id: p.id,
@@ -55,6 +57,18 @@ export default async function BookingPageSettings({
       photos={photos}
       uploadsEnabled={uploadsEnabled}
       photoLimit={plan.photoLimit}
+      brand={{
+        locked: hasFeature(plan, 'brandColors')
+          ? null
+          : { plan: cheapestPlanWith(catalog, 'brandColors') },
+        logo:
+          logo && uploadsEnabled
+            ? { src: imageUrl(cloudName(), logo.publicId, logo.version, { width: 240 }) }
+            : null,
+      }}
+      glassLockedPlan={
+        hasFeature(plan, 'glassStyle') ? undefined : cheapestPlanWith(catalog, 'glassStyle')
+      }
     />
   );
 }

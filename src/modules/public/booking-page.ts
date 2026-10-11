@@ -8,7 +8,7 @@ import {
   readPageContent,
   type PageContent,
 } from '@/modules/businesses/page-content';
-import { readPhotos } from '@/modules/businesses/photos';
+import { readLogo, readPhotos } from '@/modules/businesses/photos';
 import { hasFeature } from '@/modules/plans/features';
 import { entitlementsFor } from '@/modules/plans/service';
 
@@ -33,6 +33,8 @@ export interface PublicPage {
   glass: boolean;
   /** Plan includes hiding the "Powered by Tempo" line. */
   hideBranding: boolean;
+  /** Brand color and logo (plan feature `brandColors`); null when not set or not included. */
+  brand: { accent: string | null; logo: PublicLogo | null } | null;
   published: boolean;
   profile: {
     displayName: string;
@@ -63,6 +65,12 @@ export interface PublicPage {
   photos: PublicPhoto[];
 }
 
+export interface PublicLogo {
+  src: string;
+  width: number;
+  height: number;
+}
+
 export interface PublicPhoto {
   id: string;
   src: string;
@@ -74,6 +82,19 @@ export interface PublicPhoto {
 }
 
 const PHOTO_WIDTHS = [640, 1200, 1800];
+
+function publicBrand(accent: string | undefined, rawLogo: unknown): PublicPage['brand'] {
+  const logo = readLogo(rawLogo);
+  const src =
+    logo && isCloudinaryConfigured()
+      ? imageUrl(cloudName(), logo.publicId, logo.version, { width: 480 })
+      : null;
+  if (!accent && !src) return null;
+  return {
+    accent: accent ?? null,
+    logo: src && logo ? { src, width: logo.width, height: logo.height } : null,
+  };
+}
 
 function publicPhotos(raw: unknown): PublicPhoto[] {
   const photos = readPhotos(raw);
@@ -187,6 +208,7 @@ export async function loadPublicPage(
       GLASS_TEMPLATES.includes(t.profile.template) &&
       content.style === 'glass',
     hideBranding: hasFeature(plan, 'hideBranding'),
+    brand: hasFeature(plan, 'brandColors') ? publicBrand(content.accent, t.profile.logo) : null,
     published,
     profile: {
       displayName: t.profile.displayName,

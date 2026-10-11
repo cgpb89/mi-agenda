@@ -2,6 +2,8 @@
  * Booking-flow theme tokens — transcribed from design/project/Booking Flow.dc.html (`T`)
  * plus the per-template copy (`B`). Fonts resolve to the self-hosted next/font variables.
  */
+import { inkFor } from '@/lib/color';
+
 export type TemplateKey = 'barber' | 'wellness' | 'consult' | 'fitness' | 'services';
 
 export interface FlowTheme {
@@ -83,10 +85,26 @@ const GLASS: Partial<Record<TemplateKey, Partial<FlowTheme> & { shadow: string }
   },
 };
 
-export function flowTheme(template: TemplateKey, glass = false): FlowTheme {
-  if (!glass || !GLASS[template]) return THEMES[template];
-  const { shadow: _shadow, ...overrides } = GLASS[template];
-  return { ...THEMES[template], ...overrides };
+export function flowTheme(
+  template: TemplateKey,
+  glass = false,
+  /** Business brand color (#rrggbb), replacing the template accent. */
+  accent?: string | null,
+): FlowTheme {
+  let theme = THEMES[template];
+  if (glass && GLASS[template]) {
+    const { shadow: _shadow, ...overrides } = GLASS[template];
+    theme = { ...theme, ...overrides };
+  }
+  if (accent) {
+    theme = {
+      ...theme,
+      accent,
+      accentInk: inkFor(accent),
+      sel: `color-mix(in srgb, ${accent} 16%, transparent)`,
+    };
+  }
+  return theme;
 }
 
 /** CSS vars for the glass panel: drop-shadow colour and the opaque fallback surface. */

@@ -24,6 +24,12 @@ export function readPhotos(raw: unknown): StoredPhoto[] {
   return parsed.success ? parsed.data : [];
 }
 
+/** The booking-page logo (same shape as a photo), or null when unset/invalid. */
+export function readLogo(raw: unknown): StoredPhoto | null {
+  const parsed = storedPhotoSchema.safeParse(raw);
+  return parsed.success ? parsed.data : null;
+}
+
 /** Move the photo `id` one place left (-1) or right (+1). Returns a new array. */
 export function movePhoto<T extends { id: string }>(
   photos: T[],

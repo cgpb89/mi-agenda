@@ -28,6 +28,22 @@ export const bookingPage = {
   template: 'Template',
   templateNote:
     'Each template changes layout, type and mood. Services, staff and availability work the same underneath.',
+  brand: 'Brand',
+  brandBody:
+    'Use your own color and logo on your booking page and booking form. The color replaces the template accent (buttons, highlights, prices).',
+  accent: 'Brand color',
+  accentHint: 'Saved with "Save changes"',
+  accentReset: 'Use template color',
+  accentLowContrast:
+    'This color has low contrast against the page background, so buttons and highlights may be hard to see. Try a darker or lighter shade.',
+  logo: 'Logo',
+  logoHint: 'PNG with a transparent background works best. Shown in the page header. Max 10 MB.',
+  uploadLogo: 'Upload logo',
+  replaceLogo: 'Replace logo',
+  removeLogo: 'Remove logo',
+  toastLogoSaved: 'Logo saved',
+  toastLogoRemoved: 'Logo removed',
+  glassLocked: ({ plan }: { plan: string }) => `Available on the ${plan} plan`,
   glassStyle: 'Glass style',
   glassHint:
     'Frosted, translucent panels over a blurred version of your cover photo (or a warm gradient if you have no photos).',

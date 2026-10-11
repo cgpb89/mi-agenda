@@ -41,6 +41,7 @@ export default async function BookingPage({ params, searchParams }: Params) {
       slug={page.slug}
       template={page.template}
       glass={page.glass}
+      accent={page.brand?.accent ?? null}
       businessName={page.profile.displayName}
       timezone={page.timezone}
       currency={page.currency}

@@ -1,5 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
 import { formatPrice } from '@/i18n/format';
+import { inkFor } from '@/lib/color';
 import { messages } from '@/i18n/messages';
 import type { PublicPage, PublicPhoto } from '@/modules/public/booking-page';
 import s from './Templates.module.scss';
@@ -94,6 +95,32 @@ function Lines({ lines }: { lines: (string | null | undefined)[] }) {
   );
 }
 
+/** Brand color (Growth+): overrides the template accent via CSS variables. */
+function brandStyle(page: PublicPage): CSSProperties | undefined {
+  const accent = page.brand?.accent;
+  return accent
+    ? ({ '--accent': accent, '--accent-ink': inkFor(accent) } as CSSProperties)
+    : undefined;
+}
+
+/** The business logo when it has one (Growth+), otherwise the template's text logo. */
+function BrandLogo({ page, children }: { page: PublicPage; children: ReactNode }) {
+  const logo = page.brand?.logo;
+  if (!logo) return <>{children}</>;
+  return (
+    // Cloudinary already resizes and picks the format, so a plain <img> is enough.
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      className={s.logoImg}
+      src={logo.src}
+      alt={page.profile.displayName}
+      width={logo.width}
+      height={logo.height}
+      decoding="async"
+    />
+  );
+}
+
 /** Glass style: a blurred copy of the cover photo (or the class's gradient) behind the panels. */
 function GlassBackdrop({ className, cover }: { className?: string; cover?: PublicPhoto }) {
   return (
@@ -120,10 +147,15 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
   const c = p.content;
   const words = p.displayName.split(/\s+/);
   return (
-    <div className={[s.barber, page.glass && s.bGlass].filter(Boolean).join(' ')}>
+    <div
+      className={[s.barber, page.glass && s.bGlass].filter(Boolean).join(' ')}
+      style={brandStyle(page)}
+    >
       {page.glass ? <GlassBackdrop className={s.bBackdrop} cover={cover} /> : null}
       <div className={s.bHead}>
-        <span className={s.bLogo}>{words[0]}</span>
+        <BrandLogo page={page}>
+          <span className={s.bLogo}>{words[0]}</span>
+        </BrandLogo>
         <nav className={s.bNav} aria-label={tp.pageNav}>
           {page.staff.length ? <a href="#team">{c.notesTitle ? tp.team : tp.barbers}</a> : null}
           <a href="#visit">{tp.visit}</a>
@@ -224,10 +256,15 @@ export function WellnessTemplate({ page, flow }: TemplateProps) {
           .slice(0, 3)
           .map((x) => ({ title: x.name, body: x.description ?? tp.minutes({ n: x.durationMin }) }));
   return (
-    <div className={[s.wellness, page.glass && s.wGlass].filter(Boolean).join(' ')}>
+    <div
+      className={[s.wellness, page.glass && s.wGlass].filter(Boolean).join(' ')}
+      style={brandStyle(page)}
+    >
       {page.glass ? <GlassBackdrop className={s.wBackdrop} cover={cover} /> : null}
       <div className={s.wHead}>
-        <span className={s.wLogo}>{p.displayName}</span>
+        <BrandLogo page={page}>
+          <span className={s.wLogo}>{p.displayName}</span>
+        </BrandLogo>
         {p.tagline ? <span className={s.wTag}>{p.tagline}</span> : null}
       </div>
       <div className={s.wHero}>
@@ -304,15 +341,20 @@ export function ConsultTemplate({ page, flow }: TemplateProps) {
         ];
   const policy = c.notes?.length ? c.notes : [page.policy.policyText, tp.contactOnly];
   return (
-    <div className={[s.consult, page.glass && s.cGlass].filter(Boolean).join(' ')}>
+    <div
+      className={[s.consult, page.glass && s.cGlass].filter(Boolean).join(' ')}
+      style={brandStyle(page)}
+    >
       {page.glass ? <GlassBackdrop className={s.cBackdrop} cover={cover} /> : null}
       <div className={s.cTop}>
-        <div className={s.cBrand}>
-          <span className={s.cTile} aria-hidden="true">
-            {p.displayName.charAt(0).toUpperCase()}
-          </span>
-          <span>{p.displayName}</span>
-        </div>
+        <BrandLogo page={page}>
+          <div className={s.cBrand}>
+            <span className={s.cTile} aria-hidden="true">
+              {p.displayName.charAt(0).toUpperCase()}
+            </span>
+            <span>{p.displayName}</span>
+          </div>
+        </BrandLogo>
         <span className={s.cContact}>{[p.phone, p.hoursLines[0]].filter(Boolean).join(' · ')}</span>
       </div>
       <div className={s.cMain}>
@@ -383,18 +425,23 @@ export function FitnessTemplate({ page, flow }: TemplateProps) {
   const headline = (c.headline ?? tp.fitnessHeadline).trim();
   const lastSpace = headline.lastIndexOf(' ');
   return (
-    <div className={[s.fitness, page.glass && s.fGlass].filter(Boolean).join(' ')}>
+    <div
+      className={[s.fitness, page.glass && s.fGlass].filter(Boolean).join(' ')}
+      style={brandStyle(page)}
+    >
       {page.glass ? <GlassBackdrop className={s.fBackdrop} cover={cover} /> : null}
       <div className={s.fHead}>
-        <span className={s.fLogo}>
-          {words[0]}
-          {words.length > 1 ? (
-            <>
-              <span>/</span>
-              {words.slice(1).join(' ')}
-            </>
-          ) : null}
-        </span>
+        <BrandLogo page={page}>
+          <span className={s.fLogo}>
+            {words[0]}
+            {words.length > 1 ? (
+              <>
+                <span>/</span>
+                {words.slice(1).join(' ')}
+              </>
+            ) : null}
+          </span>
+        </BrandLogo>
         <a href="#book" className={s.fCta}>
           {c.ctaLabel ?? tp.bookSession}
         </a>
@@ -467,14 +514,19 @@ export function ServicesTemplate({ page, flow }: TemplateProps) {
   const p = page.profile;
   const c = p.content;
   return (
-    <div className={[s.services, page.glass && s.sGlass].filter(Boolean).join(' ')}>
+    <div
+      className={[s.services, page.glass && s.sGlass].filter(Boolean).join(' ')}
+      style={brandStyle(page)}
+    >
       {page.glass ? <GlassBackdrop className={s.sBackdrop} cover={cover} /> : null}
       <div className={s.sBento}>
         <div className={s.sIntro}>
-          <div className={s.sBrand}>
-            <i aria-hidden="true" />
-            <span>{p.displayName}</span>
-          </div>
+          <BrandLogo page={page}>
+            <div className={s.sBrand}>
+              <i aria-hidden="true" />
+              <span>{p.displayName}</span>
+            </div>
+          </BrandLogo>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <h1 className={s.sH1}>{c.headline ?? p.tagline ?? tp.servicesHeadline}</h1>
             {(c.intro ?? p.description) ? (

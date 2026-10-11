@@ -318,6 +318,8 @@ model BusinessProfile {
   /// Up to 3 Cloudinary photos in display order (first = cover).
   /// Shape: modules/businesses/photos.ts; length capped by a CHECK constraint.
   photos      Json            @default("[]")
+  /// Logo (Cloudinary reference, same shape as one photo). Shown with the `brandColors` feature.
+  logo        Json?
   updatedAt   DateTime        @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Restrict)
