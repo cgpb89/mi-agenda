@@ -28,3 +28,6 @@ playwright/.cache/
 .vercel
 
 .vercel
+
+# Local review reports (senior-architect agent)
+reviews/
