@@ -8,6 +8,7 @@ import { requireTenant } from '@/lib/auth/authorize';
 import {
   deleteImage,
   getImage,
+  removePendingTag,
   signUpload,
   tenantPhotoFolder,
   type SignedUpload,
@@ -26,7 +27,9 @@ import { MAX_PHOTOS, movePhoto, readPhotos, type StoredPhoto } from './photos';
  * Upload flow: (1) preparePhotoUploadAction signs a direct browser→Cloudinary
  * upload to a public_id inside this tenant's folder; (2) the browser uploads;
  * (3) addPhotoAction checks the public_id belongs to the tenant, confirms the
- * image exists with the Admin API (never trusting client-sent sizes) and saves it.
+ * image exists with the Admin API (never trusting client-sent sizes), saves it and
+ * removes the upload's `pending` tag. Uploads never saved stay tagged and are
+ * deleted by the daily job (api/cron/billing) after 24 hours.
  */
 
 function assertConfigured() {
@@ -116,6 +119,8 @@ export async function addPhotoAction(
       await deleteImage(publicId);
       throw new AppError('POLICY', msg('photoLimit', { n: MAX_PHOTOS }));
     }
+    // Saved: no longer an abandoned upload for the daily cleanup.
+    await removePendingTag(publicId);
     revalidate(tenantSlug);
     return undefined;
   });

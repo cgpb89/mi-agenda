@@ -1,6 +1,10 @@
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { NextResponse, type NextRequest } from 'next/server';
-import { deleteImagesByPrefix, tenantPhotoFolder } from '@/lib/cloudinary';
+import {
+  deleteImagesByPrefix,
+  deleteStalePendingUploads,
+  tenantPhotoFolder,
+} from '@/lib/cloudinary';
 import { getDb } from '@/lib/db/client';
 import { getEnv, isCloudinaryConfigured } from '@/lib/env';
 import { logger } from '@/lib/observability/logger';
@@ -11,7 +15,8 @@ import { GRACE_MONTHS } from '@/modules/billing/access';
  * Daily billing job (Vercel Cron, see vercel.json). Permanently deletes stores
  * whose trial or paid period ended more than a month ago without a payment.
  * The database function re-checks the dates, so a store that paid in the
- * meantime is never deleted.
+ * meantime is never deleted. Afterwards it deletes photo uploads that were
+ * never saved to a booking page (best effort, never blocks the purge).
  */
 export const dynamic = 'force-dynamic';
 
@@ -40,14 +45,16 @@ export async function GET(req: NextRequest) {
       const rows = await db.$queryRaw<{ purged: boolean }[]>`
         SELECT "app"."purge_expired_tenant"(${t.id}::uuid) AS purged`;
       if (!rows[0]?.purged) continue;
-      if (isCloudinaryConfigured()) await deleteImagesByPrefix(`${tenantPhotoFolder(t.id)}/`);
+      const photosDeleted = isCloudinaryConfigured()
+        ? await deleteImagesByPrefix(`${tenantPhotoFolder(t.id)}/`)
+        : true;
       await audit({
         tenantId: null,
         actorType: 'system',
         action: 'tenant.deleted',
         targetType: 'tenant',
         targetId: t.id,
-        metadata: { slug: t.slug, name: t.name, reason: 'unpaid' },
+        metadata: { slug: t.slug, name: t.name, reason: 'unpaid', photosDeleted },
       });
       deleted.push(t.slug);
     } catch (err) {
@@ -58,8 +65,24 @@ export async function GET(req: NextRequest) {
     }
   }
   if (deleted.length) logger.info('billing: deleted expired tenants', { count: deleted.length });
+
+  // Abandoned photo uploads (still tagged `pending` after 24 h). Runs after the
+  // purge and never throws; images a booking page references are always kept.
+  let pendingDeleted = 0;
+  if (isCloudinaryConfigured()) {
+    const res = await deleteStalePendingUploads(async (ids) => {
+      const rows = await db.$queryRaw<{ id: string }[]>`
+        SELECT DISTINCT p->>'publicId' AS id
+        FROM "app"."business_profiles" bp, jsonb_array_elements(bp.photos) AS p
+        WHERE p->>'publicId' = ANY(${ids}::text[])`;
+      return new Set(rows.map((r) => r.id));
+    });
+    pendingDeleted = res.deleted;
+    if (res.deleted) logger.info('billing: deleted abandoned uploads', { count: res.deleted });
+  }
+
   return NextResponse.json(
-    { ok: true, deleted: deleted.length },
+    { ok: true, deleted: deleted.length, pendingDeleted },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

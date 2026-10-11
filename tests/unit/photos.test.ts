@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { imageUrl, signParams } from '@/lib/cloudinary/sign';
+import {
+  PENDING_MAX_AGE_MS,
+  PENDING_TAG,
+  chunk,
+  imageUrl,
+  signParams,
+  stalePendingIds,
+  uploadParams,
+} from '@/lib/cloudinary/sign';
 import { MAX_PHOTOS, movePhoto, readPhotos } from '@/modules/businesses/photos';
 
 describe('cloudinary signing', () => {
@@ -23,6 +31,41 @@ describe('cloudinary signing', () => {
     expect(imageUrl('demo', 'x', 1, { width: 480, height: 360 })).toContain(
       '/c_fill,g_auto,w_480,h_360/',
     );
+  });
+});
+
+describe('pending uploads', () => {
+  it('signs the pending tag with the upload', () => {
+    const params = uploadParams('tempo/t/p', 1700000000);
+    expect(params.tags).toBe(PENDING_TAG);
+    const signed = signParams(params, 'secret');
+    // Dropping the tag (or changing it) must invalidate the signature.
+    const { tags: _t, ...untagged } = params;
+    expect(signParams(untagged, 'secret')).not.toBe(signed);
+    expect(signParams({ ...params, tags: 'other' }, 'secret')).not.toBe(signed);
+  });
+
+  it('selects only stale uploads inside our folder', () => {
+    const now = Date.parse('2026-10-11T12:00:00Z');
+    const old = new Date(now - PENDING_MAX_AGE_MS - 60_000).toISOString();
+    const fresh = new Date(now - PENDING_MAX_AGE_MS + 60_000).toISOString();
+    expect(
+      stalePendingIds(
+        [
+          { public_id: 'tempo/a/old', created_at: old },
+          { public_id: 'tempo/a/fresh', created_at: fresh },
+          { public_id: 'elsewhere/old', created_at: old },
+          { public_id: 'tempo/a/bad-date', created_at: 'not a date' },
+        ],
+        now,
+        'tempo/',
+      ),
+    ).toEqual(['tempo/a/old']);
+  });
+
+  it('chunks IDs for bulk deletes', () => {
+    expect(chunk([1, 2, 3, 4, 5], 2)).toEqual([[1, 2], [3, 4], [5]]);
+    expect(chunk([], 100)).toEqual([]);
   });
 });
 
