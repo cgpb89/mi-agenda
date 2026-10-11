@@ -23,6 +23,12 @@ export const staff = {
   save: 'Save',
   markInactive: 'Mark inactive',
   markActive: 'Mark active',
+  delete: 'Delete',
+  deleteTitle: ({ name }: { name: string }) => `Delete ${name}?`,
+  deleteBody:
+    'They are removed from your team, booking page and calendar. Past appointments and reports keep their name. This can’t be undone.',
+  keep: 'Keep',
+  toastDeleted: ({ name }: { name: string }) => `${name} deleted`,
   toastAdded: ({ name }: { name: string }) => `${name} added`,
   toastSaved: ({ name }: { name: string }) => `${name} saved`,
   inactiveWarning: ({ n }: { n: number }) =>

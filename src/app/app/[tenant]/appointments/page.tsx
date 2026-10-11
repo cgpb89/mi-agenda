@@ -36,7 +36,7 @@ export default async function AppointmentsPage({
   const now = new Date();
 
   const staff = await db.staff.findMany({
-    where: { tenantId: ctx.tenantId },
+    where: { tenantId: ctx.tenantId, deletedAt: null },
     orderBy: [{ sortOrder: 'asc' }, { displayName: 'asc' }],
     select: { id: true, displayName: true },
   });

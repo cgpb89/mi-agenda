@@ -7,6 +7,7 @@ import { AppError, runAction, type ActionResult } from '@/lib/errors';
 import { requireTenant } from '@/lib/auth/authorize';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { nameSchema, optionalTextSchema, parseInput, uuidSchema } from '@/lib/validation';
+import { now } from '@/lib/time';
 import { audit } from '@/modules/audit/audit';
 import { msg } from '@/i18n/message-ref';
 
@@ -29,7 +30,7 @@ export async function saveStaffAction(
     const input = parseInput(staffSchema, raw);
     const result = await withTransaction(async (tx) => {
       const svcCount = await tx.service.count({
-        where: { tenantId: ctx.tenantId, id: { in: input.serviceIds } },
+        where: { tenantId: ctx.tenantId, id: { in: input.serviceIds }, deletedAt: null },
       });
       if (svcCount !== new Set(input.serviceIds).size)
         throw new AppError('VALIDATION', msg('chooseServicesFromList'));
@@ -43,7 +44,7 @@ export async function saveStaffAction(
       let created = false;
       if (input.id) {
         const existing = await tx.staff.findFirst({
-          where: { id: input.id, tenantId: ctx.tenantId },
+          where: { id: input.id, tenantId: ctx.tenantId, deletedAt: null },
           select: { id: true },
         });
         if (!existing) throw new AppError('NOT_FOUND', msg('staffNotFound'));
@@ -83,5 +84,71 @@ export async function saveStaffAction(
     });
     revalidatePath(`/app/${tenantSlug}`, 'layout');
     return result;
+  });
+}
+
+/**
+ * Remove a staff member from the business. Refused while they still have
+ * upcoming appointments. With no appointment history the row is deleted;
+ * otherwise it is kept (past appointments reference it) but marked deleted,
+ * unlinked from its login and stripped of services and shifts.
+ */
+export async function deleteStaffAction(
+  tenantSlug: string,
+  raw: unknown,
+): Promise<ActionResult<{ name: string }>> {
+  return runAction('deleteStaff', async () => {
+    const ctx = await requireTenant(tenantSlug, 'staff.manage');
+    await enforceRateLimit('dashboardWriteByUser', ctx.userId);
+    const { id } = parseInput(z.object({ id: uuidSchema }), raw);
+    const res = await withTransaction(async (tx) => {
+      const staff = await tx.staff.findFirst({
+        where: { id, tenantId: ctx.tenantId, deletedAt: null },
+        select: { id: true, displayName: true },
+      });
+      if (!staff) throw new AppError('NOT_FOUND', msg('staffNotFound'));
+      const [upcoming, history] = await Promise.all([
+        tx.appointment.count({
+          where: {
+            tenantId: ctx.tenantId,
+            staffId: id,
+            status: { in: ['PENDING', 'CONFIRMED'] },
+            startAt: { gt: now() },
+          },
+        }),
+        tx.appointment.count({ where: { tenantId: ctx.tenantId, staffId: id } }),
+      ]);
+      if (upcoming) throw new AppError('POLICY', msg('staffHasUpcoming', { n: upcoming }));
+      if (history === 0) {
+        // Cascades to their service links, shifts and time off.
+        await tx.staff.delete({ where: { id } });
+      } else {
+        await tx.staffService.deleteMany({ where: { tenantId: ctx.tenantId, staffId: id } });
+        await tx.availabilityRule.deleteMany({ where: { tenantId: ctx.tenantId, staffId: id } });
+        await tx.availabilityException.deleteMany({
+          where: { tenantId: ctx.tenantId, staffId: id },
+        });
+        await tx.staff.update({
+          where: { id },
+          data: { deletedAt: now(), isActive: false, userId: null },
+        });
+      }
+      await audit(
+        {
+          tenantId: ctx.tenantId,
+          actorUserId: ctx.userId,
+          actorType: 'user',
+          action: 'staff.deleted',
+          targetType: 'staff',
+          targetId: id,
+          metadata: { name: staff.displayName, keptForHistory: history > 0 },
+        },
+        tx,
+      );
+      return { name: staff.displayName };
+    });
+    revalidatePath(`/app/${tenantSlug}`, 'layout');
+    revalidatePath(`/book/${tenantSlug}`);
+    return res;
   });
 }

@@ -26,6 +26,12 @@ export const staff: Messages['staff'] = {
   save: 'Guardar',
   markInactive: 'Marcar como inactivo',
   markActive: 'Marcar como activo',
+  delete: 'Eliminar',
+  deleteTitle: ({ name }) => `¿Eliminar a ${name}?`,
+  deleteBody:
+    'Se quita de tu equipo, de la página de reservas y del calendario. Las citas pasadas y los reportes conservan su nombre. No se puede deshacer.',
+  keep: 'Conservar',
+  toastDeleted: ({ name }) => `${name} eliminado`,
   toastAdded: ({ name }) => `${name} agregado`,
   toastSaved: ({ name }) => `${name} guardado`,
   inactiveWarning: ({ n }) =>

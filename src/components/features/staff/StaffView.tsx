@@ -5,14 +5,14 @@ import { useRouter } from 'next/navigation';
 import { useState, useTransition } from 'react';
 import { PageContent, PageHeader, useShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/Button';
-import { Drawer, dialogStyles } from '@/components/ui/Dialog';
+import { AlertDialog, Drawer, dialogStyles } from '@/components/ui/Dialog';
 import { Field, FormMessage, Input, Textarea, formStyles } from '@/components/ui/Form';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { useToast } from '@/components/ui/Toast';
 import segStyles from '@/components/ui/Segmented.module.scss';
 import tbl from '@/components/ui/Table.module.scss';
 import { moneyFmt } from '@/components/features/shared/format';
-import { saveStaffAction } from '@/modules/staff/actions';
+import { deleteStaffAction, saveStaffAction } from '@/modules/staff/actions';
 import { useI18n } from '@/i18n/client';
 
 interface StaffRow {
@@ -47,6 +47,7 @@ export function StaffView({
   const toast = useToast();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [pending, startTransition] = useTransition();
   const { t, locale } = useI18n();
   const st = t.staff;
@@ -62,6 +63,19 @@ export function StaffView({
           ? st.toastAdded({ name: res.data.name })
           : st.toastSaved({ name: res.data.name }),
       );
+      setDraft(null);
+      router.refresh();
+    });
+  }
+
+  function remove() {
+    if (!draft?.id) return;
+    const id = draft.id;
+    startTransition(async () => {
+      const res = await deleteStaffAction(slug, { id });
+      setConfirmDelete(false);
+      if (!res.ok) return setError(res.error.message);
+      toast(st.toastDeleted({ name: res.data!.name }));
       setDraft(null);
       router.refresh();
     });
@@ -196,6 +210,19 @@ export function StaffView({
                 {draft.isActive ? st.markInactive : st.markActive}
               </Button>
             ) : null}
+            {draft?.id ? (
+              <Button
+                variant="danger"
+                disabled={pending}
+                style={{ marginLeft: 'auto' }}
+                onClick={() => {
+                  setError(null);
+                  setConfirmDelete(true);
+                }}
+              >
+                {st.delete}
+              </Button>
+            ) : null}
           </>
         }
       >
@@ -278,6 +305,22 @@ export function StaffView({
           </>
         ) : null}
       </Drawer>
+
+      <AlertDialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title={st.deleteTitle({ name: current?.displayName ?? '' })}
+        actions={
+          <>
+            <Button onClick={() => setConfirmDelete(false)}>{st.keep}</Button>
+            <Button variant="dangerSolid" disabled={pending} onClick={remove}>
+              {st.delete}
+            </Button>
+          </>
+        }
+      >
+        {st.deleteBody}
+      </AlertDialog>
     </>
   );
 }

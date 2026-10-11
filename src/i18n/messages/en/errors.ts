@@ -90,6 +90,10 @@ export const errors = {
   customerNotFound: 'Customer not found.',
   serviceNotFound: 'Service not found.',
   staffNotFound: 'Staff member not found.',
+  staffHasUpcoming: ({ n }: { n: number }) =>
+    `This person has ${n} upcoming appointment${n === 1 ? '' : 's'}. Reassign or cancel ${n === 1 ? 'it' : 'them'} first.`,
+  serviceHasUpcoming: ({ n }: { n: number }) =>
+    `This service has ${n} upcoming appointment${n === 1 ? '' : 's'}. Reschedule or cancel ${n === 1 ? 'it' : 'them'} first.`,
   overrideNotFound: 'Override not found.',
   paymentNotFound: 'Payment not found.',
   userNotFound: 'User not found.',

@@ -25,7 +25,7 @@ export default async function ServicesPage({
   const current = now();
   const [services, staff, counts, upcoming] = await Promise.all([
     db.service.findMany({
-      where: { tenantId: ctx.tenantId },
+      where: { tenantId: ctx.tenantId, deletedAt: null },
       orderBy: [{ isActive: 'desc' }, { sortOrder: 'asc' }, { name: 'asc' }],
       include: { staff: { select: { staffId: true } } },
     }),

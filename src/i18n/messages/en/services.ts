@@ -35,6 +35,12 @@ export const services = {
   save: 'Save service',
   deactivate: 'Deactivate',
   reactivate: 'Reactivate',
+  delete: 'Delete',
+  deleteTitle: ({ name }: { name: string }) => `Delete ${name}?`,
+  deleteBody:
+    'It is removed from your services and booking page. Past appointments and reports keep its name. This can’t be undone.',
+  keep: 'Keep',
+  toastDeleted: ({ name }: { name: string }) => `${name} deleted`,
   toastAdded: ({ name }: { name: string }) => `${name} added`,
   toastSaved: ({ name }: { name: string }) => `${name} saved`,
   toastReactivated: ({ name }: { name: string }) => `${name} reactivated`,

@@ -30,6 +30,12 @@ export const services: Messages['services'] = {
   save: 'Guardar servicio',
   deactivate: 'Desactivar',
   reactivate: 'Reactivar',
+  delete: 'Eliminar',
+  deleteTitle: ({ name }) => `¿Eliminar ${name}?`,
+  deleteBody:
+    'Se quita de tus servicios y de la página de reservas. Las citas pasadas y los reportes conservan su nombre. No se puede deshacer.',
+  keep: 'Conservar',
+  toastDeleted: ({ name }) => `${name} eliminado`,
   toastAdded: ({ name }) => `${name} agregado`,
   toastSaved: ({ name }) => `${name} guardado`,
   toastReactivated: ({ name }) => `${name} reactivado`,

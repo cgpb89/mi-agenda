@@ -78,6 +78,10 @@ export const errors: Messages['errors'] = {
   customerNotFound: 'No se encontró el cliente.',
   serviceNotFound: 'No se encontró el servicio.',
   staffNotFound: 'No se encontró el miembro del equipo.',
+  staffHasUpcoming: ({ n }) =>
+    `Esta persona tiene ${n} ${n === 1 ? 'cita próxima' : 'citas próximas'}. Reasígnalas o cancélalas primero.`,
+  serviceHasUpcoming: ({ n }) =>
+    `Este servicio tiene ${n} ${n === 1 ? 'cita próxima' : 'citas próximas'}. Reprográmalas o cancélalas primero.`,
   overrideNotFound: 'No se encontró la excepción.',
   paymentNotFound: 'No se encontró el pago.',
   userNotFound: 'No se encontró el usuario.',

@@ -11,7 +11,11 @@ import { useToast } from '@/components/ui/Toast';
 import tbl from '@/components/ui/Table.module.scss';
 import segStyles from '@/components/ui/Segmented.module.scss';
 import { moneyFmt } from '@/components/features/shared/format';
-import { saveServiceAction, setServiceActiveAction } from '@/modules/services/actions';
+import {
+  deleteServiceAction,
+  saveServiceAction,
+  setServiceActiveAction,
+} from '@/modules/services/actions';
 import { DURATIONS } from '@/modules/services/constants';
 import { useI18n } from '@/i18n/client';
 import type { Messages } from '@/i18n/messages';
@@ -95,6 +99,7 @@ export function ServicesView({
   const slug = useShell().data.tenant.slug;
   const [draft, setDraft] = useState<Draft | null>(() => (openNew ? blankDraft(staff) : null));
   const [confirmDeactivate, setConfirmDeactivate] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<{ message: string; fields: Record<string, string> } | null>(
     null,
   );
@@ -161,6 +166,19 @@ export function ServicesView({
           ? sv.toastReactivated({ name: res.data.name })
           : sv.toastDeactivated({ name: res.data.name }),
       );
+      close();
+      router.refresh();
+    });
+  }
+
+  function remove() {
+    if (!draft?.id) return;
+    const id = draft.id;
+    startTransition(async () => {
+      const res = await deleteServiceAction(slug, { id });
+      setConfirmDelete(false);
+      if (!res.ok) return setError({ message: res.error.message, fields: {} });
+      toast(sv.toastDeleted({ name: res.data!.name }));
       close();
       router.refresh();
     });
@@ -301,6 +319,19 @@ export function ServicesView({
                     {sv.reactivate}
                   </Button>
                 )
+              ) : null}
+              {draft.id ? (
+                <Button
+                  variant="danger"
+                  disabled={pending}
+                  style={{ marginLeft: 'auto' }}
+                  onClick={() => {
+                    setError(null);
+                    setConfirmDelete(true);
+                  }}
+                >
+                  {sv.delete}
+                </Button>
               ) : null}
             </>
           ) : undefined
@@ -484,6 +515,22 @@ export function ServicesView({
         }
       >
         {sv.deactivateBody({ n: current?.upcoming ?? 0 })}
+      </AlertDialog>
+
+      <AlertDialog
+        open={confirmDelete}
+        onClose={() => setConfirmDelete(false)}
+        title={sv.deleteTitle({ name: current?.name ?? sv.thisService })}
+        actions={
+          <>
+            <Button onClick={() => setConfirmDelete(false)}>{sv.keep}</Button>
+            <Button variant="dangerSolid" disabled={pending} onClick={remove}>
+              {sv.delete}
+            </Button>
+          </>
+        }
+      >
+        {sv.deleteBody}
       </AlertDialog>
     </>
   );

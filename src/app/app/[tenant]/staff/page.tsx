@@ -17,7 +17,7 @@ export default async function StaffPage({ params }: { params: Promise<{ tenant: 
   const since = daysAgo(30);
   const [staff, services, memberships, counts, upcoming] = await Promise.all([
     db.staff.findMany({
-      where: { tenantId: ctx.tenantId },
+      where: { tenantId: ctx.tenantId, deletedAt: null },
       orderBy: [{ isActive: 'desc' }, { sortOrder: 'asc' }, { displayName: 'asc' }],
       include: { services: { select: { serviceId: true } }, user: { select: { email: true } } },
     }),

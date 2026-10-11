@@ -363,6 +363,9 @@ model Service {
   /// Overrides BookingPolicy.maxAdvanceDays when set.
   maxAdvanceDays  Int?        @map("max_advance_days")
   sortOrder       Int         @default(0) @map("sort_order")
+  /// Set when the business deletes the service. Kept (inactive, hidden from
+  /// the dashboard) because past appointments still reference it.
+  deletedAt       DateTime?   @map("deleted_at") @db.Timestamptz(3)
   createdAt       DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt       DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
 
@@ -377,17 +380,20 @@ model Service {
 }
 
 model Staff {
-  id          String   @id @default(uuid()) @db.Uuid
-  tenantId    String   @map("tenant_id") @db.Uuid
+  id          String    @id @default(uuid()) @db.Uuid
+  tenantId    String    @map("tenant_id") @db.Uuid
   /// Optional login account (a member of the same tenant).
-  userId      String?  @map("user_id") @db.Uuid
-  displayName String   @map("display_name") @db.VarChar(80)
-  title       String?  @db.VarChar(80)
-  bio         String?  @db.VarChar(300)
-  isActive    Boolean  @default(true) @map("is_active")
-  sortOrder   Int      @default(0) @map("sort_order")
-  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  userId      String?   @map("user_id") @db.Uuid
+  displayName String    @map("display_name") @db.VarChar(80)
+  title       String?   @db.VarChar(80)
+  bio         String?   @db.VarChar(300)
+  isActive    Boolean   @default(true) @map("is_active")
+  sortOrder   Int       @default(0) @map("sort_order")
+  /// Set when the business deletes the staff member. Kept (inactive, hidden
+  /// from the dashboard) because past appointments still reference them.
+  deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
 
   tenant       Tenant                  @relation(fields: [tenantId], references: [id], onDelete: Restrict)
   user         User?                   @relation(fields: [userId], references: [id], onDelete: SetNull)

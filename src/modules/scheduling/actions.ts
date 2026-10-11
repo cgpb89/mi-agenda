@@ -74,7 +74,7 @@ export async function saveAvailabilityAction(
     await withTransaction(async (tx) => {
       const staffIds = Object.keys(input.staff);
       const owned = await tx.staff.count({
-        where: { tenantId: ctx.tenantId, id: { in: staffIds } },
+        where: { tenantId: ctx.tenantId, id: { in: staffIds }, deletedAt: null },
       });
       if (owned !== staffIds.length) throw new AppError('VALIDATION', msg('unknownStaff'));
       for (const w of Object.values(input.staff)) if (w) checkWeek(w, 'staff');

@@ -13,6 +13,7 @@ import {
   parseInput,
   uuidSchema,
 } from '@/lib/validation';
+import { now } from '@/lib/time';
 import { audit } from '@/modules/audit/audit';
 import { DURATIONS } from './constants';
 import { msg } from '@/i18n/message-ref';
@@ -63,7 +64,7 @@ export async function saveServiceAction(
     const res = await withTransaction(async (tx) => {
       // Staff must belong to this tenant (composite FKs would reject it too).
       const staff = await tx.staff.findMany({
-        where: { tenantId: ctx.tenantId, id: { in: input.staffIds } },
+        where: { tenantId: ctx.tenantId, id: { in: input.staffIds }, deletedAt: null },
         select: { id: true },
       });
       if (staff.length !== new Set(input.staffIds).size) {
@@ -86,7 +87,7 @@ export async function saveServiceAction(
       let created = false;
       if (input.id) {
         const existing = await tx.service.findFirst({
-          where: { id: input.id, tenantId: ctx.tenantId },
+          where: { id: input.id, tenantId: ctx.tenantId, deletedAt: null },
           select: { id: true },
         });
         if (!existing) throw new AppError('NOT_FOUND', msg('serviceNotFound'));
@@ -130,7 +131,9 @@ export async function setServiceActiveAction(
     const ctx = await requireTenant(tenantSlug, 'services.manage');
     const input = parseInput(z.object({ id: uuidSchema, active: z.boolean() }), raw);
     const res = await withTransaction(async (tx) => {
-      const svc = await tx.service.findFirst({ where: { id: input.id, tenantId: ctx.tenantId } });
+      const svc = await tx.service.findFirst({
+        where: { id: input.id, tenantId: ctx.tenantId, deletedAt: null },
+      });
       if (!svc) throw new AppError('NOT_FOUND', msg('serviceNotFound'));
       await tx.service.update({
         where: { id: svc.id },
@@ -150,6 +153,66 @@ export async function setServiceActiveAction(
       return { name: svc.name };
     });
     revalidatePath(`/app/${tenantSlug}`, 'layout');
+    return res;
+  });
+}
+
+/**
+ * Remove a service. Refused while it has upcoming appointments. With no
+ * appointment history the row is deleted; otherwise it is kept (past
+ * appointments reference it) but marked deleted and unlinked from staff.
+ */
+export async function deleteServiceAction(
+  tenantSlug: string,
+  raw: unknown,
+): Promise<ActionResult<{ name: string }>> {
+  return runAction('deleteService', async () => {
+    const ctx = await requireTenant(tenantSlug, 'services.manage');
+    await enforceRateLimit('dashboardWriteByUser', ctx.userId);
+    const { id } = parseInput(z.object({ id: uuidSchema }), raw);
+    const res = await withTransaction(async (tx) => {
+      const svc = await tx.service.findFirst({
+        where: { id, tenantId: ctx.tenantId, deletedAt: null },
+        select: { id: true, name: true },
+      });
+      if (!svc) throw new AppError('NOT_FOUND', msg('serviceNotFound'));
+      const [upcoming, history] = await Promise.all([
+        tx.appointment.count({
+          where: {
+            tenantId: ctx.tenantId,
+            serviceId: id,
+            status: { in: ['PENDING', 'CONFIRMED'] },
+            startAt: { gt: now() },
+          },
+        }),
+        tx.appointment.count({ where: { tenantId: ctx.tenantId, serviceId: id } }),
+      ]);
+      if (upcoming) throw new AppError('POLICY', msg('serviceHasUpcoming', { n: upcoming }));
+      if (history === 0) {
+        await tx.service.delete({ where: { id } });
+      } else {
+        await tx.staffService.deleteMany({ where: { tenantId: ctx.tenantId, serviceId: id } });
+        await tx.service.update({
+          where: { id },
+          data: { deletedAt: now(), isActive: false, isOnline: false },
+        });
+      }
+      await audit(
+        {
+          tenantId: ctx.tenantId,
+          actorUserId: ctx.userId,
+          actorType: 'user',
+          action: 'service.deleted',
+          targetType: 'service',
+          targetId: id,
+          metadata: { name: svc.name, keptForHistory: history > 0 },
+        },
+        tx,
+      );
+      return { name: svc.name };
+    });
+    revalidatePath(`/app/${tenantSlug}`, 'layout');
+    revalidatePath(`/book/${tenantSlug}`);
     return res;
   });
 }

@@ -47,7 +47,7 @@ export default async function TenantLayout({
     }),
     can(ctx.role, 'appointments.create')
       ? db.service.findMany({
-          where: { tenantId: ctx.tenantId },
+          where: { tenantId: ctx.tenantId, deletedAt: null },
           orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
           select: {
             id: true,

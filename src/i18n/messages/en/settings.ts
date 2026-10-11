@@ -33,6 +33,8 @@ export const settings = {
     'availability.updated': 'Hours updated',
     'booking_page.updated': 'Booking page edited',
     'booking_page.published': 'Booking page status changed',
+    'staff.deleted': 'Staff member deleted',
+    'service.deleted': 'Service deleted',
     'booking_page.photo_added': 'Booking page photo added',
     'booking_page.photo_removed': 'Booking page photo removed',
     'tenant.suspended': 'Business suspended by Tempo',

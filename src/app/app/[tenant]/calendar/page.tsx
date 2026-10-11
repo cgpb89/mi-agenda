@@ -66,7 +66,7 @@ export default async function CalendarPage({
       select: { id: true, displayName: true },
     }),
     db.service.findMany({
-      where: { tenantId: ctx.tenantId },
+      where: { tenantId: ctx.tenantId, deletedAt: null },
       orderBy: { name: 'asc' },
       select: { id: true, name: true },
     }),
