@@ -22,6 +22,8 @@ export const pageContentSchema = z.object({
     .optional(),
   notes: z.array(text(200)).max(5).optional(),
   notesTitle: text(60).optional(),
+  /** Visual style. 'glass' is currently offered on the Barber template only. */
+  style: z.enum(['classic', 'glass']).optional(),
 });
 
 export type PageContent = z.infer<typeof pageContentSchema>;

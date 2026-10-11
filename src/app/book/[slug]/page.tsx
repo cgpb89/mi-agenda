@@ -40,6 +40,7 @@ export default async function BookingPage({ params, searchParams }: Params) {
     <BookingFlow
       slug={page.slug}
       template={page.template}
+      glass={page.glass}
       businessName={page.profile.displayName}
       timezone={page.timezone}
       currency={page.currency}

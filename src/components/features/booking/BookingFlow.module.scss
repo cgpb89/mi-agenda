@@ -521,3 +521,34 @@
   font-size: 13px;
   color: var(--bf-muted);
 }
+
+// Glass style (see themes.ts GLASS): frosted panel over the page backdrop.
+.glass {
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 30px 60px -30px rgba(0, 0, 0, 0.7);
+
+  // The sticky footer scrolls over the steps, so it needs its own blur.
+  .foot {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+
+  // Without backdrop blur (or when the visitor asks for less transparency),
+  // translucent panels hurt legibility: fall back to an opaque surface. (The
+  // --bf-* vars are inline, so the background is set directly here.)
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    &,
+    .foot {
+      background: #1f1a16;
+    }
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    &,
+    .foot {
+      background: #1f1a16;
+    }
+  }
+}

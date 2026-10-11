@@ -20,10 +20,11 @@ export function imageUrl(
   cloudName: string,
   publicId: string,
   version: number,
-  opts: { width: number; height?: number },
+  opts: { width: number; height?: number; blur?: number },
 ): string {
-  const t = opts.height
+  const size = opts.height
     ? `c_fill,g_auto,w_${opts.width},h_${opts.height}`
     : `c_limit,w_${opts.width}`;
+  const t = opts.blur ? `${size}/e_blur:${opts.blur}` : size;
   return `https://res.cloudinary.com/${cloudName}/image/upload/${t}/f_auto/q_auto/v${version}/${publicId}`;
 }

@@ -22,6 +22,8 @@ export interface PublicPage {
   currency: string;
   country: string;
   template: TemplateKey;
+  /** Glass style chosen in the editor (only the Barber template supports it). */
+  glass: boolean;
   published: boolean;
   profile: {
     displayName: string;
@@ -56,6 +58,8 @@ export interface PublicPhoto {
   id: string;
   src: string;
   srcSet: string;
+  /** Small, heavily blurred version for the glass-style page backdrop. */
+  blurSrc: string;
   width: number;
   height: number;
 }
@@ -72,6 +76,7 @@ function publicPhotos(raw: unknown): PublicPhoto[] {
     srcSet: PHOTO_WIDTHS.map(
       (w) => `${imageUrl(cloud, p.publicId, p.version, { width: w })} ${w}w`,
     ).join(', '),
+    blurSrc: imageUrl(cloud, p.publicId, p.version, { width: 640, blur: 1200 }),
     width: p.width,
     height: p.height,
   }));
@@ -152,6 +157,7 @@ export async function loadPublicPage(
   ]);
 
   const locale = (await getChosenLocale()) ?? toLocale(t.locale) ?? DEFAULT_LOCALE;
+  const content = readPageContent(t.profile.pageContent);
 
   return {
     tenantId: t.id,
@@ -162,6 +168,7 @@ export async function loadPublicPage(
     currency: t.currency,
     country: t.country,
     template: t.profile.template.toLowerCase() as TemplateKey,
+    glass: t.profile.template === 'BARBER' && content.style === 'glass',
     published,
     profile: {
       displayName: t.profile.displayName,
@@ -176,7 +183,7 @@ export async function loadPublicPage(
             .map((s) => s.trim())
             .filter(Boolean)
         : summarizeHours(rules, locale),
-      content: readPageContent(t.profile.pageContent),
+      content,
     },
     policy: t.policy,
     services: services

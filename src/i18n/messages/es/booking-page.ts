@@ -29,6 +29,9 @@ export const bookingPage: Messages['bookingPage'] = {
   template: 'Plantilla',
   templateNote:
     'Cada plantilla cambia el diseño, la tipografía y el estilo. Los servicios, el equipo y la disponibilidad funcionan igual por debajo.',
+  glassStyle: 'Estilo vidrio',
+  glassHint:
+    'Paneles translúcidos tipo vidrio esmerilado sobre una versión difuminada de tu foto de portada (o un degradado cálido si no tienes fotos).',
   details: 'Datos del negocio',
   nameOnPage: 'Nombre en la página',
   language: 'Idioma de la página',

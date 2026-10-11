@@ -28,6 +28,9 @@ export const bookingPage = {
   template: 'Template',
   templateNote:
     'Each template changes layout, type and mood. Services, staff and availability work the same underneath.',
+  glassStyle: 'Glass style',
+  glassHint:
+    'Frosted, translucent panels over a blurred version of your cover photo (or a warm gradient if you have no photos).',
   details: 'Business details',
   nameOnPage: 'Name on the page',
   language: 'Page language',

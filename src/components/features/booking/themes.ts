@@ -35,6 +35,23 @@ const PUBLIC_SANS = "var(--font-public-sans), 'Public Sans', sans-serif";
 const ARCHIVO = "var(--font-archivo), 'Archivo', sans-serif";
 const SCHIBSTED = "var(--font-schibsted), 'Schibsted Grotesk', sans-serif";
 
+/** Overrides for the glass style: translucent surfaces over the page backdrop. */
+const GLASS: Partial<Record<TemplateKey, Partial<FlowTheme>>> = {
+  barber: {
+    surface: 'rgba(28, 23, 19, 0.42)',
+    line: 'rgba(243, 236, 226, 0.16)',
+    field: 'rgba(255, 255, 255, 0.07)',
+    slotOff: 'rgba(255, 255, 255, 0.05)',
+    sel: 'rgba(214, 161, 92, 0.2)',
+    radius: '10px',
+    panelRadius: '22px',
+  },
+};
+
+export function flowTheme(template: TemplateKey, glass = false): FlowTheme {
+  return glass ? { ...THEMES[template], ...GLASS[template] } : THEMES[template];
+}
+
 export const THEMES: Record<TemplateKey, FlowTheme> = {
   barber: {
     surface: '#1f1a16',

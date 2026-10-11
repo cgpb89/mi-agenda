@@ -203,6 +203,92 @@
   }
 }
 
+// Barber · glass style (editor switch): frosted panels over a blurred cover
+// photo, or a warm gradient when there's no photo.
+@mixin glass-panel($alpha: 0.38) {
+  background: rgba(28, 23, 19, $alpha);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid rgba(243, 236, 226, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 24px 48px -28px rgba(0, 0, 0, 0.7);
+  // No backdrop blur, or the visitor asked for less transparency: stay legible.
+  @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+    background: rgba(28, 23, 19, 0.92);
+  }
+  @media (prefers-reduced-transparency: reduce) {
+    background: #1f1a16;
+  }
+}
+
+.bGlass {
+  --glass-gap: clamp(12px, 2cqw, 20px);
+  --glass-edge: clamp(12px, 3cqw, 32px);
+  position: relative;
+  isolation: isolate;
+  background: #120e0b;
+
+  .bHead {
+    border-bottom-color: rgba(243, 236, 226, 0.1);
+  }
+  .bBook {
+    border-radius: 999px;
+    padding: 9px 16px;
+  }
+  .bHero {
+    gap: var(--glass-gap);
+    padding: var(--glass-gap) var(--glass-edge) 0;
+    border-bottom: 0;
+  }
+  .bHeroText {
+    @include glass-panel;
+    border-radius: 24px;
+  }
+  .bPhoto {
+    border-radius: 24px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.25);
+    box-shadow: 0 24px 48px -28px rgba(0, 0, 0, 0.7);
+  }
+  .bBookRow {
+    padding-left: var(--glass-edge);
+    padding-right: var(--glass-edge);
+  }
+  .bCol > div {
+    @include glass-panel;
+    border-radius: 22px;
+    padding: clamp(18px, 3cqw, 28px);
+  }
+  .bVisit {
+    @include glass-panel(0.32);
+    border-radius: 24px;
+    margin: 0 var(--glass-edge) var(--glass-edge);
+  }
+  .bGallery > div {
+    border-radius: 14px;
+    overflow: hidden;
+  }
+}
+
+.bBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 14, 11, 0.35),
+      rgba(18, 14, 11, 0.75) 55%,
+      rgba(18, 14, 11, 0.9)
+    ),
+    var(--backdrop, none) center / cover no-repeat,
+    radial-gradient(circle at 12% 8%, rgba(214, 161, 92, 0.38), transparent 42%),
+    radial-gradient(circle at 88% 35%, rgba(170, 96, 44, 0.32), transparent 48%),
+    radial-gradient(circle at 25% 85%, rgba(214, 161, 92, 0.22), transparent 50%),
+    #16120f;
+}
+
 // ── 2. Wellness ──────────────────────────────────────────────────────────────
 .wellness {
   background: #f4efe6;

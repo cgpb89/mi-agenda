@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Field, FormMessage, Input, Select, Textarea, formStyles } from '@/components/ui/Form';
 import { StatusPill } from '@/components/ui/StatusPill';
+import { Switch } from '@/components/ui/Switch';
 import { useToast } from '@/components/ui/Toast';
 import { saveBookingPageAction, setPageStatusAction } from '@/modules/businesses/actions';
 import { PhotoManager, type EditorPhoto } from './PhotoManager';
@@ -240,6 +241,22 @@ export function BookingPageEditor({
             })}
           </div>
           <span style={{ fontSize: 12, color: '#6b6358' }}>{bp.templateNote}</span>
+          {form.template === 'BARBER' ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Switch
+                checked={c.style === 'glass'}
+                labelledBy="glass-style-label"
+                // Off is stored as "no style" so toggling back doesn't count as an edit.
+                onChange={(on) => setC({ style: on ? 'glass' : undefined })}
+              />
+              <span style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <span id="glass-style-label" style={{ fontWeight: 600 }}>
+                  {bp.glassStyle}
+                </span>
+                <span style={{ fontSize: 12, color: '#6b6358' }}>{bp.glassHint}</span>
+              </span>
+            </div>
+          ) : null}
         </Card>
 
         <div

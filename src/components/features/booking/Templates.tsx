@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 import { formatPrice } from '@/i18n/format';
 import { messages } from '@/i18n/messages';
 import type { PublicPage, PublicPhoto } from '@/modules/public/booking-page';
@@ -109,7 +109,15 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
   const c = p.content;
   const words = p.displayName.split(/\s+/);
   return (
-    <div className={s.barber}>
+    <div className={[s.barber, page.glass && s.bGlass].filter(Boolean).join(' ')}>
+      {page.glass ? (
+        // Glass style: a blurred version of the cover (or a warm gradient) behind the panels.
+        <div
+          className={s.bBackdrop}
+          aria-hidden="true"
+          style={cover ? ({ '--backdrop': `url("${cover.blurSrc}")` } as CSSProperties) : undefined}
+        />
+      ) : null}
       <div className={s.bHead}>
         <span className={s.bLogo}>{words[0]}</span>
         <nav className={s.bNav} aria-label={tp.pageNav}>

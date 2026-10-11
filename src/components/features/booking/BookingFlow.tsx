@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
-import { THEMES, type TemplateKey } from './themes';
+import { flowTheme, type TemplateKey } from './themes';
 import { demoAvailability, type DemoBusiness } from '@/components/features/landing/demo-data';
 import styles from './BookingFlow.module.scss';
 import { LOCALE_HEADER } from '@/i18n/config';
@@ -45,6 +45,8 @@ export interface ExistingBooking {
 interface Props {
   slug: string;
   template: TemplateKey;
+  /** Translucent "glass" surfaces (Barber template only). */
+  glass?: boolean;
   businessName: string;
   timezone: string;
   currency: string;
@@ -140,7 +142,7 @@ function newKey() {
 }
 
 export function BookingFlow(props: Props) {
-  const t = THEMES[props.template];
+  const t = flowTheme(props.template, props.glass);
   const { locale, intl, t: tr } = useI18n();
   const f = tr.booking.flow;
   const copy = tr.booking.vocab[props.template];
@@ -518,7 +520,11 @@ export function BookingFlow(props: Props) {
         : f.noticeHours({ n: props.minNoticeMin / 60 });
 
   return (
-    <section className={styles.root} style={vars} aria-label={f.ariaLabel}>
+    <section
+      className={[styles.root, props.glass && styles.glass].filter(Boolean).join(' ')}
+      style={vars}
+      aria-label={f.ariaLabel}
+    >
       <div className={styles.head}>
         <div className={styles.titleRow}>
           <h2 className={styles.title}>{title}</h2>
