@@ -19,6 +19,7 @@ import {
   popularServices,
   totals,
 } from './aggregate';
+import type { Locale } from '@/i18n/config';
 
 export type RangeKey = 'today' | '7d' | '30d' | '90d' | 'custom';
 
@@ -145,7 +146,12 @@ export async function loadPeriod(
   };
 }
 
-export async function loadOverview(ctx: TenantContext, range: ResolvedRange, now = new Date()) {
+export async function loadOverview(
+  ctx: TenantContext,
+  range: ResolvedRange,
+  now = new Date(),
+  locale: Locale = 'en',
+) {
   const db = getDb();
   const today = todayIn(ctx.timezone, now.getTime());
   const [{ rows, prevRows, payments }, todayAppts, upcomingList, upcomingCounts] =
@@ -220,7 +226,7 @@ export async function loadOverview(ctx: TenantContext, range: ResolvedRange, now
     },
     today: todayAppts,
     upcoming: upcomingList,
-    chart: buckets(rows, ctx.timezone, range.from, range.to, g),
+    chart: buckets(rows, ctx.timezone, range.from, range.to, g, undefined, locale),
     granularity: g,
     popular: popularServices(rows),
     peak: peakHours(rows, ctx.timezone),

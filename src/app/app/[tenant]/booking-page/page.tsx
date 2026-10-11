@@ -3,8 +3,13 @@ import { getDb } from '@/lib/db/client';
 import { requireTenantPage } from '@/lib/auth/authorize';
 import { readPageContent } from '@/modules/businesses/page-content';
 import { BookingPageEditor } from '@/components/features/booking-page/BookingPageEditor';
+import { getI18n } from '@/i18n/server';
+import { DEFAULT_LOCALE, toLocale } from '@/i18n/config';
 
-export const metadata: Metadata = { title: 'Booking page' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.nav['booking-page'] };
+}
 
 export default async function BookingPageSettings({
   params,
@@ -31,6 +36,7 @@ export default async function BookingPageSettings({
         hoursNote: profile.hoursNote ?? '',
         template: profile.template,
         content: readPageContent(profile.pageContent),
+        locale: toLocale(ctx.locale) ?? DEFAULT_LOCALE,
       }}
       pageStatus={profile.pageStatus}
       ready={{ services: onlineServices > 0, hours: rules > 0 }}

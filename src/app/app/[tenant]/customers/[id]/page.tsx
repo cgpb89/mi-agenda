@@ -5,8 +5,12 @@ import { requireTenantPage } from '@/lib/auth/authorize';
 import { can } from '@/lib/auth/permissions';
 import { netCollectedMinor } from '@/modules/payments/ledger';
 import { CustomerProfile } from '@/components/features/customers/CustomerProfile';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Customer' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.titles.customer };
+}
 
 export default async function CustomerPage({
   params,

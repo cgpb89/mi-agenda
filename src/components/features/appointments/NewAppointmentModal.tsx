@@ -14,6 +14,8 @@ import {
 } from '@/modules/bookings/actions';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
 import { dayOptions, money, quarterOptions } from './time-options';
+import { useI18n } from '@/i18n/client';
+import { countryName } from '@/i18n/format';
 
 export interface NewAppointmentPrefill {
   staffId?: string;
@@ -23,8 +25,6 @@ export interface NewAppointmentPrefill {
   customerId?: string;
   customerName?: string;
 }
-
-const QUARTERS = quarterOptions();
 
 export function NewAppointmentModal({
   open,
@@ -40,6 +40,9 @@ export function NewAppointmentModal({
   const router = useRouter();
   const toast = useToast();
   const activeServices = booking.services.filter((s) => s.isActive);
+  const { t, locale } = useI18n();
+  const c = t.appointments.create;
+  const quarters = useMemo(() => quarterOptions(locale), [locale]);
 
   const defaultService =
     activeServices.find((s) => s.id === prefill?.serviceId) ??
@@ -83,7 +86,7 @@ export function NewAppointmentModal({
   // Customer search (server-side, tenant-scoped).
   useEffect(() => {
     if (!open) return;
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       const res = await searchCustomersAction(data.tenant.slug, query);
       if (res.ok) {
         setCustomerOpts((prev) => {
@@ -92,7 +95,7 @@ export function NewAppointmentModal({
         });
       }
     }, 200);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, open, data.tenant.slug]);
 
@@ -100,7 +103,7 @@ export function NewAppointmentModal({
   useEffect(() => {
     if (!open || !serviceId || !staffId) return;
     let cancelled = false;
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       const res = await checkSlotAction(data.tenant.slug, { serviceId, staffId, date, startMin });
       if (!cancelled)
         setCheck(
@@ -111,7 +114,7 @@ export function NewAppointmentModal({
     }, 150);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearTimeout(timer);
     };
   }, [open, serviceId, staffId, date, startMin, data.tenant.slug, checkKey]);
 
@@ -123,7 +126,7 @@ export function NewAppointmentModal({
 
   let status: { kind: 'error' | 'warning' | 'success'; msg: string } | null = null;
   if (current && !current.ok) status = { kind: 'error', msg: current.message };
-  else if (needsName) status = { kind: 'warning', msg: 'Add the customer’s name to continue.' };
+  else if (needsName) status = { kind: 'warning', msg: c.needsName };
   else if (current?.ok) status = { kind: 'success', msg: `✓ ${current.message}` };
 
   function submit() {
@@ -148,7 +151,7 @@ export function NewAppointmentModal({
         setFieldErrors(res.error.fieldErrors ?? {});
         return;
       }
-      toast(`Appointment created · ${res.data.ref}`);
+      toast(c.created({ ref: res.data.ref }));
       onClose();
       router.refresh();
     });
@@ -158,12 +161,12 @@ export function NewAppointmentModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="New appointment"
+      title={c.title}
       footer={
         <>
-          <Button onClick={onClose}>Cancel</Button>
+          <Button onClick={onClose}>{c.cancel}</Button>
           <Button variant="primary" onClick={submit} disabled={invalid || pending}>
-            {pending ? 'Creating…' : 'Create appointment'}
+            {pending ? c.creating : c.create}
           </Button>
         </>
       }
@@ -172,20 +175,20 @@ export function NewAppointmentModal({
         className={formStyles.grid2}
         style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))' }}
       >
-        <Field label="Find customer" full>
+        <Field label={c.findCustomer} full>
           {(p) => (
             <Input
               {...p}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search by name or phone"
+              placeholder={c.searchPlaceholder}
             />
           )}
         </Field>
-        <Field label="Customer" full error={fieldErrors.customerId}>
+        <Field label={c.customer} full error={fieldErrors.customerId}>
           {(p) => (
             <Select {...p} value={customerId} onChange={(e) => setCustomerId(e.target.value)}>
-              <option value="new">+ New customer</option>
+              <option value="new">{c.newCustomer}</option>
               {customerOpts.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.name}
@@ -197,68 +200,69 @@ export function NewAppointmentModal({
         </Field>
         {isNew ? (
           <>
-            <Field label="Name" error={fieldErrors.n}>
+            <Field label={c.name} error={fieldErrors.n}>
               {(p) => (
                 <Input
                   {...p}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Full name"
+                  placeholder={c.namePlaceholder}
                   maxLength={120}
                 />
               )}
             </Field>
-            <Field label="Email" hint="Optional" error={fieldErrors.email}>
+            <Field label={c.email} hint={c.optional} error={fieldErrors.email}>
               {(p) => (
                 <Input
                   {...p}
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Optional for walk-ins"
+                  placeholder={c.optionalWalkIns}
                 />
               )}
             </Field>
-            <Field label="Phone country">
+            <Field label={c.phoneCountry}>
               {(p) => (
                 <Select
                   {...p}
                   value={phoneCountry}
                   onChange={(e) => setPhoneCountry(e.target.value)}
                 >
-                  {PHONE_COUNTRIES.map((c) => (
-                    <option key={c.code} value={c.code}>
-                      {c.name} ({c.dial})
+                  {PHONE_COUNTRIES.map((pc) => (
+                    <option key={pc.code} value={pc.code}>
+                      {countryName(pc.code, locale, pc.name)} ({pc.dial})
                     </option>
                   ))}
                 </Select>
               )}
             </Field>
-            <Field label="Phone" hint="Optional for walk-ins" error={fieldErrors.phone}>
+            <Field label={c.phone} hint={c.optionalWalkIns} error={fieldErrors.phone}>
               {(p) => (
                 <Input
                   {...p}
                   type="tel"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  placeholder="(555) 014-2290"
+                  placeholder={c.phonePlaceholder}
                 />
               )}
             </Field>
           </>
         ) : null}
-        <Field label="Service">
+        <Field label={c.service}>
           {(p) => (
             <Select {...p} value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
               {activeServices.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} · {s.durationMin} min · {money(s.priceMinor, s.currency)}
+                  {s.name} · {s.durationMin} {t.appointments.min} ·{' '}
+                  {money(s.priceMinor, s.currency, locale)}
                 </option>
               ))}
             </Select>
           )}
         </Field>
-        <Field label="Staff">
+        <Field label={c.staff}>
           {(p) => (
             <Select {...p} value={staffId} onChange={(e) => setStaffChoice(e.target.value)}>
               {staffForService.map((s) => (
@@ -269,10 +273,10 @@ export function NewAppointmentModal({
             </Select>
           )}
         </Field>
-        <Field label="Date">
+        <Field label={c.date}>
           {(p) => (
             <Select {...p} value={date} onChange={(e) => setDate(e.target.value)}>
-              {dayOptions(data.tenant.today).map((o) => (
+              {dayOptions(data.tenant.today, locale).map((o) => (
                 <option key={o.v} value={o.v}>
                   {o.l}
                 </option>
@@ -280,10 +284,10 @@ export function NewAppointmentModal({
             </Select>
           )}
         </Field>
-        <Field label="Start time">
+        <Field label={c.startTime}>
           {(p) => (
             <Select {...p} value={startMin} onChange={(e) => setStartMin(Number(e.target.value))}>
-              {QUARTERS.map((o) => (
+              {quarters.map((o) => (
                 <option key={o.v} value={o.v}>
                   {o.l}
                 </option>
@@ -291,13 +295,13 @@ export function NewAppointmentModal({
             </Select>
           )}
         </Field>
-        <Field label="Notes" full>
+        <Field label={c.notes} full>
           {(p) => (
             <Input
               {...p}
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Visible to staff only"
+              placeholder={c.notesPlaceholder}
               maxLength={1000}
             />
           )}

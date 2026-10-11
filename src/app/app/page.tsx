@@ -6,8 +6,13 @@ import { requireUserPage } from '@/lib/auth/authorize';
 import styles from '@/components/features/auth/Auth.module.scss';
 import { ButtonLink } from '@/components/ui/Button';
 import { logoutAction } from '@/app/(auth)/actions';
+import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Your businesses' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.noBusiness.metaTitle };
+}
 
 /** Entry point after login: go to the first business the user belongs to. */
 export default async function AppIndex() {
@@ -22,26 +27,26 @@ export default async function AppIndex() {
     select: { tenant: { select: { slug: true } } },
   });
   if (m) redirect(`/app/${m.tenant.slug}/overview`);
+  const { t } = await getI18n();
+  const nb = t.app.noBusiness;
 
   return (
     <div className={styles.page}>
       <header className={styles.top}>
-        <Link href="/" className={styles.logo}>
+        <Link href="/" className={styles.logo} aria-label={t.common.homeLabel}>
           tempo<span>.</span>
         </Link>
+        <LocaleSwitcher />
       </header>
       <main className={styles.main}>
         <div className={styles.card}>
-          <span className={styles.eyebrow}>No business yet</span>
-          <h1 className={styles.title}>You&rsquo;re not part of a business</h1>
-          <p className={styles.sub}>
-            Your account isn&rsquo;t a member of an active business. If a business invited you, open
-            the invitation link again. If an account was suspended, contact the business owner.
-          </p>
+          <span className={styles.eyebrow}>{nb.eyebrow}</span>
+          <h1 className={styles.title}>{nb.title}</h1>
+          <p className={styles.sub}>{nb.body}</p>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {user.platformRole === 'ADMIN' ? (
               <ButtonLink href="/super-admin" variant="primary">
-                Platform admin
+                {nb.platformAdmin}
               </ButtonLink>
             ) : null}
             <form action={logoutAction}>
@@ -50,7 +55,7 @@ export default async function AppIndex() {
                 className={styles.topLink}
                 style={{ background: 'none', border: 0, cursor: 'pointer', padding: '10px 0' }}
               >
-                Sign out
+                {t.app.signOut}
               </button>
             </form>
           </div>

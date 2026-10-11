@@ -4,8 +4,12 @@ import { requireTenantPage } from '@/lib/auth/authorize';
 import { can } from '@/lib/auth/permissions';
 import { loadOverview, resolveRange } from '@/modules/analytics/service';
 import { OverviewView } from '@/components/features/overview/OverviewView';
+import { getI18n, getLocale } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Overview' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.nav.overview };
+}
 
 export default async function OverviewPage({
   params,
@@ -20,7 +24,7 @@ export default async function OverviewPage({
   const range = resolveRange(sp.range, ctx.timezone, new Date(), sp.from, sp.to);
   const db = getDb();
   const [data, serviceCount, ruleCount, profile] = await Promise.all([
-    loadOverview(ctx, range),
+    loadOverview(ctx, range, undefined, await getLocale()),
     db.service.count({ where: { tenantId: ctx.tenantId, isActive: true } }),
     db.availabilityRule.count({ where: { tenantId: ctx.tenantId } }),
     db.businessProfile.findUnique({

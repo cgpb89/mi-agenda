@@ -1,48 +1,40 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { type CSSProperties, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BookingFlow } from '@/components/features/booking/BookingFlow';
 import type { TemplateKey } from '@/components/features/booking/themes';
 import { useBrowserTimeZone } from '@/lib/hooks';
-import { DEMO } from './demo-data';
+import { demoFor } from './demo-data';
 import { OFF, STREET_SPACING, Street } from './Street';
 import styles from './Landing.module.scss';
+import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
+import { useI18n } from '@/i18n/client';
 
 const SCENES = [
   {
     time: '08:40',
-    kind: 'Barbershop',
     name: 'Northside Barber Co.',
-    line: 'The first chair of the day was booked last night.',
     sky: '#f2e6d5',
   },
   {
     time: '11:15',
-    kind: 'Beauty studio',
     name: 'Sable & Sage Studio',
-    line: 'Treatments, practitioners and prep notes on one page.',
     sky: '#f1ebe3',
   },
   {
     time: '13:30',
-    kind: 'Physio clinic',
     name: 'Harbor Physio & Consulting',
-    line: 'Consultation types, in person or by video.',
     sky: '#e6ece8',
   },
   {
     time: '17:45',
-    kind: 'Fitness studio',
     name: 'Forge Training Lab',
-    line: 'One-to-one, partner and small-group sessions.',
     sky: '#f0dfcc',
   },
   {
     time: '19:20',
-    kind: 'Repair & advisory',
     name: 'Mendwell Repair & Advisory',
-    line: 'Any business that runs on appointments.',
     sky: '#dcd8e0',
   },
 ];
@@ -50,10 +42,8 @@ const SCENES = [
 const TPL: Record<
   TemplateKey,
   {
-    label: string;
     biz: string;
     slug: string;
-    headline: string;
     font: string;
     weight: number;
     style: string;
@@ -63,14 +53,11 @@ const TPL: Record<
     ink: string;
     btn: string;
     btnInk: string;
-    desc: string;
   }
 > = {
   barber: {
-    label: 'Barber & hair',
     biz: 'Northside Barber Co.',
     slug: 'northside-barber',
-    headline: 'NORTHSIDE BARBER CO.',
     font: 'var(--font-anton), sans-serif',
     weight: 400,
     style: 'normal',
@@ -80,13 +67,10 @@ const TPL: Record<
     ink: '#f3ece2',
     btn: '#d6a15c',
     btnInk: '#16120f',
-    desc: 'Dark, editorial and photo-led. Barber profiles up front, prices with dotted leaders.',
   },
   wellness: {
-    label: 'Beauty & wellness',
     biz: 'Sable & Sage Studio',
     slug: 'sable-and-sage',
-    headline: 'A quieter hour, set aside for you.',
     font: 'var(--font-cormorant), serif',
     weight: 400,
     style: 'italic',
@@ -96,13 +80,10 @@ const TPL: Record<
     ink: '#3a3128',
     btn: '#7f6545',
     btnInk: '#fbf8f2',
-    desc: 'Calm, centred and airy. Treatment categories, practitioners and preparation notes.',
   },
   consult: {
-    label: 'Consultations',
     biz: 'Harbor Physio & Consulting',
     slug: 'harbor-physio',
-    headline: 'Book a consultation',
     font: 'var(--font-public-sans), sans-serif',
     weight: 700,
     style: 'normal',
@@ -112,13 +93,10 @@ const TPL: Record<
     ink: '#14233a',
     btn: '#1f5fbf',
     btnInk: '#ffffff',
-    desc: 'Clear and accessible. Practitioner profiles, in-person or video, and visible policies. Only contact details are collected.',
   },
   fitness: {
-    label: 'Fitness & coaching',
     biz: 'Forge Training Lab',
     slug: 'forge-training-lab',
-    headline: 'TRAIN WITH INTENT.',
     font: 'var(--font-archivo), sans-serif',
     weight: 900,
     style: 'italic',
@@ -128,13 +106,10 @@ const TPL: Record<
     ink: '#f2f5ea',
     btn: '#c8f542',
     btnInk: '#0e0f0c',
-    desc: 'Loud and kinetic. Session types, group sizes and coaches.',
   },
   services: {
-    label: 'General services',
     biz: 'Mendwell Repair & Advisory',
     slug: 'mendwell',
-    headline: 'Repairs and advice, by appointment.',
     font: 'var(--font-schibsted), sans-serif',
     weight: 800,
     style: 'normal',
@@ -144,80 +119,8 @@ const TPL: Record<
     ink: '#1d1f22',
     btn: '#d9532a',
     btnInk: '#ffffff',
-    desc: 'Neutral and modular. Fits consultants, repair shops, tutors and photographers.',
   },
 };
-
-const PLANS = [
-  {
-    name: 'Starter',
-    for: 'For one person taking bookings.',
-    feats: [
-      'One booking page',
-      'One staff calendar',
-      'All five templates',
-      'Calendar and appointment list',
-      'Core analytics',
-    ],
-  },
-  {
-    name: 'Growth',
-    for: 'For a small team with set schedules.',
-    feats: [
-      'Everything in Starter',
-      'Up to 5 staff schedules',
-      'Customer directory',
-      'Full analytics and filters',
-      'Custom brand colours and type',
-    ],
-  },
-  {
-    name: 'Business',
-    for: 'For busy teams and multiple locations.',
-    feats: [
-      'Everything in Growth',
-      'Unlimited staff',
-      'Multiple locations',
-      'Roles and permissions',
-      'Data export',
-    ],
-  },
-];
-
-const COMPARE = [
-  ['Booking pages', '1', '1', '1 per location'],
-  ['Staff calendars', '1', 'Up to 5', 'Unlimited'],
-  ['Templates', 'All five', 'All five', 'All five'],
-  ['Custom colours and type', 'Preset', '✓', '✓'],
-  ['Customer directory', '—', '✓', '✓'],
-  ['Analytics', 'Core', 'Full', 'Full + export'],
-  ['Roles and permissions', '—', '—', '✓'],
-  ['Payments, SMS reminders', 'Planned', 'Planned', 'Planned'],
-];
-
-const BENEFITS = [
-  [
-    'Bookings around the clock',
-    'Your page takes appointments while you sleep, cut hair or take a day off.',
-  ],
-  [
-    'Fewer double bookings',
-    'Every slot checks staff hours, service length, breaks and existing appointments.',
-  ],
-  [
-    'Hours that fit how you work',
-    'Split shifts, different days, per-person schedules and services of any length.',
-  ],
-  ['A page that looks like you', 'Five templates, your colours, type and policies. No code.'],
-  [
-    'Numbers you can act on',
-    'Busy days, quiet hours and popular services, with clear labels for what each metric counts.',
-  ],
-  [
-    'One place for every appointment',
-    'Online, phone and walk-in bookings in a single calendar and list.',
-  ],
-];
 
 function target(i: number): [number, number] {
   const o = OFF[i]! * 0.55;
@@ -230,6 +133,10 @@ export function Landing() {
   const heroTextRef = useRef<HTMLDivElement>(null);
   const bRef = useRef<HTMLElement>(null);
   const oRef = useRef<HTMLElement>(null);
+  const bVisRef = useRef<HTMLDivElement>(null);
+  const oVisRef = useRef<HTMLDivElement>(null);
+  const bStepRefs = useRef<(HTMLElement | null)[]>([]);
+  const oStepRefs = useRef<(HTMLElement | null)[]>([]);
   const raf = useRef<number | null>(null);
   const [st, setSt] = useState({
     scene: 0,
@@ -239,12 +146,15 @@ export function Landing() {
     scrolled: false,
     narrow: false,
     flat: false,
+    phoneZoom: 1,
   });
   const [tpl, setTpl] = useState<TemplateKey>('barber');
   const [annual, setAnnual] = useState(false);
   const [plan, setPlan] = useState(1);
   const [compare, setCompare] = useState(false);
   const browserTz = useBrowserTimeZone();
+  const { t, locale } = useI18n();
+  const L = t.landing;
 
   const tick = useCallback(() => {
     const vh = innerHeight;
@@ -254,6 +164,17 @@ export function Landing() {
       if (!el) return 0;
       const b = el.getBoundingClientRect();
       return Math.min(1, Math.max(0, -b.top / Math.max(1, b.height - vh)));
+    };
+    // Stacked (mobile) layout: the visual sticks under the nav, and the active step is the
+    // last one whose top has reached the upper third of the space left below the visual.
+    const reached = (vis: HTMLElement | null, items: (HTMLElement | null)[]) => {
+      const top = vis?.getBoundingClientRect().bottom ?? 0;
+      const line = top + (vh - top) * 0.35;
+      let idx = 0;
+      items.forEach((el, k) => {
+        if (el && el.getBoundingClientRect().top <= line) idx = k;
+      });
+      return idx;
     };
     const p = prog(heroRef.current);
     const s = Math.min(4, p * 4.6);
@@ -268,7 +189,11 @@ export function Landing() {
     const z = (narrow ? 0.55 : 0.95) * (0.82 + 0.18 * Math.min(1, p * 6));
     if (worldRef.current)
       worldRef.current.style.transform = `scale(${z}) rotateX(58deg) rotateZ(-45deg) translate3d(${-cx}px,${-cy}px,0)`;
-    if (heroTextRef.current) {
+    if (heroTextRef.current && flat) {
+      heroTextRef.current.style.opacity = '';
+      heroTextRef.current.style.transform = '';
+      heroTextRef.current.style.pointerEvents = '';
+    } else if (heroTextRef.current) {
       const op = 1 - Math.min(1, Math.max(0, (p - 0.03) / 0.07));
       heroTextRef.current.style.opacity = String(op);
       heroTextRef.current.style.transform = `translateY(${(1 - op) * -30}px)`;
@@ -277,11 +202,16 @@ export function Landing() {
     const ns = {
       scene: Math.round(sf),
       dotP: Math.round(sf * 10) / 10,
-      b: Math.min(2, Math.floor(prog(bRef.current) * 3)),
-      o: Math.min(4, Math.floor(prog(oRef.current) * 5)),
+      b: flat
+        ? reached(bVisRef.current, bStepRefs.current)
+        : Math.min(2, Math.floor(prog(bRef.current) * 3)),
+      o: flat
+        ? reached(oVisRef.current, oStepRefs.current)
+        : Math.min(4, Math.floor(prog(oRef.current) * 5)),
       scrolled: scrollY > 40,
       narrow,
       flat,
+      phoneZoom: Math.round((Math.min(420, vh * 0.46) / 640) * 100) / 100,
     };
     setSt((prev) =>
       (Object.keys(ns) as (keyof typeof ns)[]).some((k) => ns[k] !== prev[k]) ? ns : prev,
@@ -306,14 +236,43 @@ export function Landing() {
   }, [tick]);
 
   const sc = SCENES[st.scene]!;
+  const scText = L.scenes[st.scene]!;
   const tp = TPL[tpl];
-  const demo = DEMO[tpl];
+  const tpText = L.templates.items[tpl];
+  const demo = demoFor(locale)[tpl];
   const rev = [2.9, 3.1, 3.0, 3.4, 3.3, 3.6, 3.5, 3.9, 3.8, 4.1, 4.0, 4.3];
   const pts = rev
     .map((v, i) => `${((i * 600) / 11).toFixed(1)},${(180 - ((v - 2.4) / 2.2) * 170).toFixed(1)}`)
     .join(' ');
-  const stickPos = st.flat ? 'relative' : 'sticky';
-  const stickH = st.flat ? 'auto' : '100vh';
+  // Desktop pins the whole section; mobile stacks it and pins only the visual (see `reached`).
+  const stage = (gap: string): CSSProperties =>
+    st.flat
+      ? {
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 20,
+          padding: '80px 16px 40px',
+        }
+      : {
+          position: 'sticky',
+          top: 0,
+          height: '100vh',
+          overflow: 'hidden',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,300px),1fr))',
+          alignItems: 'center',
+          gap,
+          padding: '80px clamp(16px,5vw,96px) 40px',
+        };
+  const stickyVisual = (bg: string): CSSProperties => ({
+    order: 1,
+    position: 'sticky',
+    top: 72,
+    zIndex: 1,
+    background: bg,
+    padding: '8px 0 16px',
+    boxShadow: `0 16px 16px -8px ${bg}`,
+  });
 
   const flow = useMemo(
     () => (
@@ -357,40 +316,37 @@ export function Landing() {
           tempo<span style={{ color: '#e0773a' }}>.</span>
         </a>
         <div className={styles.navLinks}>
-          <a href="#journey">How it works</a>
-          <a href="#templates">Templates</a>
-          <a href="#pricing">Pricing</a>
+          <a href="#journey">{L.nav.howItWorks}</a>
+          <a href="#templates">{L.nav.templates}</a>
+          <a href="#pricing">{L.nav.pricing}</a>
         </div>
+        <LocaleSwitcher />
         <Link href="/login" style={{ textDecoration: 'none', fontSize: 14, fontWeight: 600 }}>
-          Log in
+          {L.nav.logIn}
         </Link>
         <Link
           href="/signup"
           className={styles.pillDark}
           style={{ fontSize: 14, padding: '10px 18px' }}
         >
-          Start free
+          {L.nav.startFree}
         </Link>
       </div>
 
       {/* 01 Hero */}
-      <section
-        id="top"
-        ref={heroRef}
-        data-screen-label="01 Hero"
-        style={{ height: '520vh', position: 'relative' }}
-      >
+      <section id="top" ref={heroRef} data-screen-label="01 Hero" className={styles.hero}>
         <div
+          className={styles.heroStage}
           style={{
-            position: 'sticky',
-            top: 0,
-            height: '100vh',
-            overflow: 'hidden',
             background: sc.sky,
             transition: 'background 1.2s ease',
           }}
         >
-          <div style={{ position: 'absolute', inset: 0, perspective: 3200 }} aria-hidden="true">
+          <div
+            className={styles.streetOnly}
+            style={{ position: 'absolute', inset: 0, perspective: 3200 }}
+            aria-hidden="true"
+          >
             <div
               ref={worldRef}
               style={{
@@ -407,6 +363,7 @@ export function Landing() {
           </div>
           <div
             ref={heroTextRef}
+            className={styles.heroText}
             style={{
               position: 'absolute',
               left: 'clamp(16px,4vw,64px)',
@@ -421,7 +378,7 @@ export function Landing() {
               className={styles.display}
               style={{ fontSize: 'clamp(48px,7.2vw,112px)', lineHeight: 0.92, textWrap: 'balance' }}
             >
-              Your next appointment starts here.
+              {L.hero.title}
             </h1>
             <p
               style={{
@@ -432,8 +389,7 @@ export function Landing() {
                 color: '#3f3a33',
               }}
             >
-              Give your customers an easier way to book, and give yourself more time to run your
-              business.
+              {L.hero.sub}
             </p>
             <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
               <Link
@@ -441,18 +397,19 @@ export function Landing() {
                 className={styles.pillDark}
                 style={{ padding: '15px 26px', fontSize: 16 }}
               >
-                Start free
+                {L.nav.startFree}
               </Link>
               <a
                 href="#journey"
                 className={styles.pillLight}
                 style={{ padding: '15px 26px', fontSize: 16 }}
               >
-                See how it works
+                {L.hero.seeHow}
               </a>
             </div>
           </div>
           <div
+            className={styles.streetOnly}
             style={{
               position: 'absolute',
               left: 'clamp(16px,4vw,64px)',
@@ -481,7 +438,7 @@ export function Landing() {
               }}
             >
               <span style={{ color: '#c4581f', fontWeight: 500 }}>{sc.time}</span>
-              <span>{sc.kind}</span>
+              <span>{scText.kind}</span>
             </div>
             <div
               style={{
@@ -493,10 +450,11 @@ export function Landing() {
             >
               {sc.name}
             </div>
-            <div style={{ fontSize: 14, color: '#4a443c', lineHeight: 1.45 }}>{sc.line}</div>
+            <div style={{ fontSize: 14, color: '#4a443c', lineHeight: 1.45 }}>{scText.line}</div>
           </div>
           <div
             aria-hidden="true"
+            className={styles.streetOnly}
             style={{
               position: 'absolute',
               right: 'clamp(14px,3vw,40px)',
@@ -521,7 +479,7 @@ export function Landing() {
             ))}
           </div>
           <div
-            className={styles.mono}
+            className={`${styles.mono} ${styles.streetOnly}`}
             style={{
               position: 'absolute',
               left: '50%',
@@ -537,7 +495,7 @@ export function Landing() {
               color: '#6b6358',
             }}
           >
-            <span>Scroll to walk the street</span>
+            <span>{L.hero.scrollCue}</span>
             <span className={styles.cueLine} />
           </div>
         </div>
@@ -550,56 +508,33 @@ export function Landing() {
         data-screen-label="02 Booking journey"
         style={{ height: st.flat ? 'auto' : '320vh', position: 'relative', background: '#f4f0e8' }}
       >
-        <div
-          style={{
-            position: stickPos,
-            top: 0,
-            height: stickH,
-            overflow: 'hidden',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,300px),1fr))',
-            alignItems: 'center',
-            gap: 'clamp(20px,4vw,72px)',
-            padding: '80px clamp(16px,5vw,96px) 40px',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 28 }}>
+        <div style={stage('clamp(20px,4vw,72px)')}>
+          <div style={{ display: st.flat ? 'contents' : 'flex', flexDirection: 'column', gap: 28 }}>
             <span
               className={styles.mono}
               style={{ fontSize: 12, color: '#c4581f', letterSpacing: '.08em' }}
             >
-              THE CUSTOMER&rsquo;S SIDE
+              {L.customer.eyebrow}
             </span>
-            {[
-              [
-                '01',
-                'Find the business',
-                'Customers land on your page from a link, a search or your socials.',
-              ],
-              [
-                '02',
-                'Pick a time that is actually free',
-                'Only open slots appear. Breaks, buffers and existing bookings are already accounted for.',
-              ],
-              [
-                '03',
-                'Confirm in one tap',
-                'A confirmation number, a calendar file and an easy way to reschedule.',
-              ],
-            ].map(([n, title, body], i) => (
+            {L.customer.steps.map(([title, body], i) => (
               <div
-                key={n}
+                key={i}
+                ref={(el) => {
+                  bStepRefs.current[i] = el;
+                }}
                 style={{
+                  order: 2,
+                  minHeight: st.flat ? '38vh' : undefined,
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 8,
-                  opacity: st.flat || i === st.b ? 1 : 0.28,
+                  opacity: i === st.b ? 1 : st.flat ? 0.35 : 0.28,
                   transition: 'opacity .5s',
                 }}
               >
                 <div style={{ display: 'flex', gap: 14, alignItems: 'baseline' }}>
                   <span className={styles.mono} style={{ fontSize: 13, color: '#c4581f' }}>
-                    {n}
+                    0{i + 1}
                   </span>
                   <span
                     className={styles.display}
@@ -627,12 +562,14 @@ export function Landing() {
             ))}
           </div>
           <div
+            ref={bVisRef}
             style={{
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              position: 'relative',
-              height: 'min(640px,72vh)',
+              ...(st.flat
+                ? stickyVisual('#f4f0e8')
+                : { position: 'relative', height: 'min(640px,72vh)' }),
             }}
           >
             {!st.flat ? (
@@ -651,7 +588,7 @@ export function Landing() {
                 0{st.b + 1}
               </div>
             ) : null}
-            <Phone step={st.b} />
+            <Phone step={st.b} zoom={st.flat ? st.phoneZoom : undefined} />
           </div>
         </div>
       </section>
@@ -667,25 +604,13 @@ export function Landing() {
           color: '#f1ece2',
         }}
       >
-        <div
-          style={{
-            position: stickPos,
-            top: 0,
-            height: stickH,
-            overflow: 'hidden',
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit,minmax(min(100%,300px),1fr))',
-            alignItems: 'center',
-            gap: 'clamp(20px,4vw,64px)',
-            padding: '80px clamp(16px,5vw,96px) 40px',
-          }}
-        >
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 22 }}>
+        <div style={stage('clamp(20px,4vw,64px)')}>
+          <div style={{ display: st.flat ? 'contents' : 'flex', flexDirection: 'column', gap: 22 }}>
             <span
               className={styles.mono}
               style={{ fontSize: 12, color: '#e0773a', letterSpacing: '.08em' }}
             >
-              AFTER HOURS, THE OWNER&rsquo;S SIDE
+              {L.owner.eyebrow}
             </span>
             <h2
               className={styles.display}
@@ -695,39 +620,33 @@ export function Landing() {
                 letterSpacing: '-.04em',
               }}
             >
-              Set it up once. Tempo keeps the diary honest.
+              {L.owner.title}
             </h2>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, marginTop: 8 }}>
-              {[
-                [
-                  'Set your hours',
-                  'Weekly hours, split shifts and breaks. Holidays and one-off closures in a click.',
-                ],
-                ['Add services and prices', 'Duration, price and buffer time for every service.'],
-                [
-                  'Give each person a schedule',
-                  'Staff keep their own hours and offer only the services they do.',
-                ],
-                [
-                  'See the day at a glance',
-                  'Online and walk-in bookings land in the same calendar.',
-                ],
-                [
-                  'Know what is working',
-                  'Demand by day and hour, popular services and estimated revenue.',
-                ],
-              ].map(([title, body], i) => {
-                const on = st.flat || i === st.o;
+            <div
+              style={{
+                order: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 4,
+                marginTop: 8,
+              }}
+            >
+              {L.owner.steps.map(([title, body], i) => {
+                const on = i === st.o;
                 return (
                   <div
                     key={title}
+                    ref={(el) => {
+                      oStepRefs.current[i] = el;
+                    }}
                     style={{
+                      minHeight: st.flat ? '30vh' : undefined,
                       display: 'grid',
                       gridTemplateColumns: '28px minmax(0,1fr)',
                       gap: 10,
                       padding: '12px 0',
                       borderTop: '1px solid rgba(241,236,226,.12)',
-                      opacity: on ? 1 : 0.45,
+                      opacity: on ? 1 : st.flat ? 0.4 : 0.45,
                       transition: 'opacity .4s',
                     }}
                   >
@@ -743,7 +662,7 @@ export function Landing() {
                     </span>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                       <span style={{ fontWeight: 700, fontSize: 18 }}>{title}</span>
-                      {on ? (
+                      {on || st.flat ? (
                         <span style={{ fontSize: 15, color: '#bdb5a8', lineHeight: 1.5 }}>
                           {body}
                         </span>
@@ -754,7 +673,13 @@ export function Landing() {
               })}
             </div>
           </div>
-          <OwnerPanel step={st.o} />
+          {st.flat ? (
+            <div ref={oVisRef} style={stickyVisual('#16150f')}>
+              <OwnerPanel step={st.o} compact />
+            </div>
+          ) : (
+            <OwnerPanel step={st.o} />
+          )}
         </div>
       </section>
 
@@ -776,16 +701,15 @@ export function Landing() {
             }}
           >
             <h2 className={`${styles.display} ${styles.h2}`} style={{ maxWidth: 760 }}>
-              Five booking pages. One booking engine.
+              {L.templates.title}
             </h2>
             <p style={{ margin: 0, maxWidth: 380, fontSize: 17, lineHeight: 1.5, opacity: 0.8 }}>
-              Each template changes the layout, type and mood. Services, staff and availability work
-              the same underneath. Try one.
+              {L.templates.sub}
             </p>
           </div>
           <div
             role="tablist"
-            aria-label="Booking page templates"
+            aria-label={L.templates.tabsLabel}
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit,minmax(160px,1fr))',
@@ -819,7 +743,9 @@ export function Landing() {
                   <span className={styles.mono} style={{ fontSize: 11, opacity: 0.7 }}>
                     0{i + 1}
                   </span>
-                  <span style={{ fontWeight: 700, fontSize: 16 }}>{TPL[k].label}</span>
+                  <span style={{ fontWeight: 700, fontSize: 16 }}>
+                    {L.templates.items[k].label}
+                  </span>
                   <span style={{ fontSize: 13, opacity: 0.75 }}>{TPL[k].biz}</span>
                 </button>
               );
@@ -846,12 +772,12 @@ export function Landing() {
                   letterSpacing: '-.02em',
                 }}
               >
-                {tp.headline}
+                {tpText.headline}
               </span>
               <p
                 style={{ margin: 0, fontSize: 17, lineHeight: 1.55, maxWidth: 460, opacity: 0.85 }}
               >
-                {tp.desc}
+                {tpText.desc}
               </p>
               <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
                 <a
@@ -866,7 +792,7 @@ export function Landing() {
                     fontSize: 15,
                   }}
                 >
-                  Open the full demo page
+                  {L.templates.openDemo}
                 </a>
               </div>
               <span className={styles.mono} style={{ fontSize: 12, opacity: 0.65 }}>
@@ -893,12 +819,11 @@ export function Landing() {
               alignItems: 'end',
             }}
           >
-            <h2 className={`${styles.display} ${styles.h2}`}>See which hours earn their keep.</h2>
+            <h2 className={`${styles.display} ${styles.h2}`}>{L.analytics.title}</h2>
             <p
               style={{ margin: 0, fontSize: 17, lineHeight: 1.55, color: '#4a443c', maxWidth: 480 }}
             >
-              Demand by day and hour, popular services, cancellations and estimated revenue, each
-              with a plain label for what it counts.
+              {L.analytics.sub}
             </p>
           </div>
           <div
@@ -922,7 +847,7 @@ export function Landing() {
                 alignItems: 'center',
               }}
             >
-              <span style={{ fontWeight: 700 }}>Northside Barber Co. · Last 90 days</span>
+              <span style={{ fontWeight: 700 }}>{L.analytics.header}</span>
               <span
                 className={styles.mono}
                 style={{
@@ -933,7 +858,7 @@ export function Landing() {
                   borderRadius: 6,
                 }}
               >
-                DEMO DATA
+                {L.analytics.demoData}
               </span>
             </div>
             <div
@@ -943,12 +868,7 @@ export function Landing() {
                 gap: 10,
               }}
             >
-              {[
-                ['Appointments completed', '1,042', 'Status: completed'],
-                ['Upcoming', '86', 'Next 30 days, confirmed or pending'],
-                ['Estimated appointment value', '$43,860', 'Price × completed, not payments'],
-                ['Cancellation rate', '6.1%', 'Cancelled ÷ all booked'],
-              ].map(([l, v, n]) => (
+              {L.analytics.kpis.map(([l, v, n]) => (
                 <div
                   key={l}
                   style={{
@@ -998,10 +918,8 @@ export function Landing() {
                     flexWrap: 'wrap',
                   }}
                 >
-                  <span style={{ fontWeight: 700, fontSize: 14 }}>
-                    Estimated appointment value, weekly
-                  </span>
-                  <span style={{ fontSize: 12, color: '#5d564b' }}>Not collected payments</span>
+                  <span style={{ fontWeight: 700, fontSize: 14 }}>{L.analytics.weekly}</span>
+                  <span style={{ fontSize: 12, color: '#5d564b' }}>{L.analytics.notPayments}</span>
                 </div>
                 <svg
                   viewBox="0 0 600 180"
@@ -1030,10 +948,9 @@ export function Landing() {
                     color: '#857d70',
                   }}
                 >
-                  <span>Jul 13</span>
-                  <span>Aug 10</span>
-                  <span>Sep 7</span>
-                  <span>Oct 5</span>
+                  {L.analytics.weekTicks.map((w) => (
+                    <span key={w}>{w}</span>
+                  ))}
                 </div>
               </div>
               <div
@@ -1046,17 +963,9 @@ export function Landing() {
                   gap: 10,
                 }}
               >
-                <span style={{ fontWeight: 700, fontSize: 14 }}>Busiest days</span>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>{L.analytics.busiestDays}</span>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: 8, height: 150 }}>
-                  {[
-                    ['M', 38],
-                    ['T', 52],
-                    ['W', 61],
-                    ['T', 74],
-                    ['F', 96],
-                    ['S', 118],
-                    ['S', 0],
-                  ].map(([d, v], i) => (
+                  {[38, 52, 61, 74, 96, 118, 0].map((v, i) => (
                     <div
                       key={i}
                       style={{
@@ -1072,12 +981,14 @@ export function Landing() {
                       <span
                         style={{
                           width: '100%',
-                          height: `${((v as number) / 118) * 100}%`,
+                          height: `${(v / 118) * 100}%`,
                           background: i === 5 ? '#e0773a' : '#d7cfc1',
                           borderRadius: '4px 4px 0 0',
                         }}
                       />
-                      <span style={{ fontSize: 11, color: '#5d564b', fontWeight: 600 }}>{d}</span>
+                      <span style={{ fontSize: 11, color: '#5d564b', fontWeight: 600 }}>
+                        {L.analytics.dayLetters[i]}
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -1092,7 +1003,7 @@ export function Landing() {
                   gap: 10,
                 }}
               >
-                <span style={{ fontWeight: 700, fontSize: 14 }}>Peak booking hours</span>
+                <span style={{ fontWeight: 700, fontSize: 14 }}>{L.analytics.peakHours}</span>
                 <div
                   style={{
                     display: 'grid',
@@ -1122,9 +1033,7 @@ export function Landing() {
                     </div>
                   ))}
                 </div>
-                <span style={{ fontSize: 12, color: '#5d564b' }}>
-                  Appointments starting each hour. 5 PM is the fullest.
-                </span>
+                <span style={{ fontSize: 12, color: '#5d564b' }}>{L.analytics.peakNote}</span>
               </div>
               <div
                 style={{
@@ -1136,45 +1045,49 @@ export function Landing() {
                   gap: 10,
                 }}
               >
-                <span style={{ fontWeight: 700, fontSize: 14 }}>Most popular services</span>
-                {[
-                  ['Skin Fade', 31],
-                  ['Classic Cut', 27],
-                  ['Cut & Beard', 19],
-                  ['Beard Trim', 14],
-                  ['Hot Towel Shave', 9],
-                ].map(([n, v]) => (
-                  <div
-                    key={n}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '110px minmax(0,1fr) 36px',
-                      gap: 8,
-                      alignItems: 'center',
-                      fontSize: 13,
-                    }}
-                  >
-                    <span>{n}</span>
-                    <span
+                <span style={{ fontWeight: 700, fontSize: 14 }}>{L.analytics.popular}</span>
+                {(
+                  [
+                    [1, 31],
+                    [0, 27],
+                    [3, 19],
+                    [2, 14],
+                    [4, 9],
+                  ] as const
+                )
+                  .map(([svc, v]) => [L.demo.barber.services[svc]![0], v] as const)
+                  .map(([n, v]) => (
+                    <div
+                      key={n}
                       style={{
-                        height: 10,
-                        background: '#efebe4',
-                        borderRadius: 5,
-                        overflow: 'hidden',
+                        display: 'grid',
+                        gridTemplateColumns: '110px minmax(0,1fr) 36px',
+                        gap: 8,
+                        alignItems: 'center',
+                        fontSize: 13,
                       }}
                     >
+                      <span>{n}</span>
                       <span
                         style={{
-                          display: 'block',
-                          height: '100%',
-                          width: `${((v as number) / 31) * 100}%`,
-                          background: '#2f6e5a',
+                          height: 10,
+                          background: '#efebe4',
+                          borderRadius: 5,
+                          overflow: 'hidden',
                         }}
-                      />
-                    </span>
-                    <span style={{ textAlign: 'right', color: '#5d564b' }}>{v}%</span>
-                  </div>
-                ))}
+                      >
+                        <span
+                          style={{
+                            display: 'block',
+                            height: '100%',
+                            width: `${(v / 31) * 100}%`,
+                            background: '#2f6e5a',
+                          }}
+                        />
+                      </span>
+                      <span style={{ textAlign: 'right', color: '#5d564b' }}>{v}%</span>
+                    </div>
+                  ))}
               </div>
               <div
                 style={{
@@ -1189,7 +1102,7 @@ export function Landing() {
                 }}
               >
                 <span className={styles.mono} style={{ fontSize: 11, color: '#e0773a' }}>
-                  WHAT THE NUMBERS SUGGEST
+                  {L.analytics.suggestEyebrow}
                 </span>
                 <span
                   style={{
@@ -1200,12 +1113,9 @@ export function Landing() {
                     letterSpacing: '-.02em',
                   }}
                 >
-                  Saturday 2–6 PM is 94% booked. Hot Towel Shave is chosen least.
+                  {L.analytics.suggestTitle}
                 </span>
-                <span style={{ fontSize: 13, color: '#bdb5a8' }}>
-                  Worth testing: an extra Saturday chair, and featuring the shave on your booking
-                  page.
-                </span>
+                <span style={{ fontSize: 13, color: '#bdb5a8' }}>{L.analytics.suggestBody}</span>
               </div>
             </div>
           </div>
@@ -1220,7 +1130,7 @@ export function Landing() {
       >
         <div className={styles.inner} style={{ gap: 48 }}>
           <h2 className={`${styles.display} ${styles.h2}`} style={{ maxWidth: 900 }}>
-            Less time on the phone. More time with the people in the chair.
+            {L.benefits.title}
           </h2>
           <div
             style={{
@@ -1229,9 +1139,9 @@ export function Landing() {
               borderTop: '1px solid #d3cbbd',
             }}
           >
-            {BENEFITS.map(([t, d], i) => (
+            {L.benefits.items.map(([title, d], i) => (
               <div
-                key={t}
+                key={title}
                 style={{
                   padding: '28px 28px 32px 0',
                   borderBottom: '1px solid #d3cbbd',
@@ -1247,7 +1157,7 @@ export function Landing() {
                   className={styles.display}
                   style={{ fontSize: 24, letterSpacing: '-.025em', lineHeight: 1.1 }}
                 >
-                  {t}
+                  {title}
                 </span>
                 <span style={{ fontSize: 15, lineHeight: 1.55, color: '#4a443c', maxWidth: 360 }}>
                   {d}
@@ -1276,19 +1186,17 @@ export function Landing() {
             }}
           >
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <h2 className={`${styles.display} ${styles.h2}`}>Start free. Grow into it.</h2>
-              <span style={{ fontSize: 15, color: '#5d564b' }}>
-                Sample plans. Final prices are set at launch.
-              </span>
+              <h2 className={`${styles.display} ${styles.h2}`}>{L.pricing.title}</h2>
+              <span style={{ fontSize: 15, color: '#5d564b' }}>{L.pricing.sample}</span>
             </div>
             <div
               role="group"
-              aria-label="Billing"
+              aria-label={L.pricing.billing}
               style={{ display: 'flex', background: '#e8e2d7', padding: 4, borderRadius: 999 }}
             >
               {[
-                [false, 'Monthly'],
-                [true, 'Annual'],
+                [false, L.pricing.monthly],
+                [true, L.pricing.annual],
               ].map(([v, l]) => (
                 <button
                   key={l as string}
@@ -1320,7 +1228,7 @@ export function Landing() {
               gap: 12,
             }}
           >
-            {PLANS.map((p, i) => {
+            {L.pricing.plans.map((p, i) => {
               const sel = plan === i;
               return (
                 <button
@@ -1363,7 +1271,7 @@ export function Landing() {
                         opacity: sel ? 1 : 0,
                       }}
                     >
-                      Selected
+                      {L.pricing.selected}
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'baseline', gap: 6 }}>
@@ -1374,7 +1282,7 @@ export function Landing() {
                       $ —
                     </span>
                     <span style={{ fontSize: 14, opacity: 0.7 }}>
-                      {annual ? 'per month, billed yearly' : 'per month'}
+                      {annual ? L.pricing.perMonthYearly : L.pricing.perMonth}
                     </span>
                   </div>
                   <span style={{ fontSize: 15, opacity: 0.8, lineHeight: 1.45 }}>{p.for}</span>
@@ -1424,7 +1332,7 @@ export function Landing() {
                 color: '#1c1a17',
               }}
             >
-              {compare ? 'Hide feature comparison' : 'Compare all features'}
+              {compare ? L.pricing.hideCompare : L.pricing.showCompare}
             </button>
             <Link
               href="/signup"
@@ -1438,7 +1346,7 @@ export function Landing() {
                 fontSize: 15,
               }}
             >
-              Start free with {PLANS[plan]!.name}
+              {L.pricing.startWith({ plan: L.pricing.plans[plan]!.name })}
             </Link>
           </div>
           {compare ? (
@@ -1455,7 +1363,7 @@ export function Landing() {
               >
                 <thead>
                   <tr style={{ textAlign: 'left' }}>
-                    {['Feature', 'Starter', 'Growth', 'Business'].map((h) => (
+                    {[L.pricing.feature, ...L.pricing.plans.map((p) => p.name)].map((h) => (
                       <th
                         key={h}
                         style={{ padding: '14px 16px', borderBottom: '1px solid #e3ddd2' }}
@@ -1466,7 +1374,7 @@ export function Landing() {
                   </tr>
                 </thead>
                 <tbody>
-                  {COMPARE.map((r) => (
+                  {L.pricing.compare.map((r) => (
                     <tr key={r[0]}>
                       {r.map((c, i) => (
                         <td
@@ -1508,14 +1416,14 @@ export function Landing() {
             textWrap: 'balance',
           }}
         >
-          Make room for more of what matters.
+          {L.cta.title}
         </h2>
         <Link
           href="/signup"
           className={styles.pillDark}
           style={{ padding: '18px 30px', fontSize: 18 }}
         >
-          Create your booking page
+          {L.cta.button}
         </Link>
       </section>
 
@@ -1549,37 +1457,37 @@ export function Landing() {
             >
               tempo<span style={{ color: '#e0773a' }}>.</span>
             </span>
-            <span>Your time. Your business. Your way.</span>
+            <span>{L.footer.tagline}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={{ color: '#f1ece2', fontWeight: 700 }}>Product</span>
+            <span style={{ color: '#f1ece2', fontWeight: 700 }}>{L.footer.product}</span>
             <a className={styles.footerLink} href="#journey">
-              How it works
+              {L.nav.howItWorks}
             </a>
             <a className={styles.footerLink} href="#pricing">
-              Pricing
+              {L.nav.pricing}
             </a>
             <Link className={styles.footerLink} href="/login">
-              Log in
+              {L.nav.logIn}
             </Link>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={{ color: '#f1ece2', fontWeight: 700 }}>Templates</span>
+            <span style={{ color: '#f1ece2', fontWeight: 700 }}>{L.footer.templates}</span>
             {(Object.keys(TPL) as TemplateKey[]).map((k) => (
               <a key={k} className={styles.footerLink} href={`/book/${TPL[k].slug}`}>
-                {k === 'fitness' ? 'Fitness' : TPL[k].label}
+                {k === 'fitness' ? L.templates.footerFitness : L.templates.items[k].label}
               </a>
             ))}
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={{ color: '#f1ece2', fontWeight: 700 }}>Help</span>
-            <span>Help centre (planned)</span>
-            <span>Contact (planned)</span>
+            <span style={{ color: '#f1ece2', fontWeight: 700 }}>{L.footer.help}</span>
+            <span>{L.footer.helpCentre}</span>
+            <span>{L.footer.contact}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            <span style={{ color: '#f1ece2', fontWeight: 700 }}>Legal</span>
-            <span>Terms (planned)</span>
-            <span>Privacy (planned)</span>
+            <span style={{ color: '#f1ece2', fontWeight: 700 }}>{L.footer.legal}</span>
+            <span>{L.footer.terms}</span>
+            <span>{L.footer.privacy}</span>
           </div>
         </div>
         <div
@@ -1593,14 +1501,17 @@ export function Landing() {
             paddingTop: 20,
           }}
         >
-          <span>© 2026 Tempo (working name).</span>
+          <span>{L.footer.copyright}</span>
         </div>
       </footer>
     </div>
   );
 }
 
-function Phone({ step }: { step: number }) {
+function Phone({ step, zoom }: { step: number; zoom?: number }) {
+  const { t } = useI18n();
+  const ph = t.landing.phone;
+  const barber = t.landing.demo.barber.services;
   const screen = (i: number) => ({
     position: 'absolute' as const,
     inset: 0,
@@ -1630,8 +1541,10 @@ function Phone({ step }: { step: number }) {
     <div
       style={{
         position: 'relative',
-        width: 'min(320px,72vw)',
-        height: 'min(640px,72vh)',
+        // Mobile renders the full-size phone and zooms it, so the screens keep their layout.
+        width: zoom ? 320 : 'min(320px,72vw)',
+        height: zoom ? 640 : 'min(640px,72vh)',
+        zoom,
         borderRadius: 44,
         background: '#1c1a17',
         padding: 10,
@@ -1676,33 +1589,37 @@ function Phone({ step }: { step: number }) {
               BARBER CO.
             </span>
           </div>
-          {[
-            ['Classic Cut', '$38'],
-            ['Skin Fade', '$45'],
-            ['Beard Trim', '$22'],
-            ['Cut & Beard', '$58'],
-          ].map(([n, p], i) => (
-            <div
-              key={n}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                padding: '11px 12px',
-                border: `1px solid ${i === 1 ? '#d6a15c' : 'rgba(243,236,226,.16)'}`,
-                background: i === 1 ? 'rgba(214,161,92,.14)' : 'transparent',
-                borderRadius: 3,
-                fontSize: 13,
-              }}
-            >
-              <span style={{ fontWeight: 600 }}>{n}</span>
-              <span style={{ color: '#d6a15c', fontWeight: 600 }}>{p}</span>
-            </div>
-          ))}
+          {(
+            [
+              [0, '$38'],
+              [1, '$45'],
+              [2, '$22'],
+              [3, '$58'],
+            ] as const
+          )
+            .map(([svc, p]) => [barber[svc]![0], p] as const)
+            .map(([n, p], i) => (
+              <div
+                key={n}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  padding: '11px 12px',
+                  border: `1px solid ${i === 1 ? '#d6a15c' : 'rgba(243,236,226,.16)'}`,
+                  background: i === 1 ? 'rgba(214,161,92,.14)' : 'transparent',
+                  borderRadius: 3,
+                  fontSize: 13,
+                }}
+              >
+                <span style={{ fontWeight: 600 }}>{n}</span>
+                <span style={{ color: '#d6a15c', fontWeight: 600 }}>{p}</span>
+              </div>
+            ))}
         </div>
         <div style={{ ...screen(1), padding: '44px 18px 18px' }}>
-          <span style={{ fontSize: 12, color: '#b0a393' }}>Skin Fade · 60 min · Marcus</span>
+          <span style={{ fontSize: 12, color: '#b0a393' }}>{ph.selection}</span>
           <span style={{ fontFamily: 'var(--font-bricolage)', fontWeight: 700, fontSize: 22 }}>
-            Saturday, Oct 10
+            {ph.day}
           </span>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 6 }}>
             {slots.map((t, i) => {
@@ -1728,7 +1645,7 @@ function Phone({ step }: { step: number }) {
               );
             })}
           </div>
-          <span style={{ fontSize: 11, color: '#8c7f70' }}>Struck-through times are taken</span>
+          <span style={{ fontSize: 11, color: '#8c7f70' }}>{ph.takenHint}</span>
         </div>
         <div style={{ ...screen(2), padding: '60px 20px 20px', gap: 14 }}>
           <span
@@ -1755,7 +1672,7 @@ function Phone({ step }: { step: number }) {
               lineHeight: 1,
             }}
           >
-            You&rsquo;re booked.
+            {ph.booked}
           </span>
           <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12, color: '#b0a393' }}>
             TMP-4821-K
@@ -1769,9 +1686,9 @@ function Phone({ step }: { step: number }) {
             }}
           >
             {[
-              ['Service', 'Skin Fade'],
-              ['With', 'Marcus Reed'],
-              ['When', 'Sat, Oct 10 · 2:30 PM'],
+              [ph.service, barber[1]![0]],
+              [ph.with, 'Marcus Reed'],
+              [ph.when, ph.whenValue],
             ].map(([k, v]) => (
               <div
                 key={k}
@@ -1799,7 +1716,7 @@ function Phone({ step }: { step: number }) {
               borderRadius: 3,
             }}
           >
-            Add to calendar
+            {ph.addToCalendar}
           </span>
         </div>
       </div>
@@ -1807,8 +1724,11 @@ function Phone({ step }: { step: number }) {
   );
 }
 
-function OwnerPanel({ step }: { step: number }) {
-  const title = ['Availability', 'Services', 'Staff', 'Today', 'Analytics'][step];
+function OwnerPanel({ step, compact }: { step: number; compact?: boolean }) {
+  const { t } = useI18n();
+  const pn = t.landing.panel;
+  const barber = t.landing.demo.barber.services;
+  const title = pn.titles[step];
   const shade = ['#efebe4', '#c7dcd3', '#7fb09d', '#2f6e5a'];
   return (
     <div
@@ -1818,7 +1738,8 @@ function OwnerPanel({ step }: { step: number }) {
         borderRadius: 14,
         overflow: 'hidden',
         boxShadow: '0 50px 100px -40px rgba(0,0,0,.7)',
-        minHeight: 420,
+        minHeight: compact ? undefined : 420,
+        height: compact ? 'min(360px,46vh)' : undefined,
         display: 'flex',
         flexDirection: 'column',
       }}
@@ -1843,10 +1764,19 @@ function OwnerPanel({ step }: { step: number }) {
         <span style={{ marginLeft: 10, fontSize: 12, fontWeight: 700 }}>Northside Barber Co.</span>
         <span style={{ fontSize: 12, color: '#857d70' }}>/ {title}</span>
       </div>
-      <div style={{ padding: 20, flex: 1, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div
+        style={{
+          padding: compact ? 14 : 20,
+          flex: 1,
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: compact ? 8 : 10,
+        }}
+      >
         {step === 0 ? (
           <>
-            {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => {
+            {pn.days.map((d, i) => {
               const open = i < 6;
               const e = i === 5 ? 18 : 19;
               return (
@@ -1897,7 +1827,7 @@ function OwnerPanel({ step }: { step: number }) {
                     ) : null}
                   </div>
                   <span style={{ color: '#5d564b', fontFamily: 'var(--font-mono)', fontSize: 11 }}>
-                    {open ? (i === 5 ? '9:00–18:00' : '9:00–19:00') : 'Closed'}
+                    {open ? (i === 5 ? '9:00–18:00' : '9:00–19:00') : pn.closed}
                   </span>
                 </div>
               );
@@ -1905,53 +1835,57 @@ function OwnerPanel({ step }: { step: number }) {
           </>
         ) : null}
         {step === 1
-          ? [
-              ['Classic Cut', 45, 38],
-              ['Skin Fade', 60, 45],
-              ['Beard Trim', 30, 22],
-              ['Cut & Beard', 75, 58],
-              ['Hot Towel Shave', 45, 40],
-            ].map(([n, d, p]) => (
-              <div
-                key={n}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'minmax(0,1fr) 70px 60px 34px',
-                  gap: 10,
-                  alignItems: 'center',
-                  padding: '11px 12px',
-                  background: '#fff',
-                  border: '1px solid #e6e1d8',
-                  borderRadius: 8,
-                  fontSize: 14,
-                }}
-              >
-                <span style={{ fontWeight: 600 }}>{n}</span>
-                <span style={{ color: '#5d564b', fontSize: 13 }}>{d} min</span>
-                <span style={{ fontWeight: 600 }}>${p}</span>
-                <span
+          ? (
+              [
+                [45, 38],
+                [60, 45],
+                [30, 22],
+                [75, 58],
+                [45, 40],
+              ] as const
+            )
+              .map(([d, p], i) => [barber[i]![0], d, p] as const)
+              .map(([n, d, p]) => (
+                <div
+                  key={n}
                   style={{
-                    width: 30,
-                    height: 18,
-                    borderRadius: 9,
-                    background: '#2f6e5a',
-                    position: 'relative',
+                    display: 'grid',
+                    gridTemplateColumns: 'minmax(0,1fr) 70px 60px 34px',
+                    gap: 10,
+                    alignItems: 'center',
+                    padding: '11px 12px',
+                    background: '#fff',
+                    border: '1px solid #e6e1d8',
+                    borderRadius: 8,
+                    fontSize: 14,
                   }}
                 >
+                  <span style={{ fontWeight: 600 }}>{n}</span>
+                  <span style={{ color: '#5d564b', fontSize: 13 }}>{d} min</span>
+                  <span style={{ fontWeight: 600 }}>${p}</span>
                   <span
                     style={{
-                      position: 'absolute',
-                      right: 2,
-                      top: 2,
-                      width: 14,
-                      height: 14,
-                      borderRadius: '50%',
-                      background: '#fff',
+                      width: 30,
+                      height: 18,
+                      borderRadius: 9,
+                      background: '#2f6e5a',
+                      position: 'relative',
                     }}
-                  />
-                </span>
-              </div>
-            ))
+                  >
+                    <span
+                      style={{
+                        position: 'absolute',
+                        right: 2,
+                        top: 2,
+                        width: 14,
+                        height: 14,
+                        borderRadius: '50%',
+                        background: '#fff',
+                      }}
+                    />
+                  </span>
+                </div>
+              ))
           : null}
         {step === 2 ? (
           <>
@@ -1966,7 +1900,7 @@ function OwnerPanel({ step }: { step: number }) {
               }}
             >
               <span />
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+              {pn.dayLetters.map((d, i) => (
                 <span key={i}>{d}</span>
               ))}
             </div>
@@ -1991,61 +1925,21 @@ function OwnerPanel({ step }: { step: number }) {
                 ))}
               </div>
             ))}
-            <span style={{ fontSize: 12, color: '#5d564b', marginTop: 6 }}>
-              Each barber&rsquo;s own week. Darker means a longer shift.
-            </span>
+            <span style={{ fontSize: 12, color: '#5d564b', marginTop: 6 }}>{pn.staffCaption}</span>
           </>
         ) : null}
         {step === 3
-          ? [
+          ? (
               [
-                '9:00',
-                'Andre Wallace',
-                'Skin Fade · Marcus',
-                'Completed',
-                '#2f6e5a',
-                '#e3efe9',
-                '#1f5040',
-              ],
-              [
-                '10:15',
-                'Sam Whitfield',
-                'Classic Cut · Theo',
-                'Completed',
-                '#2f6e5a',
-                '#e3efe9',
-                '#1f5040',
-              ],
-              [
-                '11:30',
-                'Luis Ortega',
-                'Cut & Beard · Marcus',
-                'Confirmed',
-                '#e0773a',
-                '#fbe6d8',
-                '#8a3d12',
-              ],
-              [
-                '12:00',
-                'Ben Carter',
-                'Beard Trim · Jun',
-                'Pending',
-                '#c9a227',
-                '#f6edd0',
-                '#6e5609',
-              ],
-              [
-                '14:30',
-                'Tom Nguyen',
-                'Skin Fade · Theo',
-                'Confirmed',
-                '#e0773a',
-                '#fbe6d8',
-                '#8a3d12',
-              ],
-            ].map(([t, c, s, status, color, bbg, bink]) => (
+                ['9:00', 'Andre Wallace', 0, 'COMPLETED', '#2f6e5a', '#e3efe9', '#1f5040'],
+                ['10:15', 'Sam Whitfield', 1, 'COMPLETED', '#2f6e5a', '#e3efe9', '#1f5040'],
+                ['11:30', 'Luis Ortega', 2, 'CONFIRMED', '#e0773a', '#fbe6d8', '#8a3d12'],
+                ['12:00', 'Ben Carter', 3, 'PENDING', '#c9a227', '#f6edd0', '#6e5609'],
+                ['14:30', 'Tom Nguyen', 4, 'CONFIRMED', '#e0773a', '#fbe6d8', '#8a3d12'],
+              ] as const
+            ).map(([time, c, line, status, color, bbg, bink]) => (
               <div
-                key={t}
+                key={time}
                 style={{
                   display: 'grid',
                   gridTemplateColumns: '62px 4px minmax(0,1fr) auto',
@@ -2057,11 +1951,11 @@ function OwnerPanel({ step }: { step: number }) {
                   borderRadius: 8,
                 }}
               >
-                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{t}</span>
+                <span style={{ fontFamily: 'var(--font-mono)', fontSize: 12 }}>{time}</span>
                 <span style={{ height: 30, borderRadius: 2, background: color }} />
                 <span style={{ display: 'flex', flexDirection: 'column' }}>
                   <span style={{ fontWeight: 600, fontSize: 14 }}>{c}</span>
-                  <span style={{ fontSize: 12, color: '#5d564b' }}>{s}</span>
+                  <span style={{ fontSize: 12, color: '#5d564b' }}>{pn.today[line]}</span>
                 </span>
                 <span
                   style={{
@@ -2073,7 +1967,7 @@ function OwnerPanel({ step }: { step: number }) {
                     color: bink,
                   }}
                 >
-                  {status}
+                  {t.common.status[status]}
                 </span>
               </div>
             ))
@@ -2089,15 +1983,19 @@ function OwnerPanel({ step }: { step: number }) {
                 gap: 8,
               }}
             >
-              <span style={{ fontSize: 13, color: '#5d564b' }}>
-                Estimated appointment value · last 12 weeks
-              </span>
+              <span style={{ fontSize: 13, color: '#5d564b' }}>{pn.valueLabel}</span>
               <span style={{ fontFamily: 'var(--font-bricolage)', fontWeight: 700, fontSize: 28 }}>
                 $43,860
               </span>
             </div>
             <div
-              style={{ flex: 1, display: 'flex', alignItems: 'flex-end', gap: 6, minHeight: 200 }}
+              style={{
+                flex: 1,
+                display: 'flex',
+                alignItems: 'flex-end',
+                gap: 6,
+                minHeight: compact ? 0 : 200,
+              }}
             >
               {[2.9, 3.1, 3.0, 3.4, 3.3, 3.6, 3.5, 3.9, 3.8, 4.1, 4.0, 4.3].map((v, i) => (
                 <span
@@ -2111,9 +2009,7 @@ function OwnerPanel({ step }: { step: number }) {
                 />
               ))}
             </div>
-            <span style={{ fontSize: 12, color: '#5d564b' }}>
-              Estimated value of completed appointments. Collected payments are tracked separately.
-            </span>
+            <span style={{ fontSize: 12, color: '#5d564b' }}>{pn.valueNote}</span>
           </>
         ) : null}
       </div>

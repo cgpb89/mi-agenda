@@ -3,6 +3,7 @@ import { AppError } from '@/lib/errors';
 import { withTransaction } from '@/lib/db/tx';
 import { audit } from '@/modules/audit/audit';
 import { ledgerEntryError, netCollectedMinor } from './ledger';
+import { msg } from '@/i18n/message-ref';
 
 export interface RecordPaymentInput {
   tenantId: string;
@@ -27,14 +28,14 @@ export async function recordPayment(input: RecordPaymentInput) {
       SELECT id FROM app.appointments
       WHERE id = ${input.appointmentId}::uuid AND tenant_id = ${input.tenantId}::uuid
       FOR UPDATE`;
-    if (rows.length === 0) throw new AppError('NOT_FOUND', 'Appointment not found.');
+    if (rows.length === 0) throw new AppError('NOT_FOUND', msg('appointmentNotFound'));
     const appt = await tx.appointment.findFirstOrThrow({
       where: { id: input.appointmentId, tenantId: input.tenantId },
       include: { payments: { select: { kind: true, amountMinor: true, voidedAt: true } } },
     });
     input.guard?.(appt);
     if (input.kind === 'PAYMENT' && appt.status === 'CANCELLED') {
-      throw new AppError('CONFLICT', 'This appointment was cancelled. Record a refund instead.');
+      throw new AppError('CONFLICT', msg('cancelledRecordRefund'));
     }
     const collected = netCollectedMinor(appt.payments);
     const problem = ledgerEntryError(
@@ -88,8 +89,8 @@ export async function voidPayment(input: {
     const rec = await tx.paymentRecord.findFirst({
       where: { id: input.paymentId, tenantId: input.tenantId },
     });
-    if (!rec) throw new AppError('NOT_FOUND', 'Payment not found.');
-    if (rec.voidedAt) throw new AppError('CONFLICT', 'This entry is already voided.');
+    if (!rec) throw new AppError('NOT_FOUND', msg('paymentNotFound'));
+    if (rec.voidedAt) throw new AppError('CONFLICT', msg('alreadyVoided'));
     await tx.$queryRaw`SELECT id FROM app.appointments WHERE id = ${rec.appointmentId}::uuid AND tenant_id = ${input.tenantId}::uuid FOR UPDATE`;
     if (rec.kind === 'PAYMENT') {
       // Voiding a payment must not leave more refunded than collected.
@@ -98,7 +99,7 @@ export async function voidPayment(input: {
         select: { kind: true, amountMinor: true, voidedAt: true },
       });
       if (netCollectedMinor(others) < 0) {
-        throw new AppError('CONFLICT', 'Void the related refund first.');
+        throw new AppError('CONFLICT', msg('voidRefundFirst'));
       }
     }
     const updated = await tx.paymentRecord.update({

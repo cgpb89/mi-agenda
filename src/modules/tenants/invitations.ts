@@ -5,6 +5,7 @@ import { withTransaction, type Tx } from '@/lib/db/tx';
 import { hashPassword } from '@/lib/auth/password';
 import { hmacHex } from '@/lib/security/tokens';
 import { audit } from '@/modules/audit/audit';
+import { msg } from '@/i18n/message-ref';
 
 export const INVITE_TTL_MS = 7 * 24 * 3600 * 1000;
 
@@ -32,7 +33,7 @@ async function join(
     where: { id: inv.id, acceptedAt: null },
     data: { acceptedAt: new Date() },
   });
-  if (consumed.count !== 1) throw new AppError('CONFLICT', 'This invitation was already used.');
+  if (consumed.count !== 1) throw new AppError('CONFLICT', msg('invitationUsed'));
   await tx.membership.upsert({
     where: { tenantId_userId: { tenantId: inv.tenantId, userId: user.id } },
     create: { tenantId: inv.tenantId, userId: user.id, role: inv.role },
@@ -69,12 +70,8 @@ export async function acceptInvitationAsUser(
 ): Promise<string> {
   return withTransaction(async (tx) => {
     const inv = await findValidInvitation(tx, token);
-    if (!inv) throw new AppError('VALIDATION', 'This invitation is invalid or has expired.');
-    if (inv.email !== user.email)
-      throw new AppError(
-        'FORBIDDEN',
-        `This invitation is for a different email address. Sign in as the invited person.`,
-      );
+    if (!inv) throw new AppError('VALIDATION', msg('invitationInvalid'));
+    if (inv.email !== user.email) throw new AppError('FORBIDDEN', msg('invitationOtherEmail'));
     return join(tx, inv, { id: user.userId, name: user.name });
   });
 }
@@ -87,13 +84,9 @@ export async function acceptInvitationWithNewAccount(
   const passwordHash = await hashPassword(password);
   return withTransaction(async (tx) => {
     const inv = await findValidInvitation(tx, token);
-    if (!inv) throw new AppError('VALIDATION', 'This invitation is invalid or has expired.');
+    if (!inv) throw new AppError('VALIDATION', msg('invitationInvalid'));
     const exists = await tx.user.findUnique({ where: { email: inv.email }, select: { id: true } });
-    if (exists)
-      throw new AppError(
-        'CONFLICT',
-        'An account with this email already exists. Sign in to accept the invitation.',
-      );
+    if (exists) throw new AppError('CONFLICT', msg('invitationAccountExists'));
     const user = await tx.user.create({ data: { email: inv.email, name, passwordHash } });
     await audit(
       {

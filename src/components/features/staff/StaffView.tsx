@@ -10,9 +10,10 @@ import { Field, FormMessage, Input, Textarea, formStyles } from '@/components/ui
 import { StatusPill } from '@/components/ui/StatusPill';
 import { useToast } from '@/components/ui/Toast';
 import segStyles from '@/components/ui/Segmented.module.scss';
-import t from '@/components/ui/Table.module.scss';
+import tbl from '@/components/ui/Table.module.scss';
 import { moneyFmt } from '@/components/features/shared/format';
 import { saveStaffAction } from '@/modules/staff/actions';
+import { useI18n } from '@/i18n/client';
 
 interface StaffRow {
   id: string;
@@ -21,7 +22,7 @@ interface StaffRow {
   bio: string;
   isActive: boolean;
   serviceIds: string[];
-  login: { email: string; role: string | null } | null;
+  login: { email: string; role: 'OWNER' | 'MANAGER' | 'STAFF' | null } | null;
   completed30: number;
   value30: number;
   upcoming: number;
@@ -47,6 +48,8 @@ export function StaffView({
   const [draft, setDraft] = useState<Draft | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { t, locale } = useI18n();
+  const st = t.staff;
 
   function save() {
     if (!draft) return;
@@ -54,7 +57,11 @@ export function StaffView({
     startTransition(async () => {
       const res = await saveStaffAction(slug, draft);
       if (!res.ok) return setError(res.error.message);
-      toast(`${res.data.name} ${res.data.created ? 'added' : 'saved'}`);
+      toast(
+        res.data.created
+          ? st.toastAdded({ name: res.data.name })
+          : st.toastSaved({ name: res.data.name }),
+      );
       setDraft(null);
       router.refresh();
     });
@@ -65,14 +72,13 @@ export function StaffView({
   return (
     <>
       <PageHeader
-        title="Staff"
-        sub={`${staff.filter((s) => s.isActive).length} active · schedules live in Availability`}
+        title={t.app.nav.staff}
+        sub={st.sub({ n: staff.filter((s) => s.isActive).length })}
       />
       <PageContent>
-        <div className={t.footer}>
+        <div className={tbl.footer}>
           <span style={{ color: '#5d564b' }}>
-            Calendars for each person. To give someone a login, invite them from{' '}
-            <Link href={`/app/${slug}/settings#team`}>Business settings</Link>.
+            {st.intro} <Link href={`/app/${slug}/settings#team`}>{st.settingsLink}</Link>.
           </span>
           <Button
             variant="primary"
@@ -86,27 +92,27 @@ export function StaffView({
               })
             }
           >
-            + Add staff
+            {st.add}
           </Button>
         </div>
-        <div className={t.wrap}>
-          <table className={t.table} style={{ minWidth: 820 }}>
+        <div className={tbl.wrap}>
+          <table className={tbl.table} style={{ minWidth: 820 }}>
             <thead>
               <tr>
-                <th>Name</th>
-                <th>Services</th>
-                <th>Login</th>
-                <th>Upcoming</th>
-                <th>Completed, 30 days</th>
-                <th className={t.right}>Est. value, 30 days</th>
-                <th>Status</th>
+                <th>{st.cols.name}</th>
+                <th>{st.cols.services}</th>
+                <th>{st.cols.login}</th>
+                <th>{st.cols.upcoming}</th>
+                <th>{st.cols.completed30}</th>
+                <th className={tbl.right}>{st.cols.value30}</th>
+                <th>{st.cols.status}</th>
               </tr>
             </thead>
             <tbody>
               {staff.map((s) => (
                 <tr
                   key={s.id}
-                  className={t.clickable}
+                  className={tbl.clickable}
                   tabIndex={0}
                   style={{ opacity: s.isActive ? 1 : 0.6 }}
                   onClick={() =>
@@ -137,17 +143,17 @@ export function StaffView({
                       <span style={{ fontSize: 12, color: '#6b6358' }}>{s.title}</span>
                     </div>
                   </td>
-                  <td className={t.muted}>
-                    {s.serviceIds.length} of {services.length}
+                  <td className={tbl.muted}>
+                    {st.nOfTotal({ n: s.serviceIds.length, total: services.length })}
                   </td>
-                  <td className={t.muted}>
+                  <td className={tbl.muted}>
                     {s.login
-                      ? `${s.login.role ? s.login.role[0] + s.login.role.slice(1).toLowerCase() : 'No access'} · ${s.login.email}`
-                      : 'Calendar only'}
+                      ? `${s.login.role ? t.app.roles[s.login.role] : st.noAccess} · ${s.login.email}`
+                      : st.calendarOnly}
                   </td>
-                  <td className={t.mono}>{s.upcoming}</td>
-                  <td className={t.mono}>{s.completed30}</td>
-                  <td className={t.right}>{moneyFmt(s.value30, currency)}</td>
+                  <td className={tbl.mono}>{s.upcoming}</td>
+                  <td className={tbl.mono}>{s.completed30}</td>
+                  <td className={tbl.right}>{moneyFmt(s.value30, currency, locale)}</td>
                   <td>
                     {s.isActive ? (
                       <StatusPill status="ACTIVE" size="sm" />
@@ -160,19 +166,17 @@ export function StaffView({
             </tbody>
           </table>
         </div>
-        <span style={{ fontSize: 12, color: '#6b6358' }}>
-          Estimated value is the price of completed appointments, not collected payments.
-        </span>
+        <span style={{ fontSize: 12, color: '#6b6358' }}>{st.valueNote}</span>
       </PageContent>
 
       <Drawer
         open={draft !== null}
         onClose={() => setDraft(null)}
         wide
-        label={draft?.id ? 'Edit staff member' : 'New staff member'}
+        label={draft?.id ? st.edit : st.new}
         header={
           <span className={dialogStyles.modalTitle}>
-            {draft?.id ? `Edit ${current?.displayName ?? ''}` : 'New staff member'}
+            {draft?.id ? st.editNamed({ name: current?.displayName ?? '' }) : st.new}
           </span>
         }
         footer={
@@ -182,14 +186,14 @@ export function StaffView({
               disabled={pending || !draft?.displayName.trim()}
               onClick={save}
             >
-              {pending ? 'Saving…' : 'Save'}
+              {pending ? st.saving : st.save}
             </Button>
             {draft?.id ? (
               <Button
                 variant={draft.isActive ? 'danger' : 'secondary'}
                 onClick={() => setDraft({ ...draft, isActive: !draft.isActive })}
               >
-                {draft.isActive ? 'Mark inactive' : 'Mark active'}
+                {draft.isActive ? st.markInactive : st.markActive}
               </Button>
             ) : null}
           </>
@@ -200,12 +204,11 @@ export function StaffView({
             {error ? <FormMessage kind="error">{error}</FormMessage> : null}
             {!draft.isActive ? (
               <FormMessage kind="warning">
-                Inactive staff are hidden from booking. {current?.upcoming ?? 0} upcoming
-                appointment(s) stay booked — reassign or cancel them from the calendar.
+                {st.inactiveWarning({ n: current?.upcoming ?? 0 })}
               </FormMessage>
             ) : null}
             <div className={formStyles.grid2}>
-              <Field label="Name">
+              <Field label={st.name}>
                 {(p) => (
                   <Input
                     {...p}
@@ -215,19 +218,19 @@ export function StaffView({
                   />
                 )}
               </Field>
-              <Field label="Role shown to customers" hint="Optional">
+              <Field label={st.role} hint={st.optional}>
                 {(p) => (
                   <Input
                     {...p}
                     value={draft.title}
                     maxLength={80}
-                    placeholder="Senior barber"
+                    placeholder={st.rolePlaceholder}
                     onChange={(e) => setDraft({ ...draft, title: e.target.value })}
                   />
                 )}
               </Field>
             </div>
-            <Field label="Short bio" hint="Optional, shown on some templates">
+            <Field label={st.bio} hint={st.bioHint}>
               {(p) => (
                 <Textarea
                   {...p}
@@ -240,7 +243,7 @@ export function StaffView({
             </Field>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: '#5d564b' }}>
-                Services they offer
+                {st.servicesOffered}
               </span>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {services.map((s) => {
@@ -265,13 +268,12 @@ export function StaffView({
                   );
                 })}
                 {services.length === 0 ? (
-                  <span style={{ fontSize: 13, color: '#6b6358' }}>Add services first.</span>
+                  <span style={{ fontSize: 13, color: '#6b6358' }}>{st.addServicesFirst}</span>
                 ) : null}
               </div>
             </div>
             <span style={{ fontSize: 12, color: '#6b6358' }}>
-              Working days and shifts are set in{' '}
-              <Link href={`/app/${slug}/availability`}>Availability</Link>.
+              {st.shiftsIn} <Link href={`/app/${slug}/availability`}>{st.availabilityLink}</Link>.
             </span>
           </>
         ) : null}

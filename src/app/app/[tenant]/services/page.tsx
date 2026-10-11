@@ -3,8 +3,12 @@ import { getDb } from '@/lib/db/client';
 import { requireTenantPage } from '@/lib/auth/authorize';
 import { daysAgo, now } from '@/lib/time';
 import { ServicesView } from '@/components/features/services/ServicesView';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Services' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.nav.services };
+}
 
 export default async function ServicesPage({
   params,

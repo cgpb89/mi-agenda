@@ -17,8 +17,12 @@ import { staffDay } from '@/modules/scheduling/availability';
 import { loadScheduleData } from '@/modules/scheduling/load';
 import { addDays } from '@/modules/scheduling/time';
 import { AnalyticsView } from '@/components/features/analytics/AnalyticsView';
+import { getI18n, getLocale } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Analytics' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.nav.analytics };
+}
 
 export default async function AnalyticsPage({
   params,
@@ -67,7 +71,7 @@ export default async function AnalyticsPage({
       : auto === 'hour'
         ? 'day'
         : auto;
-  const series = buckets(rows, ctx.timezone, range.from, range.to, g);
+  const series = buckets(rows, ctx.timezone, range.from, range.to, g, undefined, await getLocale());
 
   // Collected by bucket (recorded date).
   const collectedSeries = series.map((b) => ({ key: b.key, minor: 0 }));

@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { toPublicError } from '@/lib/errors';
+import { getLocale } from '@/i18n/server';
 import { getSessionUser, startSession } from '@/lib/auth/session';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { clientIp } from '@/lib/security/request';
@@ -36,7 +37,10 @@ export async function acceptInviteAction(_prev: FormState, form: FormData): Prom
       slug = res.slug;
     }
   } catch (err) {
-    return { error: toPublicError(err, 'acceptInvite'), values: { name: values.name ?? '' } };
+    return {
+      error: toPublicError(err, await getLocale(), 'acceptInvite'),
+      values: { name: values.name ?? '' },
+    };
   }
   redirect(`/app/${slug}/overview`);
 }

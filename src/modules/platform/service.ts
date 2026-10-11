@@ -155,7 +155,8 @@ export async function platformAuditLog(limit = 100) {
   return rows.map((r) => ({
     id: r.id,
     at: r.createdAt.toISOString(),
-    who: r.actor?.name ?? (r.actorType === 'system' ? 'System' : '—'),
+    /** null = the system acted (label translated by the UI). */
+    who: r.actor?.name ?? (r.actorType === 'system' ? null : '—'),
     action: r.action,
     business: r.tenant?.name ?? null,
     metadata: (r.metadata ?? {}) as Record<string, unknown>,

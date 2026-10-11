@@ -9,12 +9,14 @@ import { Card, Kpi, KpiGrid } from '@/components/ui/Card';
 import { Field, FormMessage, Input, Select, Textarea, formStyles } from '@/components/ui/Form';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { useToast } from '@/components/ui/Toast';
-import t from '@/components/ui/Table.module.scss';
+import tbl from '@/components/ui/Table.module.scss';
 import { fmtDay, fmtTime, moneyFmt } from '@/components/features/shared/format';
 import { useOpenAppointment } from '@/components/features/appointments/AppointmentDrawer';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
 import { updateCustomerAction } from '@/modules/customers/actions';
 import { useNow } from '@/lib/hooks';
+import { useI18n } from '@/i18n/client';
+import { countryName } from '@/i18n/format';
 
 type Status = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 
@@ -58,6 +60,9 @@ export function CustomerProfile({
   });
   const [err, setErr] = useState<{ message: string; fields: Record<string, string> } | null>(null);
   const [pending, startTransition] = useTransition();
+  const { t, locale } = useI18n();
+  const pr = t.customers.profile;
+  const money = (minor: number, cur: string) => moneyFmt(minor, cur, locale);
 
   const now = useNow();
   const completed = appointments.filter((a) => a.status === 'COMPLETED');
@@ -74,7 +79,7 @@ export function CustomerProfile({
       const res = await updateCustomerAction(slug, { id: customer.id, ...form });
       if (!res.ok)
         return setErr({ message: res.error.message, fields: res.error.fieldErrors ?? {} });
-      toast('Customer saved');
+      toast(pr.saved);
       router.refresh();
     });
   }
@@ -83,34 +88,28 @@ export function CustomerProfile({
     <>
       <PageHeader
         title={customer.name}
-        sub={<Link href={`/app/${slug}/customers`}>← All customers</Link>}
+        sub={<Link href={`/app/${slug}/customers`}>{pr.allCustomers}</Link>}
       />
       <PageContent>
         <KpiGrid>
           <Kpi
-            label="Completed visits"
+            label={pr.completedVisits}
             value={completed.length}
-            note={`Customer since ${fmtDay(customer.createdAt, tz, { month: 'short', year: 'numeric' })}`}
+            note={pr.since({
+              date: fmtDay(customer.createdAt, tz, locale, { month: 'short', year: 'numeric' }),
+            })}
           />
           <Kpi
-            label="Upcoming"
+            label={pr.upcoming}
             value={upcoming.length}
             note={
               upcoming[0]
-                ? `Next: ${fmtDay(upcoming[upcoming.length - 1]!.startAt, tz)}`
-                : 'No upcoming visit'
+                ? pr.next({ date: fmtDay(upcoming[upcoming.length - 1]!.startAt, tz, locale) })
+                : pr.noUpcoming
             }
           />
-          <Kpi
-            label="Estimated lifetime value"
-            value={moneyFmt(value, currency)}
-            note="Price of completed appointments"
-          />
-          <Kpi
-            label="Collected"
-            value={moneyFmt(collected, currency)}
-            note="Payments recorded, minus refunds"
-          />
+          <Kpi label={pr.lifetime} value={money(value, currency)} note={pr.lifetimeNote} />
+          <Kpi label={pr.collected} value={money(collected, currency)} note={pr.collectedNote} />
         </KpiGrid>
         <div
           style={{
@@ -120,9 +119,9 @@ export function CustomerProfile({
             alignItems: 'start',
           }}
         >
-          <Card title="Details">
+          <Card title={pr.details}>
             {err ? <FormMessage kind="error">{err.message}</FormMessage> : null}
-            <Field label="Name" error={err?.fields.name}>
+            <Field label={pr.name} error={err?.fields.name}>
               {(p) => (
                 <Input
                   {...p}
@@ -133,7 +132,7 @@ export function CustomerProfile({
               )}
             </Field>
             <div className={formStyles.grid2}>
-              <Field label="Phone country">
+              <Field label={pr.phoneCountry}>
                 {(p) => (
                   <Select
                     {...p}
@@ -143,13 +142,13 @@ export function CustomerProfile({
                   >
                     {PHONE_COUNTRIES.map((c) => (
                       <option key={c.code} value={c.code}>
-                        {c.name} ({c.dial})
+                        {countryName(c.code, locale, c.name)} ({c.dial})
                       </option>
                     ))}
                   </Select>
                 )}
               </Field>
-              <Field label="Phone" hint="Unverified" error={err?.fields.phone}>
+              <Field label={pr.phone} hint={pr.unverified} error={err?.fields.phone}>
                 {(p) => (
                   <Input
                     {...p}
@@ -161,7 +160,7 @@ export function CustomerProfile({
                 )}
               </Field>
             </div>
-            <Field label="Email" error={err?.fields.email}>
+            <Field label={pr.email} error={err?.fields.email}>
               {(p) => (
                 <Input
                   {...p}
@@ -172,7 +171,7 @@ export function CustomerProfile({
                 />
               )}
             </Field>
-            <Field label="Notes" hint="Visible to staff only">
+            <Field label={pr.notes} hint={pr.staffOnly}>
               {(p) => (
                 <Textarea
                   {...p}
@@ -187,7 +186,7 @@ export function CustomerProfile({
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
               {canEdit ? (
                 <Button variant="primary" disabled={pending} onClick={save}>
-                  Save customer
+                  {pr.save}
                 </Button>
               ) : null}
               {data.booking ? (
@@ -196,48 +195,52 @@ export function CustomerProfile({
                     openNewAppointment({ customerId: customer.id, customerName: customer.name })
                   }
                 >
-                  New appointment
+                  {pr.newAppointment}
                 </Button>
               ) : null}
             </div>
           </Card>
-          <Card title="Appointment history" flush>
-            <div className={t.wrap} style={{ border: 0 }}>
-              <table className={t.table}>
+          <Card title={pr.history} flush>
+            <div className={tbl.wrap} style={{ border: 0 }}>
+              <table className={tbl.table}>
                 <thead>
                   <tr>
-                    <th>Date</th>
-                    <th>Service</th>
-                    <th>Status</th>
-                    <th className={t.right}>Price</th>
+                    <th>{pr.date}</th>
+                    <th>{pr.service}</th>
+                    <th>{pr.status}</th>
+                    <th className={tbl.right}>{pr.price}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {appointments.map((a) => (
                     <tr
                       key={a.id}
-                      className={t.clickable}
+                      className={tbl.clickable}
                       tabIndex={0}
                       onClick={() => openAppt(a.id)}
                       onKeyDown={(e) => e.key === 'Enter' && openAppt(a.id)}
                     >
-                      <td className={t.nowrap}>
-                        {fmtDay(a.startAt, tz, { month: 'short', day: 'numeric', year: 'numeric' })}{' '}
-                        · {fmtTime(a.startAt, tz)}
+                      <td className={tbl.nowrap}>
+                        {fmtDay(a.startAt, tz, locale, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })}{' '}
+                        · {fmtTime(a.startAt, tz, locale)}
                       </td>
                       <td>
-                        {a.service} <span className={t.faint}>· {a.staff}</span>
+                        {a.service} <span className={tbl.faint}>· {a.staff}</span>
                       </td>
                       <td>
                         <StatusPill status={a.status} size="sm" />
                       </td>
-                      <td className={t.right}>{moneyFmt(a.priceMinor, a.currency)}</td>
+                      <td className={tbl.right}>{money(a.priceMinor, a.currency)}</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
               {appointments.length === 0 ? (
-                <div className={t.empty}>No appointments yet.</div>
+                <div className={tbl.empty}>{pr.noAppointments}</div>
               ) : null}
             </div>
           </Card>

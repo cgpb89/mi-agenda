@@ -147,31 +147,3 @@ export const THEMES: Record<TemplateKey, FlowTheme> = {
     sel: '#fbeee8',
   },
 };
-
-export const COPY: Record<
-  TemplateKey,
-  { serviceLabel: string; staffLabel: string; notesHint: string }
-> = {
-  barber: { serviceLabel: 'service', staffLabel: 'Barber', notesHint: 'e.g. Keep length on top' },
-  wellness: {
-    serviceLabel: 'treatment',
-    staffLabel: 'Practitioner',
-    notesHint: 'Areas to avoid or preferences',
-  },
-  // Consultations: deliberately no health questions — contact details only.
-  consult: {
-    serviceLabel: 'consultation type',
-    staffLabel: 'Practitioner',
-    notesHint: 'Practical needs, e.g. access or interpreter',
-  },
-  fitness: {
-    serviceLabel: 'session',
-    staffLabel: 'Coach',
-    notesHint: 'Goals or anything we should know',
-  },
-  services: {
-    serviceLabel: 'service',
-    staffLabel: 'Specialist',
-    notesHint: 'Device model or what you need',
-  },
-};

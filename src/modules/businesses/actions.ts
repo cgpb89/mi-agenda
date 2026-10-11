@@ -12,9 +12,11 @@ import { nameSchema, optionalEmailSchema, optionalTextSchema, parseInput } from 
 import { audit } from '@/modules/audit/audit';
 import { MAX_ACTIVE_PER_PHONE_MAX, MAX_ACTIVE_PER_PHONE_MIN } from '@/modules/bookings/rules';
 import { pageContentSchema } from './page-content';
+import { msg } from '@/i18n/message-ref';
+import { INTL_LOCALE, LOCALES } from '@/i18n/config';
 
 const bookingPageSchema = z.object({
-  displayName: nameSchema('business name', 120),
+  displayName: nameSchema('businessName', 120),
   tagline: optionalTextSchema(160),
   description: optionalTextSchema(1000, true),
   phone: optionalTextSchema(40),
@@ -23,6 +25,8 @@ const bookingPageSchema = z.object({
   hoursNote: optionalTextSchema(240),
   template: z.enum(['BARBER', 'WELLNESS', 'CONSULT', 'FITNESS', 'SERVICES']),
   content: pageContentSchema,
+  /** Default language of the public booking page. */
+  locale: z.enum(LOCALES),
 });
 
 export async function saveBookingPageAction(
@@ -48,6 +52,10 @@ export async function saveBookingPageAction(
           pageContent: input.content as Prisma.InputJsonValue,
         },
       });
+      await tx.tenant.update({
+        where: { id: ctx.tenantId },
+        data: { locale: INTL_LOCALE[input.locale] },
+      });
       await audit(
         {
           tenantId: ctx.tenantId,
@@ -56,7 +64,7 @@ export async function saveBookingPageAction(
           action: 'booking_page.updated',
           targetType: 'tenant',
           targetId: ctx.tenantId,
-          metadata: { template: input.template },
+          metadata: { template: input.template, locale: input.locale },
         },
         tx,
       );
@@ -89,10 +97,7 @@ export async function setPageStatusAction(
           tx.availabilityRule.count({ where: { tenantId: ctx.tenantId, staffId: null } }),
         ]);
         if (!services || !staffWithServices || !hours) {
-          throw new AppError(
-            'POLICY',
-            'Add at least one online service, a staff member who offers it, and business hours before publishing.',
-          );
+          throw new AppError('POLICY', msg('publishRequirements'));
         }
       }
       await tx.businessProfile.update({
@@ -121,13 +126,13 @@ export async function setPageStatusAction(
 const policySchema = z.object({
   maxActiveAppointmentsPerPhone: z.coerce
     .number()
-    .int('Use a whole number')
-    .min(MAX_ACTIVE_PER_PHONE_MIN, `At least ${MAX_ACTIVE_PER_PHONE_MIN}`)
-    .max(MAX_ACTIVE_PER_PHONE_MAX, `At most ${MAX_ACTIVE_PER_PHONE_MAX}`),
+    .int(msg('wholeNumber'))
+    .min(MAX_ACTIVE_PER_PHONE_MIN, msg('atLeast', { n: MAX_ACTIVE_PER_PHONE_MIN }))
+    .max(MAX_ACTIVE_PER_PHONE_MAX, msg('atMost', { n: MAX_ACTIVE_PER_PHONE_MAX })),
   cancellationWindowMin: z.coerce
     .number()
     .int()
-    .refine((v) => [0, 60, 120, 240, 720, 1440, 2880].includes(v), 'Choose a window'),
+    .refine((v) => [0, 60, 120, 240, 720, 1440, 2880].includes(v), msg('chooseWindow')),
   requireEmail: z.boolean(),
   autoConfirm: z.boolean(),
   policyText: optionalTextSchema(600, true),
@@ -179,7 +184,7 @@ export async function savePolicyAction(
 }
 
 const businessSchema = z.object({
-  name: nameSchema('business name', 120),
+  name: nameSchema('businessName', 120),
   country: countryCodeSchema,
   category: z.enum(['BARBER', 'WELLNESS', 'CONSULT', 'FITNESS', 'SERVICES']),
 });

@@ -1,12 +1,17 @@
 import type { Metadata, Viewport } from 'next';
 import { headers } from 'next/headers';
 import '@/styles/globals.scss';
+import { I18nProvider } from '@/i18n/client';
+import { getI18n, getLocale } from '@/i18n/server';
 import { fontVariables } from './fonts';
 
-export const metadata: Metadata = {
-  title: { default: 'Tempo — Your next appointment starts here', template: '%s · Tempo' },
-  description: 'Booking pages, calendars and analytics for appointment-based businesses.',
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return {
+    title: { default: t.common.metaTitle, template: '%s · Tempo' },
+    description: t.common.metaDescription,
+  };
+}
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -19,9 +24,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // dynamically rendered, which nonce-based CSP requires: Next.js attaches the
   // nonce to its own scripts during the render.
   await headers();
+  const locale = await getLocale();
   return (
-    <html lang="en" className={fontVariables}>
-      <body>{children}</body>
+    <html lang={locale} className={fontVariables}>
+      <body>
+        <I18nProvider locale={locale}>{children}</I18nProvider>
+      </body>
     </html>
   );
 }

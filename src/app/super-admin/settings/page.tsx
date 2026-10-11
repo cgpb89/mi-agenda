@@ -4,8 +4,12 @@ import { listFlags, platformAuditLog } from '@/modules/platform/service';
 import { PlatformSettingsView } from '@/components/features/admin/PlatformSettingsView';
 import { isEmailConfigured } from '@/lib/env';
 import { getDb } from '@/lib/db/client';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Settings & audit log' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.admin.nav.settings };
+}
 
 export default async function PlatformSettingsPage() {
   await requirePlatformAdminPage();
@@ -26,10 +30,10 @@ export default async function PlatformSettingsPage() {
       }))}
       audit={audit}
       health={[
-        { n: 'Database', s: dbUp ? 'reachable' : 'unreachable' },
-        { n: 'Email delivery', s: isEmailConfigured() ? 'configured' : 'not configured' },
-        { n: 'Background jobs', s: '— none in this release' },
-        { n: 'Error rate', s: '— not connected' },
+        { n: 'database', s: dbUp ? 'reachable' : 'unreachable' },
+        { n: 'email', s: isEmailConfigured() ? 'configured' : 'notConfigured' },
+        { n: 'jobs', s: 'noJobs' },
+        { n: 'errors', s: 'notConnected' },
       ]}
     />
   );

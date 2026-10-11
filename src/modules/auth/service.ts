@@ -10,6 +10,10 @@ import { revokeAllSessions } from '@/lib/auth/session';
 import { generateToken, hmacHex } from '@/lib/security/tokens';
 import { audit } from '@/modules/audit/audit';
 import type { SignupInput, Category } from './schemas';
+import { msg } from '@/i18n/message-ref';
+import { getI18n } from '@/i18n/server';
+import { DEFAULT_LOCALE, INTL_LOCALE, type Locale } from '@/i18n/config';
+import { messages } from '@/i18n/messages';
 
 const RESET_TTL_MS = 30 * 60 * 1000; // 30 minutes
 
@@ -69,6 +73,8 @@ const CURRENCY_FOR_COUNTRY: Record<string, string> = {
  */
 export async function registerOwner(
   input: SignupInput,
+  /** Language the owner signed up in; becomes the booking page's default language. */
+  locale: Locale = DEFAULT_LOCALE,
 ): Promise<{ userId: string; tenantSlug: string }> {
   const passwordHash = await hashPassword(input.password);
   try {
@@ -84,6 +90,7 @@ export async function registerOwner(
           timezone: input.timezone,
           country: input.country,
           currency: CURRENCY_FOR_COUNTRY[input.country] ?? 'USD',
+          locale: INTL_LOCALE[locale],
           status: 'TRIAL',
           plan: 'TRIAL',
         },
@@ -99,7 +106,12 @@ export async function registerOwner(
       });
       await tx.bookingPolicy.create({ data: { tenantId: tenant.id, updatedByUserId: user.id } });
       await tx.staff.create({
-        data: { tenantId: tenant.id, userId: user.id, displayName: input.name, title: 'Owner' },
+        data: {
+          tenantId: tenant.id,
+          userId: user.id,
+          displayName: input.name,
+          title: messages[locale].defaults.ownerTitle,
+        },
       });
       // Sensible default: Mon–Fri 9:00–17:00. Edited during onboarding.
       await tx.availabilityRule.createMany({
@@ -139,13 +151,13 @@ export async function registerOwner(
   } catch (err) {
     if (isUniqueViolation(err, 'email')) {
       // Generic enough to not confirm existence beyond what signup inherently reveals.
-      throw new AppError('CONFLICT', 'An account with this email already exists. Try signing in.', {
-        fieldErrors: { email: 'An account with this email already exists' },
+      throw new AppError('CONFLICT', msg('emailExists'), {
+        fieldErrors: { email: msg('emailExistsField') },
       });
     }
     if (isUniqueViolation(err, 'slug')) {
-      throw new AppError('CONFLICT', 'That booking address is taken.', {
-        fieldErrors: { slug: 'That address is taken — try another' },
+      throw new AppError('CONFLICT', msg('slugTaken'), {
+        fieldErrors: { slug: msg('slugTakenField') },
       });
     }
     throw err;
@@ -157,7 +169,7 @@ export async function isSlugAvailable(slug: string): Promise<boolean> {
   return !t;
 }
 
-const INVALID_LOGIN = 'Email or password is incorrect.';
+const INVALID_LOGIN = msg('invalidLogin');
 
 /** Verify credentials. Same message and similar timing for unknown email / wrong password / suspended. */
 export async function authenticate(
@@ -232,10 +244,11 @@ export async function requestPasswordReset(email: string): Promise<void> {
     );
   });
   const link = `${getEnv().APP_URL}/reset-password?token=${encodeURIComponent(token)}`;
+  const { t } = await getI18n();
   await sendMail({
     to: user.email,
-    subject: 'Reset your Tempo password',
-    text: `Someone asked to reset the password for your Tempo account.\n\nUse this link within 30 minutes:\n${link}\n\nIf this wasn't you, ignore this email — your password stays the same.`,
+    subject: t.emails.resetSubject,
+    text: t.emails.resetBody({ link }),
   });
 }
 
@@ -247,10 +260,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
     const rec = await tx.passwordResetToken.findUnique({
       where: { tokenHash: resetTokenHash(token) },
     });
-    const invalid = new AppError(
-      'VALIDATION',
-      'This reset link is invalid or has expired. Request a new one.',
-    );
+    const invalid = new AppError('VALIDATION', msg('resetLinkInvalid'));
     if (!rec || rec.consumedAt || rec.expiresAt <= now) throw invalid;
     // Atomic single-use: only one concurrent request can flip consumedAt.
     const consumed = await tx.passwordResetToken.updateMany({

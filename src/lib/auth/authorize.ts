@@ -5,6 +5,7 @@ import { getDb } from '@/lib/db/client';
 import { AppError } from '@/lib/errors';
 import { getSessionUser, type SessionUser } from './session';
 import { can, type MembershipRole, type Permission } from './permissions';
+import { msg } from '@/i18n/message-ref';
 
 /**
  * Everything a tenant-scoped operation is allowed to rely on. It is derived on
@@ -28,7 +29,7 @@ export interface TenantContext {
 
 export async function requireUser(): Promise<SessionUser> {
   const user = await getSessionUser();
-  if (!user) throw new AppError('UNAUTHENTICATED', 'Please sign in to continue.');
+  if (!user) throw new AppError('UNAUTHENTICATED', msg('signInToContinue'));
   return user;
 }
 
@@ -41,7 +42,7 @@ const SLUG_SHAPE = /^[a-z0-9-]{1,48}$/;
  */
 export const getTenantContext = cache(async (tenantSlug: string): Promise<TenantContext> => {
   const user = await requireUser();
-  if (!SLUG_SHAPE.test(tenantSlug)) throw new AppError('NOT_FOUND', 'Business not found.');
+  if (!SLUG_SHAPE.test(tenantSlug)) throw new AppError('NOT_FOUND', msg('businessNotFound'));
   const membership = await getDb().membership.findFirst({
     where: {
       userId: user.userId,
@@ -52,7 +53,7 @@ export const getTenantContext = cache(async (tenantSlug: string): Promise<Tenant
       tenant: true,
     },
   });
-  if (!membership) throw new AppError('NOT_FOUND', 'Business not found.');
+  if (!membership) throw new AppError('NOT_FOUND', msg('businessNotFound'));
   const staff = await getDb().staff.findFirst({
     where: { tenantId: membership.tenantId, userId: user.userId },
     select: { id: true },
@@ -85,7 +86,7 @@ export async function requireTenant(
 
 export function assertCan(ctx: Pick<TenantContext, 'role'>, permission: Permission): void {
   if (!can(ctx.role, permission)) {
-    throw new AppError('FORBIDDEN', "You don't have access to do that.");
+    throw new AppError('FORBIDDEN', msg('noAccess'));
   }
 }
 
@@ -102,7 +103,7 @@ export function assertCanManageAssigned(
   if (can(ctx.role, anyPermission)) return;
   if (can(ctx.role, ownPermission) && ctx.staffId !== null && ctx.staffId === assignedStaffId)
     return;
-  throw new AppError('FORBIDDEN', "You don't have access to do that.");
+  throw new AppError('FORBIDDEN', msg('noAccess'));
 }
 
 /** For pages: redirect to login / render 404 instead of throwing. */
@@ -135,7 +136,7 @@ export async function requireUserPage(nextPath = '/app'): Promise<SessionUser> {
  */
 export async function requirePlatformAdmin(): Promise<SessionUser> {
   const user = await requireUser();
-  if (user.platformRole !== 'ADMIN') throw new AppError('NOT_FOUND', 'Not found.');
+  if (user.platformRole !== 'ADMIN') throw new AppError('NOT_FOUND', msg('notFound'));
   return user;
 }
 

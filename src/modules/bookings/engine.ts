@@ -23,6 +23,7 @@ import {
   confirmationCode,
   wouldExceedPhoneLimit,
 } from './rules';
+import { msg } from '@/i18n/message-ref';
 
 /**
  * THE booking engine. Every appointment creation path (public booking page,
@@ -92,15 +93,14 @@ export function manageTokenHash(token: string): string {
 }
 
 const PUBLIC_REASON_MESSAGE: Partial<Record<SlotReason, string>> = {
-  past: 'That time has already passed. Please choose another time.',
-  too_soon: 'That time is too soon to book online. Please choose a later time.',
-  beyond_window: 'That date is too far ahead to book. Please choose an earlier date.',
-  booked: 'That time was just taken. Please choose another time.',
+  past: msg('slotPast'),
+  too_soon: msg('slotTooSoon'),
+  beyond_window: msg('slotTooFar'),
+  booked: msg('slotTaken'),
 };
 
 export function slotProblem(reason: SlotReason): AppError {
-  const message =
-    PUBLIC_REASON_MESSAGE[reason] ?? "That time isn't available. Please choose another time.";
+  const message = PUBLIC_REASON_MESSAGE[reason] ?? msg('slotUnavailable');
   return new AppError(reason === 'booked' ? 'SLOT_TAKEN' : 'POLICY', message, {
     fieldErrors: { slot: reason },
   });
@@ -142,7 +142,7 @@ async function loadTenant(tx: Tx, tenantId: string): Promise<TenantBits> {
       policy: true,
     },
   });
-  if (!t || !t.policy) throw new AppError('NOT_FOUND', 'Business not found.');
+  if (!t || !t.policy) throw new AppError('NOT_FOUND', msg('businessNotFound'));
   return {
     id: t.id,
     timezone: t.timezone,
@@ -180,14 +180,14 @@ function toPolicyInput(p: TenantBits['policy']): PolicyInput {
 
 function assertBookableTenant(t: TenantBits, mode: BookingMode) {
   if (t.status !== 'ACTIVE' && t.status !== 'TRIAL')
-    throw new AppError('NOT_FOUND', 'Business not found.');
+    throw new AppError('NOT_FOUND', msg('businessNotFound'));
   if (mode === 'public' && t.pageStatus !== 'PUBLISHED')
-    throw new AppError('NOT_FOUND', 'Business not found.');
+    throw new AppError('NOT_FOUND', msg('businessNotFound'));
 }
 
 function validateWhen(date: string, startMin: number) {
   if (!isValidLocalDate(date) || !Number.isInteger(startMin) || startMin < 0 || startMin >= 1440) {
-    throw new AppError('VALIDATION', 'Choose a valid date and time.', {
+    throw new AppError('VALIDATION', msg('chooseValidDateTime'), {
       fieldErrors: { slot: 'invalid' },
     });
   }
@@ -280,7 +280,7 @@ async function createInTx(tx: Tx, input: CreateAppointmentInput): Promise<Create
     },
   });
   if (!service)
-    throw new AppError('VALIDATION', 'Choose a service.', {
+    throw new AppError('VALIDATION', msg('chooseService'), {
       fieldErrors: { serviceId: 'invalid' },
     });
 
@@ -298,9 +298,7 @@ async function createInTx(tx: Tx, input: CreateAppointmentInput): Promise<Create
   if (eligible.length === 0) {
     throw new AppError(
       'VALIDATION',
-      input.staffId
-        ? "That person doesn't offer this service."
-        : 'Nobody offers this service right now.',
+      input.staffId ? msg('staffDoesntOffer') : msg('nobodyOffers'),
       {
         fieldErrors: { staffId: 'invalid' },
       },
@@ -314,13 +312,12 @@ async function createInTx(tx: Tx, input: CreateAppointmentInput): Promise<Create
   let contactEmail = input.customer.email ?? null;
 
   if (input.customer.existingCustomerId) {
-    if (input.mode !== 'staff')
-      throw new AppError('FORBIDDEN', "You don't have access to do that.");
+    if (input.mode !== 'staff') throw new AppError('FORBIDDEN', msg('noAccess'));
     const existing = await tx.customer.findFirst({
       where: { id: input.customer.existingCustomerId, tenantId: tenant.id },
     });
     if (!existing)
-      throw new AppError('VALIDATION', 'Choose a customer.', {
+      throw new AppError('VALIDATION', msg('chooseCustomer'), {
         fieldErrors: { customerId: 'invalid' },
       });
     customerId = existing.id;
@@ -333,20 +330,20 @@ async function createInTx(tx: Tx, input: CreateAppointmentInput): Promise<Create
       input.customer.phoneCountry ?? tenant.country,
     );
     if (!phone.ok) {
-      throw new AppError('VALIDATION', 'Enter a phone number we can reach.', {
+      throw new AppError('VALIDATION', msg('enterReachablePhone'), {
         fieldErrors: {
           phone:
             phone.reason === 'missing'
-              ? 'Enter a phone number we can reach'
-              : 'That phone number doesn’t look right for the selected country',
+              ? msg('enterReachablePhoneField')
+              : msg('phoneWrongForCountry'),
         },
       });
     }
     phoneE164 = phone.e164;
   }
   if (input.mode === 'public' && tenant.policy.requireEmail && !contactEmail) {
-    throw new AppError('VALIDATION', 'Enter a valid email.', {
-      fieldErrors: { email: 'Enter a valid email' },
+    throw new AppError('VALIDATION', msg('enterValidEmailPeriod'), {
+      fieldErrors: { email: msg('enterValidEmail') },
     });
   }
 
@@ -370,9 +367,7 @@ async function createInTx(tx: Tx, input: CreateAppointmentInput): Promise<Create
     if (wouldExceedPhoneLimit(active, max)) {
       throw new AppError(
         'PHONE_LIMIT',
-        max === 1
-          ? 'This phone number already has an upcoming appointment here. Cancel or finish it before booking another.'
-          : `This phone number already has ${max} upcoming appointments here, which is the most this business allows.`,
+        max === 1 ? msg('phoneLimitOne') : msg('phoneLimitMany', { max }),
         { fieldErrors: { phone: 'limit' } },
       );
     }
@@ -536,14 +531,13 @@ export async function rescheduleAppointment(input: RescheduleInput) {
         SELECT id FROM app.appointments
         WHERE id = ${input.appointmentId}::uuid AND tenant_id = ${tenant.id}::uuid
         FOR UPDATE`;
-      if (locked.length === 0) throw new AppError('NOT_FOUND', 'Appointment not found.');
+      if (locked.length === 0) throw new AppError('NOT_FOUND', msg('appointmentNotFound'));
 
       const appt = await tx.appointment.findFirstOrThrow({
         where: { id: input.appointmentId, tenantId: tenant.id },
         include: { service: true },
       });
-      if (!canReschedule(appt.status))
-        throw new AppError('CONFLICT', 'This appointment can no longer be moved.');
+      if (!canReschedule(appt.status)) throw new AppError('CONFLICT', msg('cantMove'));
 
       const staffId = input.mode === 'staff' && input.staffId ? input.staffId : appt.staffId;
       if (staffId !== appt.staffId) {
@@ -556,7 +550,7 @@ export async function rescheduleAppointment(input: RescheduleInput) {
           },
           select: { id: true },
         });
-        if (!ok) throw new AppError('VALIDATION', "That person doesn't offer this service.");
+        if (!ok) throw new AppError('VALIDATION', msg('staffDoesntOffer'));
       }
 
       const schedule = await loadScheduleData(tx, {

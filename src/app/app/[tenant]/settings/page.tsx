@@ -3,11 +3,16 @@ import { getDb } from '@/lib/db/client';
 import { requireTenantPage } from '@/lib/auth/authorize';
 import { can } from '@/lib/auth/permissions';
 import { SettingsView } from '@/components/features/settings/SettingsView';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Business settings' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.nav.settings };
+}
 
 export default async function SettingsPage({ params }: { params: Promise<{ tenant: string }> }) {
   const { tenant } = await params;
+  const { t: tr } = await getI18n();
   const ctx = await requireTenantPage(tenant, 'business.manage');
   const db = getDb();
   const [t, policy, members, invites, events] = await Promise.all([
@@ -88,7 +93,9 @@ export default async function SettingsPage({ params }: { params: Promise<{ tenan
       events={events.map((e) => ({
         id: e.id,
         action: e.action,
-        actor: e.actor?.name ?? (e.actorType === 'customer' ? 'Customer' : 'System'),
+        actor:
+          e.actor?.name ??
+          (e.actorType === 'customer' ? tr.settings.actorCustomer : tr.settings.actorSystem),
         at: e.createdAt.toISOString(),
         target: e.targetType ?? '',
       }))}

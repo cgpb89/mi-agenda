@@ -1,3 +1,4 @@
+import { msg } from '@/i18n/message-ref';
 /**
  * Collected-money ledger (pure).
  *
@@ -42,15 +43,14 @@ export function ledgerEntryError(
   currentCollectedMinor: number,
   quotedMinor: number,
 ): string | null {
-  if (!Number.isInteger(amountMinor) || amountMinor <= 0)
-    return 'Enter an amount greater than zero.';
+  if (!Number.isInteger(amountMinor) || amountMinor <= 0) return msg('amountPositive');
   if (kind === 'REFUND' && amountMinor > currentCollectedMinor) {
-    return 'A refund cannot exceed the amount collected.';
+    return msg('refundTooLarge');
   }
   // Guard against typos (e.g. 3800 instead of 38.00): allow tips/extras up to 3× quote or +$500.
   const ceiling = Math.max(quotedMinor * 3, quotedMinor + 50_000);
   if (kind === 'PAYMENT' && currentCollectedMinor + amountMinor > ceiling) {
-    return 'That amount is much higher than the appointment price. Check it and try again.';
+    return msg('amountTooHigh');
   }
   return null;
 }

@@ -4,6 +4,8 @@ import { getDb } from '@/lib/db/client';
 import { evaluateSlot, staffDay, type SlotReason } from '@/modules/scheduling/availability';
 import { loadScheduleData } from '@/modules/scheduling/load';
 import { formatMinutes, localMinutesToInstant } from '@/modules/scheduling/time';
+import { INTL_LOCALE, type Locale } from '@/i18n/config';
+import { messages } from '@/i18n/messages';
 
 export interface SlotCheck {
   ok: boolean;
@@ -15,10 +17,10 @@ function firstName(name: string) {
   return name.replace(/^Dr\.\s+/, '').split(/\s+/)[0] ?? name;
 }
 
-function timeRange(startMs: number, endMs: number, tz: string): string {
+function timeRange(startMs: number, endMs: number, tz: string, locale: Locale): string {
   const a = DateTime.fromMillis(startMs, { zone: tz });
   const b = DateTime.fromMillis(endMs, { zone: tz });
-  const fmt = (d: DateTime) => formatMinutes(d.hour * 60 + d.minute);
+  const fmt = (d: DateTime) => formatMinutes(d.hour * 60 + d.minute, locale);
   return `${fmt(a)}–${fmt(b)}`;
 }
 
@@ -38,8 +40,13 @@ export async function checkStaffSlot(params: {
   excludeAppointmentId?: string;
   durationOverrideMin?: number;
   now?: Date;
+  locale: Locale;
 }): Promise<SlotCheck> {
   const db = getDb();
+  const { locale } = params;
+  const t = messages[locale].slotCheck;
+  const minutes = (start: number, end: number) =>
+    `${formatMinutes(start, locale)}–${formatMinutes(end, locale)}`;
   const [service, staff, policy] = await Promise.all([
     db.service.findFirst({ where: { id: params.serviceId, tenantId: params.tenantId } }),
     db.staff.findFirst({
@@ -48,11 +55,13 @@ export async function checkStaffSlot(params: {
     }),
     db.bookingPolicy.findUnique({ where: { tenantId: params.tenantId } }),
   ]);
-  if (!service || !staff || !policy)
-    return { ok: false, message: 'Choose a service and a staff member.' };
+  if (!service || !staff || !policy) return { ok: false, message: t.chooseServiceAndStaff };
   const fn = firstName(staff.displayName);
   if (!staff.services.some((s) => s.serviceId === service.id)) {
-    return { ok: false, message: `${staff.displayName} doesn't offer ${service.name}.` };
+    return {
+      ok: false,
+      message: t.doesntOffer({ staff: staff.displayName, service: service.name }),
+    };
   }
   const data = await loadScheduleData(db, {
     tenantId: params.tenantId,
@@ -72,31 +81,39 @@ export async function checkStaffSlot(params: {
     mode: 'staff',
     excludeAppointmentId: params.excludeAppointmentId,
   });
-  const dayLabel = DateTime.fromISO(params.date, { zone: params.tz }).toFormat('cccc, LLL d');
+  const day = DateTime.fromISO(params.date, { zone: params.tz }).setLocale(INTL_LOCALE[locale]);
+  const dayLabel = day.toLocaleString({ weekday: 'long', month: 'short', day: 'numeric' });
   if (r.ok)
     return {
       ok: true,
-      message: `${dayLabel}, ${timeRange(r.startMs, r.endMs, params.tz)} is free for ${fn}.`,
+      message: t.free({
+        day: dayLabel,
+        range: timeRange(r.startMs, r.endMs, params.tz, locale),
+        staff: fn,
+      }),
     };
 
-  const weekday = DateTime.fromISO(params.date, { zone: params.tz }).toFormat('cccc');
   switch (r.reason) {
     case 'past':
-      return { ok: false, reason: r.reason, message: 'That time has already passed.' };
+      return { ok: false, reason: r.reason, message: t.past };
     case 'business_closed':
       return {
         ok: false,
         reason: r.reason,
-        message: `${params.businessName} is closed on ${dayLabel}.`,
+        message: t.businessClosed({ business: params.businessName, day: dayLabel }),
       };
     case 'not_working_day':
-      return { ok: false, reason: r.reason, message: `${fn} doesn't work on ${weekday}s.` };
+      return {
+        ok: false,
+        reason: r.reason,
+        message: t.notWorkingDay({ staff: fn, isoDay: day.weekday }),
+      };
     case 'break':
-      return { ok: false, reason: r.reason, message: `That runs into ${fn}'s break.` };
+      return { ok: false, reason: r.reason, message: t.onBreak({ staff: fn }) };
     case 'blocked': {
-      const day = staffDay(data, staff.id, params.date);
+      const blocks = staffDay(data, staff.id, params.date);
       const startMs = localMinutesToInstant(params.date, params.startMin, params.tz);
-      const block = day.blocksMinutes.find(
+      const block = blocks.blocksMinutes.find(
         (b) =>
           localMinutesToInstant(params.date, b.start, params.tz) < startMs + durationMin * 60_000 &&
           localMinutesToInstant(params.date, b.end, params.tz) > startMs,
@@ -108,19 +125,21 @@ export async function checkStaffSlot(params: {
         ok: false,
         reason: r.reason,
         message: block
-          ? `${fn} has blocked ${formatMinutes(block.start)}–${formatMinutes(block.end)}${ex?.reason ? `: ${ex.reason}` : ''}.`
-          : `${fn} isn't available then.`,
+          ? t.blocked({
+              staff: fn,
+              range: minutes(block.start, block.end),
+              reason: ex?.reason ?? null,
+            })
+          : t.unavailableStaff({ staff: fn }),
       };
     }
     case 'outside_hours': {
-      const day = staffDay(data, staff.id, params.date);
-      const periods = day.shiftMinutes
-        .map((p) => `${formatMinutes(p.start)}–${formatMinutes(p.end)}`)
-        .join(', ');
+      const shifts = staffDay(data, staff.id, params.date);
+      const periods = shifts.shiftMinutes.map((p) => minutes(p.start, p.end)).join(', ');
       return {
         ok: false,
         reason: r.reason,
-        message: `Outside ${fn}'s working hours (${periods}).`,
+        message: t.outsideHours({ staff: fn, periods }),
       };
     }
     case 'booked': {
@@ -134,11 +153,16 @@ export async function checkStaffSlot(params: {
         ok: false,
         reason: r.reason,
         message: other
-          ? `Overlaps ${other.contactName}, ${timeRange(other.startAt.getTime(), other.endAt.getTime(), params.tz)} (${other.serviceNameSnapshot}) with ${fn}.`
-          : `${fn} is already booked then.`,
+          ? t.overlaps({
+              customer: other.contactName,
+              range: timeRange(other.startAt.getTime(), other.endAt.getTime(), params.tz, locale),
+              service: other.serviceNameSnapshot,
+              staff: fn,
+            })
+          : t.alreadyBooked({ staff: fn }),
       };
     }
     default:
-      return { ok: false, reason: r.reason, message: "That time isn't available." };
+      return { ok: false, reason: r.reason, message: t.unavailable };
   }
 }

@@ -134,6 +134,37 @@
   }
 }
 
+.hero {
+  height: 520vh;
+  position: relative;
+}
+
+.heroStage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+}
+
+// Matches the `flat` breakpoint in Landing.tsx: no street scene on small screens.
+@media (max-width: 699px), (max-height: 479px) {
+  .hero {
+    height: auto;
+  }
+  .heroStage {
+    position: relative;
+    height: auto;
+    padding: 96px 0 56px;
+  }
+  .heroText {
+    position: static !important;
+    padding: 0 16px;
+  }
+  .streetOnly {
+    display: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .pinBob,
   .cueLine {

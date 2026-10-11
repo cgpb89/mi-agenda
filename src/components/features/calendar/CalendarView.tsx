@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import { PageContent, PageHeader, useShell } from '@/components/layout/AppShell';
 import { buttonClass } from '@/components/ui/Button';
 import { Segmented } from '@/components/ui/Segmented';
-import { APPOINTMENT_STATUS_LABEL, STATUS_BAR_COLOR, STATUS_BG } from '@/components/ui/StatusPill';
+import { STATUS_BAR_COLOR, STATUS_BG, type AppointmentStatusKey } from '@/components/ui/StatusPill';
 import tableStyles from '@/components/ui/Table.module.scss';
-import { localMinutes } from '@/components/features/shared/format';
+import { hourShort, localMinutes, weekdayNames } from '@/components/features/shared/format';
 import { addDaysIso, fmtMin, labelDate } from '@/components/features/appointments/time-options';
 import { useOpenAppointment } from '@/components/features/appointments/AppointmentDrawer';
 import styles from './Calendar.module.scss';
+import { useI18n } from '@/i18n/client';
 
 interface Range {
   start: number;
@@ -21,7 +22,7 @@ export interface CalItem {
   id: string;
   startMin: number;
   endMin: number;
-  status: keyof typeof APPOINTMENT_STATUS_LABEL;
+  status: AppointmentStatusKey;
   customer: string;
   service: string;
 }
@@ -33,13 +34,12 @@ export interface CalDay {
   lanes: {
     staffId: string;
     shifts: Range[];
-    blocks: (Range & { label: string })[];
+    blocks: (Range & { label: string | null })[];
     items: CalItem[];
   }[];
 }
 
 const HOUR_PX = 56;
-const WD = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 function initials(name: string) {
   return name
@@ -78,6 +78,12 @@ export function CalendarView({
   const router = useRouter();
   const openAppt = useOpenAppointment();
   const base = `/app/${tenant.slug}/calendar`;
+  const { t, locale } = useI18n();
+  const cal = t.calendar;
+  const WD = weekdayNames(locale, 'short');
+  const fmt = (m: number) => fmtMin(m, locale);
+  const dateLabel = (iso: string, opts?: Intl.DateTimeFormatOptions) =>
+    labelDate(iso, locale, opts);
 
   const href = (patch: Record<string, string | null>) => {
     const cur: Record<string, string | null> = {
@@ -113,10 +119,10 @@ export function CalendarView({
 
   const label =
     view === 'day'
-      ? labelDate(anchor, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+      ? dateLabel(anchor, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
       : view === 'week'
-        ? `${labelDate(days[0]!.date, { month: 'short', day: 'numeric' })} – ${labelDate(days[6]!.date, { month: 'short', day: 'numeric', year: 'numeric' })}`
-        : labelDate(anchor, { month: 'long', year: 'numeric' });
+        ? `${dateLabel(days[0]!.date, { month: 'short', day: 'numeric' })} – ${dateLabel(days[6]!.date, { month: 'short', day: 'numeric', year: 'numeric' })}`
+        : dateLabel(anchor, { month: 'long', year: 'numeric' });
 
   const [H0, H1] = hours;
   const total = ((H1 - H0) / 60) * HOUR_PX;
@@ -141,37 +147,36 @@ export function CalendarView({
         top: 0,
         h: total,
         cls: styles.off!,
-        text: view === 'day' ? 'Not working' : undefined,
-        title: 'Not working',
+        text: view === 'day' ? cal.notWorking : undefined,
+        title: cal.notWorking,
       });
       return out;
     }
     const first = lane.shifts[0]!.start;
     const last = lane.shifts[lane.shifts.length - 1]!.end;
-    if (first > H0) out.push({ top: 0, h: y(first), cls: styles.off!, title: 'Not working' });
+    if (first > H0) out.push({ top: 0, h: y(first), cls: styles.off!, title: cal.notWorking });
     if (last < H1)
-      out.push({ top: y(last), h: total - y(last), cls: styles.off!, title: 'Not working' });
+      out.push({ top: y(last), h: total - y(last), cls: styles.off!, title: cal.notWorking });
     for (let i = 1; i < lane.shifts.length; i++) {
       const a = lane.shifts[i - 1]!.end;
       const b = lane.shifts[i]!.start;
-      if (b > a) out.push({ top: y(a), h: y(b) - y(a), cls: styles.brk!, title: 'Break' });
+      if (b > a) out.push({ top: y(a), h: y(b) - y(a), cls: styles.brk!, title: cal.break });
     }
-    for (const b of lane.blocks)
-      out.push({
-        top: y(b.start),
-        h: y(b.end) - y(b.start),
-        cls: styles.blk!,
-        text: `Blocked · ${b.label}`,
-        title: `Blocked · ${b.label}`,
-      });
+    for (const b of lane.blocks) {
+      const text = b.label ? cal.blockedWith({ label: b.label }) : cal.blocked;
+      out.push({ top: y(b.start), h: y(b.end) - y(b.start), cls: styles.blk!, text, title: text });
+    }
     return out;
   }
 
   return (
     <>
       <PageHeader
-        title="Calendar"
-        sub={`${tenant.name} · ${tenant.timezone.split('/').pop()?.replace(/_/g, ' ')} time`}
+        title={t.app.nav.calendar}
+        sub={cal.sub({
+          business: tenant.name,
+          zone: tenant.timezone.split('/').pop()?.replace(/_/g, ' ') ?? tenant.timezone,
+        })}
       />
       <PageContent>
         <div className={styles.toolbar}>
@@ -180,11 +185,11 @@ export function CalendarView({
             className={buttonClass({ variant: 'primary', size: 'sm' })}
             scroll={false}
           >
-            Today
+            {cal.today}
           </Link>
           <div style={{ display: 'flex', gap: 4 }}>
             <Link
-              aria-label="Previous"
+              aria-label={cal.previous}
               className={styles.navBtn}
               href={href({ date: prev })}
               scroll={false}
@@ -192,7 +197,7 @@ export function CalendarView({
               ‹
             </Link>
             <Link
-              aria-label="Next"
+              aria-label={cal.next}
               className={styles.navBtn}
               href={href({ date: next })}
               scroll={false}
@@ -202,10 +207,10 @@ export function CalendarView({
           </div>
           <span className={styles.label}>{label}</span>
           <Segmented
-            label="View"
+            label={cal.view}
             items={(['day', 'week', 'month'] as const).map((v) => ({
               key: v,
-              label: v[0]!.toUpperCase() + v.slice(1),
+              label: cal.views[v],
               selected: view === v,
               href: href({ view: v }),
             }))}
@@ -213,7 +218,7 @@ export function CalendarView({
         </div>
 
         <div className={styles.filters}>
-          <span className={styles.filterLabel}>Staff</span>
+          <span className={styles.filterLabel}>{cal.staff}</span>
           <button
             type="button"
             onClick={() => toggleStaff(null)}
@@ -222,7 +227,7 @@ export function CalendarView({
               .filter(Boolean)
               .join(' ')}
           >
-            Everyone
+            {cal.everyone}
           </button>
           {allStaff.map((s) => {
             const on = selectedStaff.includes(s.id);
@@ -241,7 +246,7 @@ export function CalendarView({
           <span className={styles.sep} />
           <select
             className={styles.select}
-            aria-label="Service filter"
+            aria-label={cal.serviceFilter}
             value={serviceId ?? 'all'}
             onChange={(e) =>
               router.replace(href({ svc: e.target.value === 'all' ? null : e.target.value }), {
@@ -249,7 +254,7 @@ export function CalendarView({
               })
             }
           >
-            <option value="all">All services</option>
+            <option value="all">{cal.allServices}</option>
             {services.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -258,7 +263,7 @@ export function CalendarView({
           </select>
           <select
             className={styles.select}
-            aria-label="Status filter"
+            aria-label={cal.statusFilter}
             value={statusKey}
             onChange={(e) =>
               router.replace(
@@ -267,12 +272,13 @@ export function CalendarView({
               )
             }
           >
-            <option value="active">Hide cancelled</option>
-            <option value="all">All statuses</option>
-            <option value="pending">Pending only</option>
-            <option value="confirmed">Confirmed only</option>
-            <option value="completed">Completed only</option>
-            <option value="noshow">No-shows only</option>
+            {(['active', 'all', 'pending', 'confirmed', 'completed', 'noshow'] as const).map(
+              (k) => (
+                <option key={k} value={k}>
+                  {cal.statuses[k]}
+                </option>
+              ),
+            )}
           </select>
         </div>
 
@@ -284,30 +290,28 @@ export function CalendarView({
                   className={styles.sw}
                   style={{ background: '#fff', border: '1px solid #d9d3c8' }}
                 />
-                Available
+                {cal.available}
               </span>
               <span>
                 <span
                   className={styles.sw}
                   style={{ background: '#fbe6d8', borderLeft: '3px solid #e0773a' }}
                 />
-                Booked
+                {cal.booked}
               </span>
               <span>
                 <span className={[styles.sw, styles.brk].join(' ')} />
-                Break
+                {cal.break}
               </span>
               <span>
                 <span className={[styles.sw, styles.blk].join(' ')} />
-                Blocked
+                {cal.blocked}
               </span>
               <span>
                 <span className={[styles.sw, styles.off].join(' ')} />
-                Not working
+                {cal.notWorking}
               </span>
-              {shell.data.booking ? (
-                <span className={styles.hint}>Click an open time to book it.</span>
-              ) : null}
+              {shell.data.booking ? <span className={styles.hint}>{cal.clickToBook}</span> : null}
             </div>
             <div className={styles.gridWrap}>
               <div style={{ minWidth: minW }}>
@@ -316,8 +320,8 @@ export function CalendarView({
                   {days.map((d) => (
                     <div key={d.date} className={styles.dayHead}>
                       <span style={{ color: d.isToday ? '#c4581f' : undefined }}>
-                        {labelDate(d.date)}
-                        {d.isToday ? ' · Today' : ''}
+                        {dateLabel(d.date)}
+                        {d.isToday ? cal.todaySuffix : ''}
                       </span>
                       <div className={styles.laneHeads}>
                         {staff.map((s) => (
@@ -335,8 +339,7 @@ export function CalendarView({
                       const h = H0 / 60 + i;
                       return (
                         <span key={h} style={{ top: i * HOUR_PX + (i === 0 ? 8 : 0) }}>
-                          {((h + 11) % 12) + 1}
-                          {h < 12 ? 'a' : 'p'}
+                          {hourShort(h, locale)}
                         </span>
                       );
                     })}
@@ -383,7 +386,7 @@ export function CalendarView({
                               <button
                                 key={it.id}
                                 type="button"
-                                title={`${it.customer} · ${it.service} · ${fmtMin(it.startMin)}–${fmtMin(it.endMin)} · ${staff.find((s) => s.id === lane.staffId)?.name} · ${APPOINTMENT_STATUS_LABEL[it.status]}`}
+                                title={`${it.customer} · ${it.service} · ${fmt(it.startMin)}–${fmt(it.endMin)} · ${staff.find((s) => s.id === lane.staffId)?.name} · ${t.common.status[it.status]}`}
                                 className={[styles.item, cancelled && styles.cancelled]
                                   .filter(Boolean)
                                   .join(' ')}
@@ -395,7 +398,7 @@ export function CalendarView({
                                 }}
                                 onClick={() => openAppt(it.id)}
                               >
-                                <span>{fmtMin(it.startMin)}</span>
+                                <span>{fmt(it.startMin)}</span>
                                 <span>{it.customer}</span>
                                 <span>{it.service}</span>
                               </button>
@@ -444,9 +447,7 @@ export function CalendarView({
                       >
                         {Number(d.date.slice(8))}
                       </span>
-                      <span>
-                        {items.length ? `${items.length} appt${items.length === 1 ? '' : 's'}` : ''}
-                      </span>
+                      <span>{items.length ? cal.nAppts({ n: items.length }) : ''}</span>
                     </span>
                     {items.slice(0, 3).map((i) => (
                       <span
@@ -454,15 +455,12 @@ export function CalendarView({
                         className={styles.chip}
                         style={{ background: STATUS_BG[i.status], color: '#1c1a17' }}
                       >
-                        {fmtMin(i.startMin)
-                          .replace(':00', '')
-                          .replace(' AM', 'a')
-                          .replace(' PM', 'p')}{' '}
+                        {fmt(i.startMin).replace(':00', '').replace(' AM', 'a').replace(' PM', 'p')}{' '}
                         {i.customer}
                       </span>
                     ))}
                     {items.length > 3 ? (
-                      <span className={styles.more}>+{items.length - 3} more</span>
+                      <span className={styles.more}>{cal.more({ n: items.length - 3 })}</span>
                     ) : null}
                   </Link>
                 );

@@ -2,22 +2,24 @@ import type { Metadata } from 'next';
 import { requirePlatformAdminPage } from '@/lib/auth/authorize';
 import { AdminHeader } from '@/components/features/admin/AdminShell';
 import s from '@/components/features/admin/Admin.module.scss';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Templates' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.admin.nav.templates };
+}
 
 export default async function TemplatesPage() {
   await requirePlatformAdminPage();
+  const { t } = await getI18n();
   return (
     <>
-      <AdminHeader title="Templates" />
+      <AdminHeader title={t.admin.nav.templates} />
       <div className={s.content}>
         <div className={s.later}>
-          <span>DESIGNED IN THE NEXT PASS</span>
-          <span>Templates</span>
-          <span>
-            Enable or retire each of the five booking templates, set category defaults and see how
-            many businesses use each.
-          </span>
+          <span>{t.admin.later}</span>
+          <span>{t.admin.nav.templates}</span>
+          <span>{t.admin.templatesLater}</span>
         </div>
       </div>
     </>

@@ -6,8 +6,12 @@ import { can } from '@/lib/auth/permissions';
 import { parseRef } from '@/modules/bookings/rules';
 import { netCollectedMinor } from '@/modules/payments/ledger';
 import { AppointmentsView } from '@/components/features/appointments/AppointmentsView';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Appointments' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.nav.appointments };
+}
 
 const STATUSES = ['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'] as const;
 type Status = (typeof STATUSES)[number];

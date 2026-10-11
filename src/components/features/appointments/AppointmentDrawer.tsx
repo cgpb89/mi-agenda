@@ -27,18 +27,8 @@ import type { AppointmentDetails } from '@/modules/bookings/types';
 import { recordPaymentAction, voidPaymentAction } from '@/modules/payments/actions';
 import { addDaysIso, dayOptions, fmtMin } from './time-options';
 import styles from './AppointmentDrawer.module.scss';
-
-const SOURCE_LABEL = {
-  ONLINE: 'Booked online',
-  PHONE: 'Added by staff (phone)',
-  WALK_IN: 'Walk-in',
-} as const;
-const CANCEL_REASONS = [
-  'Customer asked to cancel',
-  'Staff unavailable',
-  'Booked by mistake',
-  'Other',
-];
+import { useI18n } from '@/i18n/client';
+import { CUSTOMER_CANCEL_REASON } from '@/modules/bookings/rules';
 
 /** Hook used by lists/calendar to open the drawer via `?appt=<id>`. */
 export function useOpenAppointment() {
@@ -70,13 +60,18 @@ function AppointmentDrawerBody({ id }: { id: string }) {
   const router = useRouter();
   const toast = useToast();
   const tz = data.tenant.timezone;
+  const { t, locale, intl } = useI18n();
+  const dr = t.appointments.drawer;
+  const money = (minor: number, currency: string) => moneyFmt(minor, currency, locale);
+  const day = (iso: string, opts?: Intl.DateTimeFormatOptions) => fmtDay(iso, tz, locale, opts);
+  const time = (iso: string) => fmtTime(iso, tz, locale);
 
   const [d, setD] = useState<AppointmentDetails | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [actionError, setActionError] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<'cancel' | 'no_show' | null>(null);
-  const [cancelReason, setCancelReason] = useState(CANCEL_REASONS[0]!);
+  const [cancelReason, setCancelReason] = useState(dr.cancelReasons[0]!);
   const [resched, setResched] = useState<{ date: string; startMin: number } | null>(null);
   const [options, setOptions] = useState<{ startMin: number; available: boolean }[]>([]);
   const [pay, setPay] = useState<{
@@ -138,12 +133,12 @@ function AppointmentDrawerBody({ id }: { id: string }) {
       if (!res.ok) return setActionError(res.error.message);
       afterChange(
         action === 'confirm'
-          ? 'Appointment confirmed'
+          ? dr.toastConfirmed
           : action === 'cancel'
-            ? `Appointment cancelled · ${d.ref}`
+            ? dr.toastCancelled({ ref: d.ref })
             : action === 'complete'
-              ? 'Marked as completed'
-              : 'Marked as no-show',
+              ? dr.toastCompleted
+              : dr.toastNoShow,
       );
     });
   }
@@ -157,7 +152,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
       });
       if (!res.ok) return setActionError(res.error.message);
       setResched(null);
-      afterChange(`Moved to ${fmtDay(res.data.startAt, tz)}, ${fmtTime(res.data.startAt, tz)}`);
+      afterChange(dr.toastMoved({ when: `${day(res.data.startAt)}, ${time(res.data.startAt)}` }));
     });
   }
 
@@ -168,7 +163,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
       const res = await recordPaymentAction(data.tenant.slug, { appointmentId: d.id, ...pay });
       if (!res.ok) return setPayError(res.error.fieldErrors?.amount ?? res.error.message);
       setPay(null);
-      afterChange(pay.kind === 'PAYMENT' ? 'Payment recorded' : 'Refund recorded');
+      afterChange(pay.kind === 'PAYMENT' ? dr.toastPayment : dr.toastRefund);
     });
   }
 
@@ -182,7 +177,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
       setVoidTarget(null);
       setVoidReason('');
       if (!res.ok) return setActionError(res.error.message);
-      afterChange('Entry voided');
+      afterChange(dr.toastVoided);
     });
   }
 
@@ -191,10 +186,13 @@ function AppointmentDrawerBody({ id }: { id: string }) {
   const payLabel = !d
     ? ''
     : d.collectedMinor <= 0
-      ? 'Not recorded'
+      ? t.appointments.list.notRecorded
       : d.collectedMinor >= d.quotedPriceMinor
-        ? `${moneyFmt(d.collectedMinor, d.currency)} collected`
-        : `${moneyFmt(d.collectedMinor, d.currency)} of ${moneyFmt(d.quotedPriceMinor, d.currency)}`;
+        ? t.appointments.list.collected({ amount: money(d.collectedMinor, d.currency) })
+        : t.appointments.list.partOf({
+            amount: money(d.collectedMinor, d.currency),
+            total: money(d.quotedPriceMinor, d.currency),
+          });
 
   const actions: React.ReactNode[] = [];
   if (d && d.can.manage) {
@@ -206,7 +204,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
           disabled={pending}
           onClick={() => transition('confirm')}
         >
-          Confirm
+          {dr.confirm}
         </Button>,
         <Button
           key="resched"
@@ -215,7 +213,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
             setResched({ date: localDateKey(d.startAt, tz), startMin: localMinutes(d.startAt, tz) })
           }
         >
-          Reschedule
+          {dr.reschedule}
         </Button>,
         <Button
           key="cancel"
@@ -223,7 +221,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
           disabled={pending}
           onClick={() => setConfirm('cancel')}
         >
-          Cancel
+          {dr.cancel}
         </Button>,
       );
     } else if (active && !started) {
@@ -236,7 +234,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
             setResched({ date: localDateKey(d.startAt, tz), startMin: localMinutes(d.startAt, tz) })
           }
         >
-          Reschedule
+          {dr.reschedule}
         </Button>,
         <Button
           key="cancel"
@@ -244,7 +242,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
           disabled={pending}
           onClick={() => setConfirm('cancel')}
         >
-          Cancel
+          {dr.cancel}
         </Button>,
       );
     } else if (active && started) {
@@ -255,7 +253,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
           disabled={pending}
           onClick={() => transition('complete')}
         >
-          Mark completed
+          {dr.markCompleted}
         </Button>,
         <Button
           key="noshow"
@@ -263,7 +261,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
           disabled={pending}
           onClick={() => setConfirm('no_show')}
         >
-          Mark no-show
+          {dr.markNoShow}
         </Button>,
       );
     }
@@ -289,7 +287,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
           });
         }}
       >
-        Book again
+        {dr.bookAgain}
       </Button>,
     );
   }
@@ -305,7 +303,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
           })
         }
       >
-        Record payment
+        {dr.recordPayment}
       </Button>,
     );
   }
@@ -315,98 +313,113 @@ function AppointmentDrawerBody({ id }: { id: string }) {
       <Drawer
         open
         onClose={close}
-        label="Appointment details"
+        label={dr.label}
         header={
           d ? (
             <div className={styles.meta}>
               <span className={styles.ref}>
-                {d.ref} · {SOURCE_LABEL[d.source]}
+                {d.ref} · {dr.source[d.source]}
               </span>
               <StatusPill status={d.status} size="sm" />
             </div>
           ) : (
-            <span className={styles.ref}>Appointment</span>
+            <span className={styles.ref}>{dr.appointment}</span>
           )
         }
         footer={actions.length ? <>{actions}</> : undefined}
       >
-        {!d && !loadError ? <div className={styles.loading}>Loading…</div> : null}
+        {!d && !loadError ? <div className={styles.loading}>{dr.loading}</div> : null}
         {loadError ? <FormMessage kind="error">{loadError}</FormMessage> : null}
         {d ? (
           <>
             <div className={styles.meta}>
               <span className={styles.svc}>{d.serviceName}</span>
               <span className={styles.when}>
-                {fmtDay(d.startAt, tz, { weekday: 'long', month: 'long', day: 'numeric' })},{' '}
-                {fmtTime(d.startAt, tz)}–{fmtTime(d.endAt, tz)} · {d.durationMin} min · with{' '}
-                {d.staffName}
+                {day(d.startAt, { weekday: 'long', month: 'long', day: 'numeric' })},{' '}
+                {time(d.startAt)}–{time(d.endAt)} · {d.durationMin} {t.appointments.min} ·{' '}
+                {dr.with({ staff: d.staffName })}
               </span>
             </div>
             <div className={styles.tiles}>
               <div className={styles.tile}>
-                <span>Price</span>
+                <span>{dr.price}</span>
                 <span>
-                  {d.quotedPriceMinor === 0 ? 'Free' : moneyFmt(d.quotedPriceMinor, d.currency)}
+                  {d.quotedPriceMinor === 0
+                    ? t.appointments.free
+                    : money(d.quotedPriceMinor, d.currency)}
                 </span>
               </div>
               <div className={styles.tile}>
-                <span>Payment</span>
+                <span>{dr.payment}</span>
                 <span>{payLabel}</span>
               </div>
             </div>
             {actionError ? <FormMessage kind="error">{actionError}</FormMessage> : null}
             {d.status === 'CANCELLED' && d.cancelReason ? (
-              <span className={styles.small}>Cancelled · {d.cancelReason}</span>
+              <span className={styles.small}>
+                {dr.cancelledReason({
+                  reason:
+                    d.cancelReason === CUSTOMER_CANCEL_REASON
+                      ? dr.cancelledByCustomer
+                      : d.cancelReason,
+                })}
+              </span>
             ) : null}
 
             <div className={styles.box}>
-              <span className={styles.boxTitle}>Customer</span>
+              <span className={styles.boxTitle}>{dr.customer}</span>
               <span className={styles.custName}>{d.contactName}</span>
               <span className={styles.small}>
-                {[d.contactEmail, d.phone].filter(Boolean).join(' · ') || 'No contact details'}
+                {[d.contactEmail, d.phone].filter(Boolean).join(' · ') || dr.noContact}
               </span>
               <span className={styles.small}>
-                {d.completedVisits} completed visit{d.completedVisits === 1 ? '' : 's'} ·{' '}
+                {dr.visits({ n: d.completedVisits })} ·{' '}
                 {d.completedVisits === 0
-                  ? 'first visit'
-                  : `customer since ${new Date(d.customerSince).toLocaleDateString('en-US', { month: 'short', year: 'numeric', timeZone: tz })}`}
+                  ? dr.firstVisit
+                  : dr.customerSince({
+                      date: new Date(d.customerSince).toLocaleDateString(intl, {
+                        month: 'short',
+                        year: 'numeric',
+                        timeZone: tz,
+                      }),
+                    })}
               </span>
               {d.customerNote ? <span className={styles.quote}>“{d.customerNote}”</span> : null}
               {d.internalNote ? (
-                <span className={styles.quote}>Staff note: {d.internalNote}</span>
+                <span className={styles.quote}>{dr.staffNote({ note: d.internalNote })}</span>
               ) : null}
               <span className={styles.small} style={{ fontSize: 11 }}>
-                Phone numbers are not verified.
+                {dr.phoneNotVerified}
               </span>
             </div>
 
             {resched ? (
               <div className={styles.resched}>
-                <span style={{ fontWeight: 700 }}>Pick a new time</span>
+                <span style={{ fontWeight: 700 }}>{dr.pickNewTime}</span>
                 <div className={styles.row}>
                   <select
-                    aria-label="New date"
+                    aria-label={dr.newDate}
                     value={resched.date}
                     onChange={(e) => setResched({ ...resched, date: e.target.value })}
                   >
-                    {dayOptions(data.tenant.today).map((o) => (
+                    {dayOptions(data.tenant.today, locale).map((o) => (
                       <option key={o.v} value={o.v}>
                         {o.l}
                       </option>
                     ))}
                   </select>
                   <select
-                    aria-label="New time"
+                    aria-label={dr.newTime}
                     value={resched.startMin}
                     onChange={(e) => setResched({ ...resched, startMin: Number(e.target.value) })}
                   >
                     {options.length === 0 ? (
-                      <option value={resched.startMin}>Not working this day</option>
+                      <option value={resched.startMin}>{dr.notWorking}</option>
                     ) : null}
                     {options.map((o) => (
                       <option key={o.startMin} value={o.startMin} disabled={!o.available}>
-                        {fmtMin(o.startMin)}
-                        {o.available ? '' : ' · unavailable'}
+                        {fmtMin(o.startMin, locale)}
+                        {o.available ? '' : dr.unavailable}
                       </option>
                     ))}
                   </select>
@@ -414,7 +427,7 @@ function AppointmentDrawerBody({ id }: { id: string }) {
                 {options.length > 0 &&
                 !options.find((o) => o.startMin === resched.startMin)?.available ? (
                   <span role="alert" className={styles.err}>
-                    Pick an available time.
+                    {dr.pickAvailable}
                   </span>
                 ) : null}
                 <div className={styles.row}>
@@ -425,9 +438,9 @@ function AppointmentDrawerBody({ id }: { id: string }) {
                     }
                     onClick={saveResched}
                   >
-                    Move appointment
+                    {dr.move}
                   </Button>
-                  <Button onClick={() => setResched(null)}>Keep current time</Button>
+                  <Button onClick={() => setResched(null)}>{dr.keepTime}</Button>
                 </div>
               </div>
             ) : null}
@@ -435,41 +448,39 @@ function AppointmentDrawerBody({ id }: { id: string }) {
             {pay ? (
               <div className={styles.resched}>
                 <span style={{ fontWeight: 700 }}>
-                  {pay.kind === 'PAYMENT' ? 'Record a payment' : 'Record a refund'}
+                  {pay.kind === 'PAYMENT' ? dr.recordAPayment : dr.recordARefund}
                 </span>
-                <span className={styles.small}>
-                  Record money you actually received in person. Tempo does not process payments.
-                </span>
+                <span className={styles.small}>{dr.payHint}</span>
                 <div className={styles.row}>
                   {d.can.void && d.collectedMinor > 0 ? (
                     <select
-                      aria-label="Type"
+                      aria-label={dr.type}
                       value={pay.kind}
                       onChange={(e) =>
                         setPay({ ...pay, kind: e.target.value as 'PAYMENT' | 'REFUND' })
                       }
                     >
-                      <option value="PAYMENT">Payment</option>
-                      <option value="REFUND">Refund</option>
+                      <option value="PAYMENT">{dr.paymentKind}</option>
+                      <option value="REFUND">{dr.refundKind}</option>
                     </select>
                   ) : null}
                   <input
-                    aria-label="Amount"
+                    aria-label={dr.amount}
                     inputMode="decimal"
                     value={pay.amount}
                     onChange={(e) => setPay({ ...pay, amount: e.target.value })}
                     style={{ width: 110 }}
                   />
                   <select
-                    aria-label="Method"
+                    aria-label={dr.method}
                     value={pay.method}
                     onChange={(e) =>
                       setPay({ ...pay, method: e.target.value as 'CASH' | 'CARD' | 'OTHER' })
                     }
                   >
-                    <option value="CASH">Cash</option>
-                    <option value="CARD">Card (in person)</option>
-                    <option value="OTHER">Other</option>
+                    <option value="CASH">{dr.methods.CASH}</option>
+                    <option value="CARD">{dr.methods.CARD}</option>
+                    <option value="OTHER">{dr.methods.OTHER}</option>
                   </select>
                 </div>
                 {payError ? (
@@ -479,16 +490,16 @@ function AppointmentDrawerBody({ id }: { id: string }) {
                 ) : null}
                 <div className={styles.row}>
                   <Button variant="primary" disabled={pending} onClick={savePayment}>
-                    Save
+                    {dr.save}
                   </Button>
-                  <Button onClick={() => setPay(null)}>Cancel</Button>
+                  <Button onClick={() => setPay(null)}>{dr.cancel}</Button>
                 </div>
               </div>
             ) : null}
 
             {d.payments.length ? (
               <div className={styles.box}>
-                <span className={styles.boxTitle}>Payments recorded</span>
+                <span className={styles.boxTitle}>{dr.paymentsRecorded}</span>
                 <div className={styles.ledger}>
                   {d.payments.map((p) => (
                     <div
@@ -498,11 +509,13 @@ function AppointmentDrawerBody({ id }: { id: string }) {
                         .join(' ')}
                     >
                       <span>
-                        {p.kind === 'PAYMENT' ? 'Payment' : 'Refund'} · {p.method.toLowerCase()} ·{' '}
-                        {fmtDay(p.recordedAt, tz)}
+                        {p.kind === 'PAYMENT' ? dr.paymentKind : dr.refundKind} ·{' '}
+                        {dr.methodShort[p.method as keyof typeof dr.methodShort] ??
+                          p.method.toLowerCase()}{' '}
+                        · {day(p.recordedAt)}
                       </span>
                       <span>
-                        {(p.kind === 'REFUND' ? '−' : '') + moneyFmt(p.amountMinor, d.currency)}
+                        {(p.kind === 'REFUND' ? '−' : '') + money(p.amountMinor, d.currency)}
                       </span>
                       {d.can.void && !p.voided ? (
                         <button
@@ -510,10 +523,10 @@ function AppointmentDrawerBody({ id }: { id: string }) {
                           className={styles.linkBtn}
                           onClick={() => setVoidTarget(p.id)}
                         >
-                          Void
+                          {dr.void}
                         </button>
                       ) : (
-                        <span>{p.voided ? 'voided' : ''}</span>
+                        <span>{p.voided ? dr.voided : ''}</span>
                       )}
                     </div>
                   ))}
@@ -527,31 +540,35 @@ function AppointmentDrawerBody({ id }: { id: string }) {
       <AlertDialog
         open={confirm === 'cancel'}
         onClose={() => setConfirm(null)}
-        title="Cancel this appointment?"
+        title={dr.cancelTitle}
         actions={
           <>
-            <Button onClick={() => setConfirm(null)}>Keep appointment</Button>
+            <Button onClick={() => setConfirm(null)}>{dr.keepAppointment}</Button>
             <Button
               variant="dangerSolid"
               disabled={pending}
               onClick={() => transition('cancel', cancelReason)}
             >
-              Cancel appointment
+              {dr.cancelAppointment}
             </Button>
           </>
         }
       >
         {d ? (
           <p>
-            {d.contactName} · {d.serviceName}, {fmtDay(d.startAt, tz)} at {fmtTime(d.startAt, tz)}.
-            The time becomes bookable again.
+            {dr.cancelBody({
+              customer: d.contactName,
+              service: d.serviceName,
+              day: day(d.startAt),
+              time: time(d.startAt),
+            })}
           </p>
         ) : null}
         <div style={{ marginTop: 12 }}>
-          <Field label="Reason">
+          <Field label={dr.reason}>
             {(p) => (
               <Select {...p} value={cancelReason} onChange={(e) => setCancelReason(e.target.value)}>
-                {CANCEL_REASONS.map((r) => (
+                {dr.cancelReasons.map((r) => (
                   <option key={r}>{r}</option>
                 ))}
               </Select>
@@ -563,43 +580,41 @@ function AppointmentDrawerBody({ id }: { id: string }) {
       <AlertDialog
         open={confirm === 'no_show'}
         onClose={() => setConfirm(null)}
-        title="Mark as no-show?"
+        title={dr.noShowTitle}
         actions={
           <>
-            <Button onClick={() => setConfirm(null)}>Go back</Button>
+            <Button onClick={() => setConfirm(null)}>{dr.goBack}</Button>
             <Button variant="dangerSolid" disabled={pending} onClick={() => transition('no_show')}>
-              Mark no-show
+              {dr.markNoShow}
             </Button>
           </>
         }
       >
-        {d
-          ? `${d.contactName} didn't arrive for ${fmtTime(d.startAt, tz)}. This counts toward the no-show rate.`
-          : null}
+        {d ? dr.noShowBody({ customer: d.contactName, time: time(d.startAt) }) : null}
       </AlertDialog>
 
       <AlertDialog
         open={voidTarget !== null}
         onClose={() => setVoidTarget(null)}
-        title="Void this entry?"
+        title={dr.voidTitle}
         actions={
           <>
-            <Button onClick={() => setVoidTarget(null)}>Keep it</Button>
+            <Button onClick={() => setVoidTarget(null)}>{dr.keepIt}</Button>
             <Button variant="dangerSolid" disabled={pending || !voidReason.trim()} onClick={doVoid}>
-              Void entry
+              {dr.voidEntry}
             </Button>
           </>
         }
       >
-        <p>Voided entries stay in the history but no longer count toward collected revenue.</p>
+        <p>{dr.voidBody}</p>
         <div style={{ marginTop: 12 }}>
-          <Field label="Reason, saved to the audit log">
+          <Field label={dr.voidReason}>
             {(p) => (
               <Input
                 {...p}
                 value={voidReason}
                 onChange={(e) => setVoidReason(e.target.value)}
-                placeholder="Required"
+                placeholder={dr.required}
                 maxLength={200}
               />
             )}

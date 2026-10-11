@@ -11,6 +11,7 @@ import { audit } from '@/modules/audit/audit';
 import { validateDayPeriods } from './intervals';
 import { localDateToDb } from './load';
 import { LOCAL_DATE_RE } from './time';
+import { msg } from '@/i18n/message-ref';
 
 const period = z.object({
   start: z.number().int().min(0).max(1440),
@@ -36,13 +37,13 @@ const saveSchema = z.object({
   }),
 });
 
-function checkWeek(w: z.infer<typeof week>, label: string) {
+function checkWeek(w: z.infer<typeof week>, schedule: 'business' | 'staff') {
   for (const [dow, periods] of Object.entries(w)) {
     const err = validateDayPeriods(periods);
     if (err) {
       throw new AppError(
         'VALIDATION',
-        `${label}: ${err === 'overlap' ? 'periods overlap' : 'end time must be after start time'} (day ${dow}).`,
+        msg('invalidPeriods', { schedule, overlap: err === 'overlap', day: Number(dow) }),
       );
     }
   }
@@ -69,14 +70,14 @@ export async function saveAvailabilityAction(
     const ctx = await requireTenant(tenantSlug, 'availability.manage');
     await enforceRateLimit('dashboardWriteByUser', ctx.userId);
     const input = parseInput(saveSchema, raw);
-    checkWeek(input.business, 'Business hours');
+    checkWeek(input.business, 'business');
     await withTransaction(async (tx) => {
       const staffIds = Object.keys(input.staff);
       const owned = await tx.staff.count({
         where: { tenantId: ctx.tenantId, id: { in: staffIds } },
       });
-      if (owned !== staffIds.length) throw new AppError('VALIDATION', 'Unknown staff member.');
-      for (const w of Object.values(input.staff)) if (w) checkWeek(w, 'Staff hours');
+      if (owned !== staffIds.length) throw new AppError('VALIDATION', msg('unknownStaff'));
+      for (const w of Object.values(input.staff)) if (w) checkWeek(w, 'staff');
 
       await tx.availabilityRule.deleteMany({
         where: { tenantId: ctx.tenantId, OR: [{ staffId: null }, { staffId: { in: staffIds } }] },
@@ -126,7 +127,7 @@ const exceptionSchema = z
   .object({
     staffId: uuidSchema.nullable(),
     type: z.enum(['CLOSED', 'CUSTOM_HOURS', 'BLOCK']),
-    date: z.string().regex(LOCAL_DATE_RE, 'Pick a date'),
+    date: z.string().regex(LOCAL_DATE_RE, msg('pickDate')),
     endDate: z.string().regex(LOCAL_DATE_RE).optional().or(z.literal('')),
     startMin: z.number().int().min(0).max(1440).optional(),
     endMin: z.number().int().min(0).max(1440).optional(),
@@ -140,14 +141,14 @@ const exceptionSchema = z
       c.addIssue({
         code: 'custom',
         path: ['endMin'],
-        message: 'End time must be after start time.',
+        message: msg('endAfterStart'),
       });
     }
     if (v.endDate && v.endDate < v.date)
       c.addIssue({
         code: 'custom',
         path: ['endDate'],
-        message: 'End date must be after the start date.',
+        message: msg('endDateAfterStart'),
       });
   });
 
@@ -164,7 +165,7 @@ export async function addExceptionAction(
           where: { id: input.staffId, tenantId: ctx.tenantId },
           select: { id: true },
         });
-        if (!s) throw new AppError('VALIDATION', 'Unknown staff member.');
+        if (!s) throw new AppError('VALIDATION', msg('unknownStaff'));
       }
       const ex = await tx.availabilityException.create({
         data: {
@@ -209,7 +210,7 @@ export async function removeExceptionAction(
       const res = await tx.availabilityException.deleteMany({
         where: { id: exId, tenantId: ctx.tenantId },
       });
-      if (res.count !== 1) throw new AppError('NOT_FOUND', 'Override not found.');
+      if (res.count !== 1) throw new AppError('NOT_FOUND', msg('overrideNotFound'));
       await audit(
         {
           tenantId: ctx.tenantId,

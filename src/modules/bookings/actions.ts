@@ -19,6 +19,8 @@ import { createAppointment, rescheduleAppointment } from './engine';
 import { transitionAppointment } from './lifecycle';
 import { checkStaffSlot, type SlotCheck } from './staff-check';
 import { appointmentRef } from './rules';
+import { msg } from '@/i18n/message-ref';
+import { getLocale } from '@/i18n/server';
 
 /*
  * Dashboard appointment actions. Every action:
@@ -48,6 +50,7 @@ export async function checkSlotAction(
       tenantId: ctx.tenantId,
       tz: ctx.timezone,
       businessName: ctx.tenantName,
+      locale: await getLocale(),
       ...input,
     });
   });
@@ -77,11 +80,11 @@ export async function createAppointmentAction(
     const input = parseInput(createSchema, raw);
     // STAFF may only book into their own column.
     if (ctx.role === 'STAFF' && input.staffId !== ctx.staffId) {
-      throw new AppError('FORBIDDEN', 'You can only add appointments to your own calendar.');
+      throw new AppError('FORBIDDEN', msg('ownCalendarOnly'));
     }
     let name = '';
     if (!input.customerId) {
-      name = parseInput(z.object({ n: nameSchema('customer name') }), {
+      name = parseInput(z.object({ n: nameSchema('customerName') }), {
         n: input.customerName ?? '',
       }).n;
     }
@@ -190,7 +193,7 @@ export async function rescheduleAppointmentAction(
       where: { id: input.appointmentId, tenantId: ctx.tenantId },
       select: { staffId: true },
     });
-    if (!appt) throw new AppError('NOT_FOUND', 'Appointment not found.');
+    if (!appt) throw new AppError('NOT_FOUND', msg('appointmentNotFound'));
     assertCanManageAssigned(
       ctx,
       'appointments.manage.any',

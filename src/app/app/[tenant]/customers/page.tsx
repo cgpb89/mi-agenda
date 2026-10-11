@@ -3,8 +3,12 @@ import { getDb } from '@/lib/db/client';
 import { requireTenantPage } from '@/lib/auth/authorize';
 import { formatPhone } from '@/lib/phone';
 import { CustomersView } from '@/components/features/customers/CustomersView';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Customers' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.nav.customers };
+}
 
 const PAGE = 50;
 

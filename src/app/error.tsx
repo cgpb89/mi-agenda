@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import styles from '@/components/features/auth/Auth.module.scss';
+import { useI18n } from '@/i18n/client';
 
 /** Generic error boundary. Never shows error details to the user. */
 export default function GlobalError({
@@ -10,20 +11,19 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <div className={styles.page}>
       <header className={styles.top}>
-        <Link href="/" className={styles.logo}>
+        <Link href="/" className={styles.logo} aria-label={t.common.homeLabel}>
           tempo<span>.</span>
         </Link>
       </header>
       <main className={styles.main}>
         <div className={styles.card}>
-          <span className={styles.eyebrow}>Something went wrong</span>
-          <h1 className={styles.title}>We hit a problem</h1>
-          <p className={styles.sub}>
-            Please try again. If it keeps happening, wait a minute and reload the page.
-          </p>
+          <span className={styles.eyebrow}>{t.common.error.eyebrow}</span>
+          <h1 className={styles.title}>{t.common.error.title}</h1>
+          <p className={styles.sub}>{t.common.error.body}</p>
           <div style={{ display: 'flex', gap: 12 }}>
             <button
               type="button"
@@ -38,10 +38,10 @@ export default function GlobalError({
                 cursor: 'pointer',
               }}
             >
-              Try again
+              {t.common.error.retry}
             </button>
             <Link href="/" style={{ alignSelf: 'center' }}>
-              Home
+              {t.common.error.home}
             </Link>
           </div>
         </div>

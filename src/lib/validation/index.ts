@@ -1,5 +1,7 @@
 import { z } from 'zod';
 import { AppError, type FieldErrors } from '@/lib/errors';
+import { isMessageRef, msg } from '@/i18n/message-ref';
+import type { FieldLabel } from '@/i18n/messages/en/errors';
 
 /** Parse untrusted input; throw a client-safe VALIDATION error with field messages. */
 export function parseInput<S extends z.ZodType>(schema: S, input: unknown): z.infer<S> {
@@ -8,9 +10,11 @@ export function parseInput<S extends z.ZodType>(schema: S, input: unknown): z.in
   const fieldErrors: FieldErrors = {};
   for (const issue of result.error.issues) {
     const key = issue.path.join('.') || '_';
-    if (!fieldErrors[key]) fieldErrors[key] = issue.message;
+    // Zod's built-in messages are English-only; our schemas always set a msg() token.
+    if (!fieldErrors[key])
+      fieldErrors[key] = isMessageRef(issue.message) ? issue.message : msg('invalidField');
   }
-  throw new AppError('VALIDATION', 'Please check the highlighted fields.', { fieldErrors });
+  throw new AppError('VALIDATION', msg('checkFields'), { fieldErrors });
 }
 
 /** FormData → plain object (first value per key; files are dropped). */
@@ -29,26 +33,26 @@ export function normalizeEmail(raw: string): string {
 }
 
 export const emailSchema = z
-  .string({ error: 'Enter your email' })
+  .string({ error: msg('enterEmail') })
   .trim()
-  .max(254, 'Email is too long')
+  .max(254, msg('emailTooLong'))
   .transform(normalizeEmail)
-  .pipe(z.email({ error: 'Enter a valid email' }));
+  .pipe(z.email({ error: msg('enterValidEmail') }));
 
 export const optionalEmailSchema = z
   .string()
   .trim()
-  .max(254, 'Email is too long')
+  .max(254, msg('emailTooLong'))
   .optional()
   .transform((v) => (v ? normalizeEmail(v) : undefined))
-  .pipe(z.email({ error: 'Enter a valid email' }).optional());
+  .pipe(z.email({ error: msg('enterValidEmail') }).optional());
 
 // ── Passwords ───────────────────────────────────────────────────────────────
 
 export const passwordSchema = z
   .string()
-  .min(10, 'Use at least 10 characters')
-  .max(200, 'Password is too long');
+  .min(10, msg('passwordTooShort'))
+  .max(200, msg('passwordTooLong'));
 
 // ── Names / text ────────────────────────────────────────────────────────────
 
@@ -60,12 +64,12 @@ export function cleanText(value: string, multiline = false): string {
   return value.normalize('NFC').replace(re, '').trim();
 }
 
-export const nameSchema = (label = 'name', max = 120) =>
+export const nameSchema = (field: FieldLabel = 'name', max = 120) =>
   z
-    .string({ error: `Enter a ${label}` })
+    .string({ error: msg('enterField', { field }) })
     .transform((v) => cleanText(v))
     .pipe(
-      z.string().min(1, `Enter a ${label}`).max(max, `Keep the ${label} under ${max} characters`),
+      z.string().min(1, msg('enterField', { field })).max(max, msg('fieldTooLong', { field, max })),
     );
 
 export const optionalTextSchema = (max: number, multiline = false) =>
@@ -73,9 +77,9 @@ export const optionalTextSchema = (max: number, multiline = false) =>
     .string()
     .optional()
     .transform((v) => (v === undefined ? undefined : cleanText(v, multiline) || undefined))
-    .pipe(z.string().max(max, `Keep this under ${max} characters`).optional());
+    .pipe(z.string().max(max, msg('textTooLong', { max })).optional());
 
-export const uuidSchema = z.uuid({ error: 'Invalid identifier' });
+export const uuidSchema = z.uuid({ error: msg('invalidId') });
 
 // ── Slugs ───────────────────────────────────────────────────────────────────
 
@@ -136,9 +140,9 @@ export const slugSchema = z
   .string()
   .trim()
   .toLowerCase()
-  .regex(SLUG_RE, 'Use 3–48 lowercase letters, numbers and single hyphens')
-  .refine((s) => !s.includes('--'), 'Use single hyphens only')
-  .refine((s) => !RESERVED_SLUGS.has(s), 'That address is reserved — try another');
+  .regex(SLUG_RE, msg('slugFormat'))
+  .refine((s) => !s.includes('--'), msg('slugHyphens'))
+  .refine((s) => !RESERVED_SLUGS.has(s), msg('slugReserved'));
 
 // ── Misc ────────────────────────────────────────────────────────────────────
 
@@ -149,7 +153,7 @@ export const timeZoneSchema = z.string().refine((tz) => {
   } catch {
     return false;
   }
-}, 'Unknown time zone');
+}, msg('unknownTimeZone'));
 
 /** Money input like "38", "38.5", "38.50" → integer minor units (2-decimal currencies). */
 export function parseMoneyToMinor(input: string): number | null {
@@ -160,13 +164,11 @@ export function parseMoneyToMinor(input: string): number | null {
 }
 
 /** Money arrives as a decimal *string* (never a float) and becomes integer minor units. */
-export const moneyInputSchema = z
-  .string({ error: 'Enter an amount like 38 or 38.50' })
-  .transform((v, ctx) => {
-    const minor = parseMoneyToMinor(v);
-    if (minor === null) {
-      ctx.addIssue({ code: 'custom', message: 'Enter an amount like 38 or 38.50' });
-      return z.NEVER;
-    }
-    return minor;
-  });
+export const moneyInputSchema = z.string({ error: msg('amountFormat') }).transform((v, ctx) => {
+  const minor = parseMoneyToMinor(v);
+  if (minor === null) {
+    ctx.addIssue({ code: 'custom', message: msg('amountFormat') });
+    return z.NEVER;
+  }
+  return minor;
+});

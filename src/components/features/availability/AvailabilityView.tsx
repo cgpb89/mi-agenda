@@ -27,32 +27,25 @@ import {
 } from '@/components/features/appointments/time-options';
 import { useNow } from '@/lib/hooks';
 import styles from './Availability.module.scss';
+import { useI18n } from '@/i18n/client';
+import { weekdayNames } from '@/components/features/shared/format';
 
 type Week = Record<string, Interval[]>; // ISO weekday '1'..'7'
-const DAY_LABELS: [string, string][] = [
-  ['1', 'Mon'],
-  ['2', 'Tue'],
-  ['3', 'Wed'],
-  ['4', 'Thu'],
-  ['5', 'Fri'],
-  ['6', 'Sat'],
-  ['7', 'Sun'],
-];
-const TIME_OPTS = quarterOptions(6 * 60, 22 * 60 + 30, 30);
+const DAYS = ['1', '2', '3', '4', '5', '6', '7'];
 const ZONES = [
-  ['America/New_York', 'Eastern (New York)'],
-  ['America/Chicago', 'Central (Chicago)'],
-  ['America/Denver', 'Mountain (Denver)'],
-  ['America/Los_Angeles', 'Pacific (Los Angeles)'],
-  ['Europe/London', 'London'],
-];
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'Europe/London',
+] as const;
 
 interface ExceptionView extends ExceptionInput {
   id: string;
 }
 
 function emptyWeek(): Week {
-  return Object.fromEntries(DAY_LABELS.map(([d]) => [d, []]));
+  return Object.fromEntries(DAYS.map((d) => [d, []]));
 }
 
 function toWeek(
@@ -92,6 +85,12 @@ export function AvailabilityView({
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
+  const { t, locale } = useI18n();
+  const av = t.availability;
+  const shortDays = weekdayNames(locale, 'short');
+  const DAY_LABELS: [string, string][] = DAYS.map((d, i) => [d, shortDays[i]!]);
+  const TIME_OPTS = useMemo(() => quarterOptions(locale, 6 * 60, 22 * 60 + 30, 30), [locale]);
+  const fmt = (m: number) => fmtMin(m, locale);
 
   const initial = useMemo(
     () => ({
@@ -126,9 +125,9 @@ export function AvailabilityView({
       return [
         d,
         err === 'overlap'
-          ? 'Periods overlap.'
+          ? av.periodsOverlap
           : err === 'end_before_start'
-            ? 'End time must be after start time.'
+            ? av.endAfterStart
             : null,
       ];
     }),
@@ -191,7 +190,7 @@ export function AvailabilityView({
         rules: state.rules,
       });
       if (!res.ok) return setSaveError(res.error.message);
-      toast('Availability saved · calendar updated');
+      toast(av.toastSaved);
       router.refresh();
     });
   }
@@ -222,7 +221,7 @@ export function AvailabilityView({
           res.error.fieldErrors ? Object.values(res.error.fieldErrors)[0]! : res.error.message,
         );
       setOv({ ...ov, note: '' });
-      toast('Override added');
+      toast(av.toastOverrideAdded);
       router.refresh();
     });
   }
@@ -230,51 +229,51 @@ export function AvailabilityView({
     startTransition(async () => {
       const res = await removeExceptionAction(slug, id);
       if (!res.ok) return setOvError(res.error.message);
-      toast('Override removed');
+      toast(av.toastOverrideRemoved);
       router.refresh();
     });
   }
 
   const staffName = (id: string | null) =>
-    id ? (staff.find((s) => s.id === id)?.name ?? 'Staff') : 'Whole business';
+    id ? (staff.find((s) => s.id === id)?.name ?? av.staffFallback) : av.wholeBusiness;
 
   return (
     <>
       <PageHeader
-        title="Availability & working hours"
-        sub={`${data.tenant.name} · ${timezone.split('/').pop()?.replace(/_/g, ' ')} time`}
+        title={t.app.titles.availability}
+        sub={av.sub({
+          business: data.tenant.name,
+          zone: timezone.split('/').pop()?.replace(/_/g, ' ') ?? timezone,
+        })}
       />
       <PageContent>
         <div className={styles.explain}>
-          <div className={styles.explainCard}>
-            <span>1 · BUSINESS HOURS</span>
-            <span>When the business is open</span>
-            <span>The outer limit. Nobody can be booked outside these.</span>
-          </div>
-          <div className={styles.explainCard}>
-            <span>2 · STAFF AVAILABILITY</span>
-            <span>When each person works</span>
-            <span>Inside business hours, with their own days, shifts and breaks.</span>
-          </div>
-          <div className={[styles.explainCard, styles.explainDark].join(' ')}>
-            <span>3 · BOOKABLE SLOTS</span>
-            <span>What customers see</span>
-            <span>Staff time minus existing appointments, buffers and the notice rules below.</span>
-          </div>
+          {av.explain.map(([eyebrow, title, body], i) => (
+            <div
+              key={eyebrow}
+              className={[styles.explainCard, i === 2 && styles.explainDark]
+                .filter(Boolean)
+                .join(' ')}
+            >
+              <span>{eyebrow}</span>
+              <span>{title}</span>
+              <span>{body}</span>
+            </div>
+          ))}
         </div>
 
         <div className={styles.cols}>
           <Card
-            title="Weekly schedule"
+            title={av.weekly}
             action={
               <select
                 className={styles.sel}
                 style={{ fontWeight: 600, padding: '7px 8px' }}
-                aria-label="Schedule for"
+                aria-label={av.scheduleFor}
                 value={target}
                 onChange={(e) => setTarget(e.target.value)}
               >
-                <option value="business">Business hours</option>
+                <option value="business">{av.businessHours}</option>
                 {staff.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name}
@@ -284,10 +283,7 @@ export function AvailabilityView({
             }
           >
             {inherits ? (
-              <FormMessage kind="warning">
-                {staffName(target)} follows business hours. Edit below to give them their own days
-                and shifts.
-              </FormMessage>
+              <FormMessage kind="warning">{av.inherits({ name: staffName(target) })}</FormMessage>
             ) : null}
             <div>
               {DAY_LABELS.map(([d, label]) => {
@@ -317,14 +313,14 @@ export function AvailabilityView({
                         })
                       }
                     >
-                      {open ? 'Open' : 'Closed'}
+                      {open ? av.open : av.closed}
                     </button>
                     <div className={styles.periods}>
                       {periods.map((p, i) => (
                         <div key={i} className={styles.period}>
                           <select
                             className={styles.sel}
-                            aria-label={`${label} start`}
+                            aria-label={av.start({ day: label })}
                             value={p.start}
                             onChange={(e) =>
                               setWeek({
@@ -344,7 +340,7 @@ export function AvailabilityView({
                           <span style={{ color: '#857d70' }}>–</span>
                           <select
                             className={styles.sel}
-                            aria-label={`${label} end`}
+                            aria-label={av.end({ day: label })}
                             value={p.end}
                             onChange={(e) =>
                               setWeek({
@@ -364,7 +360,7 @@ export function AvailabilityView({
                           <button
                             type="button"
                             className={styles.x}
-                            aria-label="Remove period"
+                            aria-label={av.removePeriod}
                             onClick={() =>
                               setWeek({ ...week, [d]: periods.filter((_, j) => j !== i) })
                             }
@@ -386,7 +382,7 @@ export function AvailabilityView({
                             });
                           }}
                         >
-                          + Add period
+                          {av.addPeriod}
                         </button>
                       ) : null}
                       {dayErrors[d] ? (
@@ -394,9 +390,7 @@ export function AvailabilityView({
                           {dayErrors[d]}
                         </span>
                       ) : outside ? (
-                        <span className={styles.warn}>
-                          Outside business hours. Customers won&rsquo;t see the extra time.
-                        </span>
+                        <span className={styles.warn}>{av.outside}</span>
                       ) : null}
                       <div className={styles.timeline} aria-hidden="true">
                         {periods.map((p, i) => (
@@ -416,9 +410,9 @@ export function AvailabilityView({
             </div>
             <span className={styles.hint}>
               {target === 'business'
-                ? 'Business hours limit everyone.'
-                : `${staffName(target)}'s hours, inside business hours.`}{' '}
-              Gaps between periods become breaks.
+                ? av.limitEveryone
+                : av.staffHours({ name: staffName(target) })}{' '}
+              {av.gaps}
               {target !== 'business' && !inherits ? (
                 <>
                   {' '}
@@ -429,7 +423,7 @@ export function AvailabilityView({
                       setState({ ...state, staff: { ...state.staff, [target]: null } })
                     }
                   >
-                    Follow business hours instead
+                    {av.followBusiness}
                   </button>
                 </>
               ) : null}
@@ -437,9 +431,9 @@ export function AvailabilityView({
           </Card>
 
           <div className={styles.side}>
-            <Card title="Booking rules">
+            <Card title={av.rules}>
               <div className={styles.rulesGrid}>
-                <Field label="Slot interval">
+                <Field label={av.slotInterval}>
                   {(p) => (
                     <Select
                       {...p}
@@ -451,13 +445,13 @@ export function AvailabilityView({
                         })
                       }
                     >
-                      <option value={15}>Every 15 min</option>
-                      <option value={30}>Every 30 min</option>
-                      <option value={60}>Every hour</option>
+                      <option value={15}>{av.every({ n: 15 })}</option>
+                      <option value={30}>{av.every({ n: 30 })}</option>
+                      <option value={60}>{av.everyHour}</option>
                     </Select>
                   )}
                 </Field>
-                <Field label="Minimum notice">
+                <Field label={av.minNotice}>
                   {(p) => (
                     <Select
                       {...p}
@@ -469,15 +463,15 @@ export function AvailabilityView({
                         })
                       }
                     >
-                      <option value={0}>None</option>
-                      <option value={60}>1 hour</option>
-                      <option value={120}>2 hours</option>
-                      <option value={240}>4 hours</option>
-                      <option value={1440}>1 day</option>
+                      <option value={0}>{av.none}</option>
+                      <option value={60}>{av.hours({ n: 1 })}</option>
+                      <option value={120}>{av.hours({ n: 2 })}</option>
+                      <option value={240}>{av.hours({ n: 4 })}</option>
+                      <option value={1440}>{av.oneDay}</option>
                     </Select>
                   )}
                 </Field>
-                <Field label="Book up to">
+                <Field label={av.bookUpTo}>
                   {(p) => (
                     <Select
                       {...p}
@@ -489,14 +483,14 @@ export function AvailabilityView({
                         })
                       }
                     >
-                      <option value={14}>2 weeks ahead</option>
-                      <option value={30}>30 days ahead</option>
-                      <option value={60}>60 days ahead</option>
-                      <option value={90}>90 days ahead</option>
+                      <option value={14}>{av.twoWeeks}</option>
+                      <option value={30}>{av.daysAhead({ n: 30 })}</option>
+                      <option value={60}>{av.daysAhead({ n: 60 })}</option>
+                      <option value={90}>{av.daysAhead({ n: 90 })}</option>
                     </Select>
                   )}
                 </Field>
-                <Field label="Time zone">
+                <Field label={av.timezone}>
                   {(p) => (
                     <Select
                       {...p}
@@ -505,12 +499,12 @@ export function AvailabilityView({
                         setState({ ...state, rules: { ...state.rules, timezone: e.target.value } })
                       }
                     >
-                      {ZONES.some(([z]) => z === timezone) ? null : (
+                      {(ZONES as readonly string[]).includes(timezone) ? null : (
                         <option value={timezone}>{timezone.replace(/_/g, ' ')}</option>
                       )}
-                      {ZONES.map(([z, l]) => (
+                      {ZONES.map((z) => (
                         <option key={z} value={z}>
-                          {l}
+                          {av.zones[z]}
                         </option>
                       ))}
                     </Select>
@@ -520,11 +514,11 @@ export function AvailabilityView({
             </Card>
 
             <Card
-              title="What customers will see"
+              title={av.preview}
               action={
                 <select
                   className={styles.sel}
-                  aria-label="Preview staff"
+                  aria-label={av.previewStaff}
                   value={prevStaff}
                   onChange={(e) => setPrevStaff(e.target.value)}
                 >
@@ -547,22 +541,22 @@ export function AvailabilityView({
                       .join(' ')}
                     onClick={() => setPrevDate(d)}
                   >
-                    {i === 0 ? 'Today' : labelDate(d, { weekday: 'short', day: 'numeric' })}
+                    {i === 0
+                      ? av.today
+                      : labelDate(d, locale, { weekday: 'short', day: 'numeric' })}
                   </button>
                 ))}
               </div>
               {previewService ? (
                 <span style={{ fontSize: 12, color: '#6b6358' }}>
-                  {previewService.name} ({previewService.durationMin} min
-                  {previewService.bufferAfterMin
-                    ? ` + ${previewService.bufferAfterMin} min buffer`
-                    : ''}
-                  ), using your unsaved changes.
+                  {av.previewNote({
+                    service: previewService.name,
+                    duration: previewService.durationMin,
+                    buffer: previewService.bufferAfterMin,
+                  })}
                 </span>
               ) : (
-                <span style={{ fontSize: 13, color: '#5d564b' }}>
-                  Add a service to preview bookable times.
-                </span>
+                <span style={{ fontSize: 13, color: '#5d564b' }}>{av.addService}</span>
               )}
               {preview && !preview.closed ? (
                 <div className={styles.slots}>
@@ -575,61 +569,59 @@ export function AvailabilityView({
                           ? styles.brk
                           : styles.taken;
                     const why = s.available
-                      ? 'Bookable'
+                      ? av.bookable
                       : s.reason === 'too_soon' || s.reason === 'past'
-                        ? 'Inside minimum notice'
+                        ? av.insideNotice
                         : s.reason === 'booked'
-                          ? 'Booked'
+                          ? av.booked
                           : s.reason === 'blocked'
-                            ? 'Blocked'
-                            : 'Break or end of shift';
+                            ? av.blocked
+                            : av.breakOrEnd;
                     return (
                       <span key={s.startMin} title={why} className={[styles.slot, cls].join(' ')}>
-                        {fmtMin(s.startMin)}
+                        {fmt(s.startMin)}
                       </span>
                     );
                   })}
                 </div>
               ) : previewService ? (
-                <span style={{ fontSize: 13, color: '#5d564b' }}>
-                  Not working this day, so nothing is bookable.
-                </span>
+                <span style={{ fontSize: 13, color: '#5d564b' }}>{av.notWorking}</span>
               ) : null}
               <div className={styles.legend}>
                 <span>
-                  <i className={styles.ok} /> Bookable
+                  <i className={styles.ok} /> {av.bookable}
                 </span>
                 <span>
-                  <i className={styles.taken} /> Booked
+                  <i className={styles.taken} /> {av.booked}
                 </span>
                 <span>
-                  <i className={styles.brk} /> Break
+                  <i className={styles.brk} /> {av.break}
                 </span>
                 <span>
-                  <i className={styles.soon} /> Too soon
+                  <i className={styles.soon} /> {av.tooSoon}
                 </span>
               </div>
             </Card>
 
-            <Card title="Holidays, overrides and time off">
+            <Card title={av.overrides}>
               {exceptions.length === 0 ? (
-                <span style={{ fontSize: 13, color: '#6b6358' }}>No upcoming overrides.</span>
+                <span style={{ fontSize: 13, color: '#6b6358' }}>{av.noOverrides}</span>
               ) : null}
               {exceptions.map((o) => (
                 <div key={o.id} className={styles.ovRow}>
                   <span style={{ fontWeight: 700 }}>
-                    {labelDate(o.date)}
-                    {o.endDate && o.endDate !== o.date ? ` – ${labelDate(o.endDate)}` : ''}
+                    {labelDate(o.date, locale)}
+                    {o.endDate && o.endDate !== o.date ? ` – ${labelDate(o.endDate, locale)}` : ''}
                   </span>
                   <span>
                     <span style={{ fontWeight: 600 }}>
                       {o.type === 'CLOSED'
                         ? o.staffId
-                          ? 'Day off'
-                          : 'Closed'
+                          ? av.dayOff
+                          : av.closed
                         : o.type === 'CUSTOM_HOURS'
-                          ? `${fmtMin(o.startMin!)}–${fmtMin(o.endMin!)}`
-                          : `Blocked ${fmtMin(o.startMin!)}–${fmtMin(o.endMin!)}`}
+                          ? `${fmt(o.startMin!)}–${fmt(o.endMin!)}`
+                          : av.blockedRange({ range: `${fmt(o.startMin!)}–${fmt(o.endMin!)}` })}
                     </span>{' '}
                     <span style={{ color: '#6b6358' }}>
                       {staffName(o.staffId)}
@@ -642,13 +634,13 @@ export function AvailabilityView({
                     disabled={pending}
                     onClick={() => removeOverride(o.id)}
                   >
-                    Remove
+                    {av.remove}
                   </button>
                 </div>
               ))}
               <div className={styles.ovAdd}>
                 <select
-                  aria-label="Applies to"
+                  aria-label={av.appliesTo}
                   value={ov.scope}
                   onChange={(e) =>
                     setOv({
@@ -659,7 +651,7 @@ export function AvailabilityView({
                     })
                   }
                 >
-                  <option value="business">Whole business</option>
+                  <option value="business">{av.wholeBusiness}</option>
                   {staff.map((s) => (
                     <option key={s.id} value={s.id}>
                       {s.name}
@@ -668,26 +660,26 @@ export function AvailabilityView({
                 </select>
                 <input
                   type="date"
-                  aria-label="Override date"
+                  aria-label={av.overrideDate}
                   value={ov.date}
                   min={today}
                   onChange={(e) => setOv({ ...ov, date: e.target.value })}
                 />
                 <select
-                  aria-label="Override type"
+                  aria-label={av.overrideType}
                   value={ov.type}
                   onChange={(e) => setOv({ ...ov, type: e.target.value as typeof ov.type })}
                 >
                   <option value="CLOSED">
-                    {ov.scope === 'business' ? 'Closed all day' : 'Day off'}
+                    {ov.scope === 'business' ? av.closedAllDay : av.dayOff}
                   </option>
-                  <option value="CUSTOM_HOURS">Custom hours</option>
-                  <option value="BLOCK">Block time</option>
+                  <option value="CUSTOM_HOURS">{av.customHours}</option>
+                  <option value="BLOCK">{av.blockTime}</option>
                 </select>
                 {ov.type !== 'CLOSED' ? (
                   <>
                     <select
-                      aria-label="From"
+                      aria-label={av.from}
                       value={ov.a}
                       onChange={(e) => setOv({ ...ov, a: Number(e.target.value) })}
                     >
@@ -698,7 +690,7 @@ export function AvailabilityView({
                       ))}
                     </select>
                     <select
-                      aria-label="To"
+                      aria-label={av.to}
                       value={ov.b}
                       onChange={(e) => setOv({ ...ov, b: Number(e.target.value) })}
                     >
@@ -715,7 +707,7 @@ export function AvailabilityView({
                   value={ov.note}
                   maxLength={120}
                   onChange={(e) => setOv({ ...ov, note: e.target.value })}
-                  placeholder="Note, e.g. Staff training"
+                  placeholder={av.notePlaceholder}
                 />
                 <Button
                   size="sm"
@@ -723,7 +715,7 @@ export function AvailabilityView({
                   onClick={addOverride}
                   style={{ borderColor: '#1c1a17' }}
                 >
-                  Add
+                  {av.add}
                 </Button>
               </div>
               {ovError ? <span className={styles.err}>{ovError}</span> : null}
@@ -734,19 +726,19 @@ export function AvailabilityView({
         {saveError ? <FormMessage kind="error">{saveError}</FormMessage> : null}
         {dirty ? (
           <div className={styles.saveBar}>
-            <span style={{ fontWeight: 600 }}>Unsaved availability changes</span>
+            <span style={{ fontWeight: 600 }}>{av.unsaved}</span>
             <button
               type="button"
               className={styles.discard}
               onClick={() => {
                 setState(initial);
-                toast('Changes discarded');
+                toast(av.toastDiscarded);
               }}
             >
-              Discard
+              {av.discard}
             </button>
             <Button variant="accent" disabled={invalid || pending} onClick={save}>
-              {pending ? 'Saving…' : 'Save changes'}
+              {pending ? av.saving : av.save}
             </Button>
           </div>
         ) : null}

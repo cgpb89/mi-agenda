@@ -4,8 +4,12 @@ import { requireTenantPage } from '@/lib/auth/authorize';
 import { dbDateToLocal, localDateToDb } from '@/modules/scheduling/load';
 import { addDays, localMinutesToInstant, todayIn } from '@/modules/scheduling/time';
 import { AvailabilityView } from '@/components/features/availability/AvailabilityView';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Availability & working hours' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.titles.availability };
+}
 
 export default async function AvailabilityPage({
   params,

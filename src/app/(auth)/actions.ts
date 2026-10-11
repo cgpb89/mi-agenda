@@ -3,6 +3,7 @@
 import { redirect } from 'next/navigation';
 import { getDb } from '@/lib/db/client';
 import { AppError, type PublicError, toPublicError } from '@/lib/errors';
+import { getLocale } from '@/i18n/server';
 import { startSession, revokeCurrentSession, getSessionUser } from '@/lib/auth/session';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { clientIp, safeRedirectPath } from '@/lib/security/request';
@@ -52,7 +53,7 @@ export async function loginAction(_prev: FormState, form: FormData): Promise<For
     const next = values.next ? safeRedirectPath(values.next, '') : '';
     target = next || (await landingFor(userId, platformRole));
   } catch (err) {
-    return { error: toPublicError(err, 'login'), values: echo(values) };
+    return { error: toPublicError(err, await getLocale(), 'login'), values: echo(values) };
   }
   redirect(target);
 }
@@ -63,11 +64,11 @@ export async function signupAction(_prev: FormState, form: FormData): Promise<Fo
   try {
     await enforceRateLimit('signupByIp', await clientIp());
     const input = parseInput(signupSchema, values);
-    const res = await registerOwner(input);
+    const res = await registerOwner(input, await getLocale());
     await startSession(res.userId);
     slug = res.tenantSlug;
   } catch (err) {
-    return { error: toPublicError(err, 'signup'), values: echo(values) };
+    return { error: toPublicError(err, await getLocale(), 'signup'), values: echo(values) };
   }
   redirect(`/app/${slug}/onboarding`);
 }
@@ -84,11 +85,11 @@ export async function forgotPasswordAction(_prev: FormState, form: FormData): Pr
     return { done: true };
   } catch (err) {
     if (err instanceof AppError && err.code === 'VALIDATION')
-      return { error: toPublicError(err), values: echo(values) };
+      return { error: toPublicError(err, await getLocale()), values: echo(values) };
     if (err instanceof AppError && err.code === 'RATE_LIMITED')
-      return { error: toPublicError(err), values: echo(values) };
+      return { error: toPublicError(err, await getLocale()), values: echo(values) };
     // Never reveal other failures (e.g. mail errors) — respond as success.
-    toPublicError(err, 'forgot-password');
+    toPublicError(err, await getLocale(), 'forgot-password');
     return { done: true };
   }
 }
@@ -100,7 +101,7 @@ export async function resetPasswordAction(_prev: FormState, form: FormData): Pro
     const input = parseInput(resetSchema, values);
     await resetPassword(input.token, input.password);
   } catch (err) {
-    return { error: toPublicError(err, 'reset-password') };
+    return { error: toPublicError(err, await getLocale(), 'reset-password') };
   }
   redirect('/login?reset=1');
 }

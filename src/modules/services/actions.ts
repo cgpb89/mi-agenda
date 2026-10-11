@@ -15,15 +15,16 @@ import {
 } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
 import { DURATIONS } from './constants';
+import { msg } from '@/i18n/message-ref';
 
 const serviceSchema = z.object({
   id: uuidSchema.optional(),
-  name: nameSchema('service name', 80),
+  name: nameSchema('serviceName', 80),
   description: optionalTextSchema(300),
   durationMin: z.coerce
     .number()
     .int()
-    .refine((v) => (DURATIONS as readonly number[]).includes(v), 'Choose a duration'),
+    .refine((v) => (DURATIONS as readonly number[]).includes(v), msg('chooseDuration')),
   price: moneyInputSchema,
   bufferBeforeMin: z.coerce
     .number()
@@ -66,7 +67,7 @@ export async function saveServiceAction(
         select: { id: true },
       });
       if (staff.length !== new Set(input.staffIds).size) {
-        throw new AppError('VALIDATION', 'Choose staff from your team.', {
+        throw new AppError('VALIDATION', msg('chooseStaffFromTeam'), {
           fieldErrors: { staffIds: 'invalid' },
         });
       }
@@ -88,7 +89,7 @@ export async function saveServiceAction(
           where: { id: input.id, tenantId: ctx.tenantId },
           select: { id: true },
         });
-        if (!existing) throw new AppError('NOT_FOUND', 'Service not found.');
+        if (!existing) throw new AppError('NOT_FOUND', msg('serviceNotFound'));
         await tx.service.update({ where: { id: existing.id }, data });
         id = existing.id;
       } else {
@@ -130,7 +131,7 @@ export async function setServiceActiveAction(
     const input = parseInput(z.object({ id: uuidSchema, active: z.boolean() }), raw);
     const res = await withTransaction(async (tx) => {
       const svc = await tx.service.findFirst({ where: { id: input.id, tenantId: ctx.tenantId } });
-      if (!svc) throw new AppError('NOT_FOUND', 'Service not found.');
+      if (!svc) throw new AppError('NOT_FOUND', msg('serviceNotFound'));
       await tx.service.update({
         where: { id: svc.id },
         data: { isActive: input.active, isOnline: input.active },

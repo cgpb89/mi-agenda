@@ -2,8 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { ResetPasswordForm } from '@/components/features/auth/PasswordForms';
 import styles from '@/components/features/auth/Auth.module.scss';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Choose a new password', referrer: 'no-referrer' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.auth.reset.metaTitle, referrer: 'no-referrer' };
+}
 
 export default async function ResetPasswordPage({
   searchParams,
@@ -12,16 +16,16 @@ export default async function ResetPasswordPage({
 }) {
   const { token } = await searchParams;
   const valid = typeof token === 'string' && token.length >= 20 && token.length <= 128;
+  const { t } = await getI18n();
   return (
     <div className={styles.card}>
-      <span className={styles.eyebrow}>Account help</span>
-      <h1 className={styles.title}>Choose a new password</h1>
+      <span className={styles.eyebrow}>{t.auth.accountHelp}</span>
+      <h1 className={styles.title}>{t.auth.reset.title}</h1>
       {valid ? (
         <ResetPasswordForm token={token} />
       ) : (
         <p className={styles.sub}>
-          This reset link is invalid or has expired.{' '}
-          <Link href="/forgot-password">Request a new one</Link>.
+          {t.auth.reset.invalid} <Link href="/forgot-password">{t.auth.reset.requestNew}</Link>.
         </p>
       )}
     </div>

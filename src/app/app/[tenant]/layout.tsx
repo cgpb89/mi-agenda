@@ -3,8 +3,7 @@ import { requireTenantPage } from '@/lib/auth/authorize';
 import { can } from '@/lib/auth/permissions';
 import { AppShell, type ShellData } from '@/components/layout/AppShell';
 import { todayIn } from '@/modules/scheduling/time';
-
-const ROLE_LABEL = { OWNER: 'Owner', MANAGER: 'Manager', STAFF: 'Staff' } as const;
+import { getI18n } from '@/i18n/server';
 
 function initials(name: string): string {
   return (
@@ -27,6 +26,7 @@ export default async function TenantLayout({
 }) {
   const { tenant: slug } = await params;
   const ctx = await requireTenantPage(slug);
+  const { t } = await getI18n();
   const db = getDb();
 
   const [memberships, profile, services, staff] = await Promise.all([
@@ -69,25 +69,25 @@ export default async function TenantLayout({
   ]);
 
   const base = `/app/${ctx.tenantSlug}`;
-  const navAll: { key: string; label: string; perm: Parameters<typeof can>[1] }[] = [
-    { key: 'overview', label: 'Overview', perm: 'dashboard.view' },
-    { key: 'calendar', label: 'Calendar', perm: 'appointments.read' },
-    { key: 'appointments', label: 'Appointments', perm: 'appointments.read' },
-    { key: 'services', label: 'Services', perm: 'services.manage' },
-    { key: 'staff', label: 'Staff', perm: 'staff.manage' },
-    { key: 'customers', label: 'Customers', perm: 'customers.read' },
-    { key: 'analytics', label: 'Analytics', perm: 'analytics.read' },
-    { key: 'booking-page', label: 'Booking page', perm: 'bookingPage.manage' },
-    { key: 'availability', label: 'Availability', perm: 'availability.manage' },
-    { key: 'settings', label: 'Business settings', perm: 'business.manage' },
+  const navAll: { key: keyof typeof t.app.nav; perm: Parameters<typeof can>[1] }[] = [
+    { key: 'overview', perm: 'dashboard.view' },
+    { key: 'calendar', perm: 'appointments.read' },
+    { key: 'appointments', perm: 'appointments.read' },
+    { key: 'services', perm: 'services.manage' },
+    { key: 'staff', perm: 'staff.manage' },
+    { key: 'customers', perm: 'customers.read' },
+    { key: 'analytics', perm: 'analytics.read' },
+    { key: 'booking-page', perm: 'bookingPage.manage' },
+    { key: 'availability', perm: 'availability.manage' },
+    { key: 'settings', perm: 'business.manage' },
   ];
 
   const pageSub = (status: string | undefined, s: string) =>
     status === 'PUBLISHED'
       ? `/book/${s}`
       : status === 'UNPUBLISHED'
-        ? 'Unpublished'
-        : 'Draft · not published';
+        ? t.app.pageUnpublished
+        : t.app.pageDraft;
 
   // STAFF may only book into their own column.
   const staffForBooking = ctx.role === 'STAFF' ? staff.filter((s) => s.id === ctx.staffId) : staff;
@@ -110,12 +110,12 @@ export default async function TenantLayout({
     user: {
       name: ctx.user.name,
       initials: initials(ctx.user.name),
-      roleLabel: ROLE_LABEL[ctx.role],
+      roleLabel: t.app.roles[ctx.role],
       isPlatformAdmin: ctx.user.platformRole === 'ADMIN',
     },
     nav: navAll
       .filter((n) => can(ctx.role, n.perm))
-      .map((n) => ({ key: n.key, label: n.label, href: `${base}/${n.key}` })),
+      .map((n) => ({ key: n.key, label: t.app.nav[n.key], href: `${base}/${n.key}` })),
     booking:
       can(ctx.role, 'appointments.create') && services.length > 0 && staffForBooking.length > 0
         ? {

@@ -3,6 +3,7 @@ import { AppError } from '@/lib/errors';
 import { withTransaction, type Tx } from '@/lib/db/tx';
 import { audit } from '@/modules/audit/audit';
 import { type Transition, targetStatus, transitionError } from './rules';
+import { msg } from '@/i18n/message-ref';
 
 export interface TransitionInput {
   tenantId: string;
@@ -28,7 +29,7 @@ async function lockAppointment(tx: Tx, tenantId: string, appointmentId: string) 
     SELECT id FROM app.appointments
     WHERE id = ${appointmentId}::uuid AND tenant_id = ${tenantId}::uuid
     FOR UPDATE`;
-  if (rows.length === 0) throw new AppError('NOT_FOUND', 'Appointment not found.');
+  if (rows.length === 0) throw new AppError('NOT_FOUND', msg('appointmentNotFound'));
   return tx.appointment.findFirstOrThrow({ where: { id: appointmentId, tenantId } });
 }
 

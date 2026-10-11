@@ -1,17 +1,20 @@
 import type { Metadata } from 'next';
 import { SignupForm } from '@/components/features/auth/SignupForm';
 import styles from '@/components/features/auth/Auth.module.scss';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Create your booking page' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.auth.signup.metaTitle };
+}
 
-export default function SignupPage() {
+export default async function SignupPage() {
+  const { t } = await getI18n();
   return (
     <div className={[styles.card, styles.wideCard].join(' ')}>
-      <span className={styles.eyebrow}>Start free</span>
-      <h1 className={styles.title}>Create your booking page</h1>
-      <p className={styles.sub}>
-        Set up your account and business. You can add services and hours in the next step.
-      </p>
+      <span className={styles.eyebrow}>{t.auth.signup.eyebrow}</span>
+      <h1 className={styles.title}>{t.auth.signup.title}</h1>
+      <p className={styles.sub}>{t.auth.signup.sub}</p>
       <SignupForm />
     </div>
   );

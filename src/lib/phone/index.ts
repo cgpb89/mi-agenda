@@ -1,6 +1,7 @@
 import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js/max';
 import { z } from 'zod';
 import { PHONE_COUNTRIES } from './countries';
+import { msg } from '@/i18n/message-ref';
 
 /**
  * Phone policy
@@ -48,6 +49,6 @@ export const countryCodeSchema = z
   .string()
   .length(2)
   .toUpperCase()
-  .refine((c) => SUPPORTED.has(c), 'Choose a country');
+  .refine((c) => SUPPORTED.has(c), msg('chooseCountry'));
 
 export { PHONE_COUNTRIES };

@@ -13,6 +13,7 @@ import { LOCAL_DATE_RE } from '@/modules/scheduling/time';
 import { netCollectedMinor } from '@/modules/payments/ledger';
 import { appointmentRef } from './rules';
 import type { AppointmentDetails } from './types';
+import { msg } from '@/i18n/message-ref';
 
 /** Appointment details for the drawer (tenant-scoped; permissions computed server-side). */
 export async function getAppointmentDetailsAction(
@@ -31,7 +32,7 @@ export async function getAppointmentDetailsAction(
         payments: { orderBy: { recordedAt: 'asc' } },
       },
     });
-    if (!a) throw new AppError('NOT_FOUND', 'Appointment not found.');
+    if (!a) throw new AppError('NOT_FOUND', msg('appointmentNotFound'));
     const completedVisits = await db.appointment.count({
       where: { tenantId: ctx.tenantId, customerId: a.customerId, status: 'COMPLETED' },
     });
@@ -99,7 +100,7 @@ export async function rescheduleOptionsAction(
       where: { id: input.appointmentId, tenantId: ctx.tenantId },
       include: { service: true },
     });
-    if (!a) throw new AppError('NOT_FOUND', 'Appointment not found.');
+    if (!a) throw new AppError('NOT_FOUND', msg('appointmentNotFound'));
     const policy = await db.bookingPolicy.findUniqueOrThrow({ where: { tenantId: ctx.tenantId } });
     const data = await loadScheduleData(db, {
       tenantId: ctx.tenantId,

@@ -16,6 +16,8 @@
  * timezone.
  */
 import { DateTime } from 'luxon';
+import { INTL_LOCALE, type Locale } from '@/i18n/config';
+import { messages } from '@/i18n/messages';
 
 export interface ApptRow {
   startAt: Date;
@@ -113,16 +115,19 @@ export function buckets(
   to: string,
   g: Granularity,
   hours: [number, number] = [9, 18],
+  locale: Locale = 'en',
 ): Bucket[] {
   const out: Bucket[] = [];
   const index = new Map<string, Bucket>();
-  const start = DateTime.fromISO(from, { zone: tz });
-  const end = DateTime.fromISO(to, { zone: tz });
+  const loc = INTL_LOCALE[locale];
+  const start = DateTime.fromISO(from, { zone: tz }).setLocale(loc);
+  const end = DateTime.fromISO(to, { zone: tz }).setLocale(loc);
+  const monthDay = (d: DateTime) => d.toLocaleString({ month: 'short', day: 'numeric' });
   const days = Math.round(end.diff(start, 'days').days) + 1;
 
   if (g === 'hour') {
     for (let h = hours[0]; h <= hours[1]; h++) {
-      const label = `${((h + 11) % 12) + 1}${h < 12 ? 'a' : 'p'}`;
+      const label = locale === 'es' ? `${h} h` : `${((h + 11) % 12) + 1}${h < 12 ? 'a' : 'p'}`;
       const b = { key: String(h), label, tooltip: label, volume: 0, estimatedMinor: 0 };
       out.push(b);
       index.set(b.key, b);
@@ -131,11 +136,15 @@ export function buckets(
     for (let i = 0; i < days; i++) {
       const d = start.plus({ days: i });
       const label =
-        days > 14 ? (i % 5 === 0 ? d.toFormat('L/d') : '') : `${d.toFormat('ccccc')} ${d.day}`;
+        days > 14
+          ? i % 5 === 0
+            ? d.toFormat(locale === 'es' ? 'd/L' : 'L/d')
+            : ''
+          : `${d.toFormat('ccccc').toUpperCase()} ${d.day}`;
       const b = {
         key: d.toISODate()!,
         label,
-        tooltip: d.toFormat('ccc, LLL d'),
+        tooltip: d.toLocaleString({ weekday: 'short', month: 'short', day: 'numeric' }),
         volume: 0,
         estimatedMinor: 0,
       };
@@ -147,8 +156,8 @@ export function buckets(
     while (w <= end) {
       const b = {
         key: w.toISODate()!,
-        label: w.toFormat('LLL d'),
-        tooltip: `Week of ${w.toFormat('LLL d')}`,
+        label: monthDay(w),
+        tooltip: messages[locale].analytics.weekOf({ date: monthDay(w) }),
         volume: 0,
         estimatedMinor: 0,
       };
@@ -161,8 +170,8 @@ export function buckets(
     while (m <= end) {
       const b = {
         key: m.toFormat('yyyy-LL'),
-        label: m.toFormat('LLL'),
-        tooltip: m.toFormat('LLLL yyyy'),
+        label: m.toLocaleString({ month: 'short' }),
+        tooltip: m.toLocaleString({ month: 'long', year: 'numeric' }),
         volume: 0,
         estimatedMinor: 0,
       };

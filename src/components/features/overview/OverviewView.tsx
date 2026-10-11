@@ -8,26 +8,23 @@ import { Button, ButtonLink } from '@/components/ui/Button';
 import { Segmented } from '@/components/ui/Segmented';
 import { StatusPill, STATUS_BAR_COLOR } from '@/components/ui/StatusPill';
 import {
+  fmtDate,
   fmtTime,
   hourLong,
   hourShort,
   moneyFmt,
+  numFmt,
   pct,
   relDay,
-  WEEKDAYS,
+  weekdayNames,
 } from '@/components/features/shared/format';
 import type { OverviewData } from '@/modules/analytics/service';
 import { useOpenAppointment } from '@/components/features/appointments/AppointmentDrawer';
 import { useNow } from '@/lib/hooks';
 import styles from './Overview.module.scss';
+import { useI18n } from '@/i18n/client';
 
-const RANGES = [
-  ['today', 'Today'],
-  ['7d', '7 days'],
-  ['30d', '30 days'],
-  ['90d', '90 days'],
-  ['custom', 'Custom'],
-] as const;
+const RANGES = ['today', '7d', '30d', '90d', 'custom'] as const;
 
 export function OverviewView({
   data,
@@ -47,21 +44,29 @@ export function OverviewView({
   const k = data.kpi;
   const range = data.range;
   const nowMs = useNow();
+  const { t, locale, intl } = useI18n();
+  const ov = t.overview;
+  const an = t.analytics;
+  const WEEKDAYS = weekdayNames(locale);
+  const signedPct = (p: number) => `${p >= 0 ? '+' : ''}${p}%`;
 
-  const subtitle = `${new Date(`${tenant.today}T12:00:00Z`).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', timeZone: 'UTC' })} · ${tenant.name}`;
+  const subtitle = `${fmtD(tenant.today, { weekday: 'long', month: 'long', day: 'numeric' })} · ${tenant.name}`;
   const rangeLabel = `${range.from === range.to ? '' : `${fmtD(range.from)} – `}${fmtD(range.to)}`;
 
   const completedNote = (() => {
-    if (range.key === 'today' || !k.completedPrev) return `Range: ${rangeLabel}`;
+    if (range.key === 'today' || !k.completedPrev) return ov.rangeNote({ range: rangeLabel });
     const p = Math.round(((k.completed - k.completedPrev) / k.completedPrev) * 100);
-    return `${p >= 0 ? '+' : ''}${p}% vs previous ${range.days} days`;
+    return ov.vsPreviousDays({ pct: signedPct(p), days: range.days });
   })();
   const cancelNote =
     range.key === 'today'
-      ? `${k.todayCancelled} cancelled today`
+      ? ov.cancelledToday({ n: k.todayCancelled })
       : k.cancellationRatePrev === null
-        ? 'Cancelled ÷ all booked in range'
-        : `${(k.cancellationRate ?? 0) <= k.cancellationRatePrev ? 'Down' : 'Up'} from ${pct(k.cancellationRatePrev)} previous period`;
+        ? ov.cancelledShare
+        : ov.cancelTrend({
+            down: (k.cancellationRate ?? 0) <= k.cancellationRatePrev,
+            prev: pct(k.cancellationRatePrev, locale),
+          });
 
   const values = data.chart.map((b) => (chart === 'rev' ? b.estimatedMinor : b.volume));
   const max = Math.max(1, ...values);
@@ -86,12 +91,12 @@ export function OverviewView({
   }
 
   const header = (
-    <PageHeader title="Overview" sub={subtitle}>
+    <PageHeader title={ov.title} sub={subtitle}>
       <Segmented
-        label="Date range"
-        items={RANGES.map(([key, label]) => ({
+        label={an.dateRange}
+        items={RANGES.map((key) => ({
           key,
-          label,
+          label: an.ranges[key],
           selected: range.key === key,
           href:
             key === 'custom'
@@ -105,18 +110,18 @@ export function OverviewView({
   const customBar =
     range.key === 'custom' ? (
       <div className={styles.customBar}>
-        <span style={{ fontWeight: 600 }}>Custom range</span>
+        <span style={{ fontWeight: 600 }}>{an.customRange}</span>
         <input
           type="date"
-          aria-label="From"
+          aria-label={an.from}
           defaultValue={range.from}
           max={range.to}
           onChange={(e) => e.target.value && setCustom(e.target.value, range.to)}
         />
-        <span>to</span>
+        <span>{an.toWord}</span>
         <input
           type="date"
-          aria-label="To"
+          aria-label={an.to}
           defaultValue={range.to}
           min={range.from}
           onChange={(e) => e.target.value && setCustom(range.from, e.target.value)}
@@ -130,13 +135,13 @@ export function OverviewView({
         {header}
         <PageContent>
           <EmptyState
-            eyebrow={setupNeeded.published ? 'BOOKING PAGE · LIVE' : 'NEW BUSINESS · DRAFT'}
-            title="No appointments yet"
+            eyebrow={setupNeeded.published ? ov.eyebrowLive : ov.eyebrowDraft}
+            title={ov.emptyTitle}
             actions={
               <>
                 {setupNeeded.hours ? (
                   <ButtonLink href={`${base}/availability`} variant="primary">
-                    Set working hours
+                    {ov.setHours}
                   </ButtonLink>
                 ) : null}
                 {setupNeeded.services ? (
@@ -144,21 +149,21 @@ export function OverviewView({
                     href={`${base}/services?new=1`}
                     variant={setupNeeded.hours ? 'secondary' : 'primary'}
                   >
-                    Add a service
+                    {ov.addService}
                   </ButtonLink>
                 ) : null}
                 {!setupNeeded.published ? (
-                  <ButtonLink href={`${base}/booking-page`}>Publish your booking page</ButtonLink>
+                  <ButtonLink href={`${base}/booking-page`}>{ov.publishPage}</ButtonLink>
                 ) : null}
                 {shell.data.booking ? (
-                  <Button onClick={() => shell.openNewAppointment()}>New appointment</Button>
+                  <Button onClick={() => shell.openNewAppointment()}>{ov.newAppointment}</Button>
                 ) : null}
               </>
             }
           >
             {setupNeeded.published
-              ? `${tenant.name}'s booking page is live. New bookings and charts appear here as soon as customers book.`
-              : `Once ${tenant.name}'s services, hours and booking page are set up and published, appointments and charts appear here.`}
+              ? ov.emptyLive({ business: tenant.name })
+              : ov.emptyDraft({ business: tenant.name })}
           </EmptyState>
         </PageContent>
       </>
@@ -173,54 +178,58 @@ export function OverviewView({
         <div className={styles.quick}>
           {shell.data.booking ? (
             <Button pill onClick={() => shell.openNewAppointment()}>
-              New appointment
+              {ov.newAppointment}
             </Button>
           ) : null}
           <ButtonLink pill href={`${base}/services?new=1`}>
-            Add service
+            {ov.quickAddService}
           </ButtonLink>
           <ButtonLink pill href={`${base}/availability`}>
-            Edit availability
+            {ov.quickAvailability}
           </ButtonLink>
         </div>
 
         <KpiGrid>
           <Kpi
-            label="Today's appointments"
+            label={ov.todayCount}
             value={k.todayCount}
-            note={`${k.todayDone} done · ${k.todayToCome} still to come`}
+            note={ov.todayNote({ done: k.todayDone, toCome: k.todayToCome })}
           />
-          <Kpi label="Upcoming" value={k.upcoming} note={`${k.pending} pending confirmation`} />
-          <Kpi label="Completed" value={k.completed.toLocaleString()} note={completedNote} />
+          <Kpi label={ov.upcoming} value={k.upcoming} note={ov.pendingNote({ n: k.pending })} />
+          <Kpi label={ov.completed} value={numFmt(k.completed, locale)} note={completedNote} />
           {canRevenue ? (
             <>
               <Kpi
-                label="Estimated revenue"
-                value={moneyFmt(k.estimatedMinor, tenant.currency)}
-                note="Price of completed appointments"
+                label={ov.estimatedRevenue}
+                value={moneyFmt(k.estimatedMinor, tenant.currency, locale)}
+                note={ov.estimatedRevenueNote}
               />
               <Kpi
-                label="Revenue collected"
-                value={moneyFmt(k.collectedMinor, tenant.currency)}
-                note="Payments recorded in range, minus refunds"
+                label={ov.collected}
+                value={moneyFmt(k.collectedMinor, tenant.currency, locale)}
+                note={ov.collectedNote}
               />
             </>
           ) : null}
-          <Kpi label="Cancellation rate" value={pct(k.cancellationRate)} note={cancelNote} />
+          <Kpi
+            label={ov.cancellationRate}
+            value={pct(k.cancellationRate, locale)}
+            note={cancelNote}
+          />
         </KpiGrid>
 
         <div className={styles.two}>
           <Card
-            title="Today's schedule"
+            title={ov.todaySchedule}
             action={{
               href: `${base}/calendar?view=day&date=${tenant.today}`,
-              label: 'Open calendar →',
+              label: ov.openCalendar,
             }}
             flush
           >
             <div className={styles.list}>
               {data.today.length === 0 ? (
-                <div className={styles.emptyList}>Nothing booked today.</div>
+                <div className={styles.emptyList}>{ov.nothingToday}</div>
               ) : null}
               {data.today.map((a) => {
                 const start = new Date(a.startAt).getTime();
@@ -232,7 +241,9 @@ export function OverviewView({
                     onClick={() => openAppt(a.id)}
                     className={[styles.row, now && styles.rowNow].filter(Boolean).join(' ')}
                   >
-                    <span className={styles.time}>{fmtTime(a.startAt, tenant.timezone)}</span>
+                    <span className={styles.time}>
+                      {fmtTime(a.startAt, tenant.timezone, locale)}
+                    </span>
                     <span
                       className={styles.bar}
                       style={{ background: STATUS_BAR_COLOR[a.status] }}
@@ -250,13 +261,13 @@ export function OverviewView({
             </div>
           </Card>
           <Card
-            title="Coming up"
-            action={{ href: `${base}/appointments`, label: 'All appointments →' }}
+            title={ov.comingUp}
+            action={{ href: `${base}/appointments`, label: ov.allAppointments }}
             flush
           >
             <div>
               {data.upcoming.length === 0 ? (
-                <div className={styles.emptyList}>No upcoming appointments.</div>
+                <div className={styles.emptyList}>{ov.noUpcoming}</div>
               ) : null}
               {data.upcoming.map((a) => (
                 <button
@@ -266,8 +277,8 @@ export function OverviewView({
                   className={[styles.row, styles.upRow].join(' ')}
                 >
                   <span className={styles.day}>
-                    <span>{relDay(a.startAt, tenant.timezone, tenant.today)}</span>
-                    <span>{fmtTime(a.startAt, tenant.timezone)}</span>
+                    <span>{relDay(a.startAt, tenant.timezone, tenant.today, locale)}</span>
+                    <span>{fmtTime(a.startAt, tenant.timezone, locale)}</span>
                   </span>
                   <span className={styles.who}>
                     <span>{a.contactName}</span>
@@ -295,7 +306,7 @@ export function OverviewView({
                     .join(' ')}
                   onClick={() => setChart('rev')}
                 >
-                  Estimated revenue
+                  {ov.revenueTab}
                 </button>
               ) : null}
               <button
@@ -305,29 +316,25 @@ export function OverviewView({
                 className={[styles.tab, chart === 'vol' && styles.tabOn].filter(Boolean).join(' ')}
                 onClick={() => setChart('vol')}
               >
-                Appointment volume
+                {ov.volumeTab}
               </button>
             </div>
-            <span className={styles.note}>
-              {chart === 'rev'
-                ? 'Price of completed appointments. Not collected payments.'
-                : 'Booked appointments, excluding cancellations.'}
-            </span>
+            <span className={styles.note}>{chart === 'rev' ? ov.revenueNote : ov.volumeNote}</span>
           </div>
           <div
             className={styles.bars}
             style={{ gap }}
             role="img"
-            aria-label={chart === 'rev' ? 'Estimated revenue chart' : 'Appointment volume chart'}
+            aria-label={chart === 'rev' ? ov.revenueChart : ov.volumeChart}
           >
             {data.chart.map((b, i) => {
               const v = values[i]!;
-              const shown = chart === 'rev' ? moneyFmt(v, tenant.currency) : String(v);
+              const shown = chart === 'rev' ? moneyFmt(v, tenant.currency, locale) : String(v);
               return (
                 <div
                   key={b.key}
                   className={styles.barCol}
-                  title={`${b.tooltip}: ${chart === 'rev' ? shown : `${v} appointments`}`}
+                  title={`${b.tooltip}: ${chart === 'rev' ? shown : an.nAppointments({ n: v })}`}
                 >
                   <span className={styles.barTop}>{showTop && v > 0 ? shown : ''}</span>
                   <span
@@ -348,9 +355,9 @@ export function OverviewView({
         </div>
 
         <div className={styles.three}>
-          <Card title="Popular services">
+          <Card title={ov.popular}>
             {data.popular.length === 0 ? (
-              <span className={styles.note}>No bookings in this range.</span>
+              <span className={styles.note}>{an.noBookings}</span>
             ) : null}
             {data.popular.map((p) => (
               <div key={p.name} className={styles.popRow}>
@@ -361,11 +368,9 @@ export function OverviewView({
                 <span className={styles.count}>{p.count}</span>
               </div>
             ))}
-            <span className={styles.note}>
-              Booked appointments in range, excluding cancellations.
-            </span>
+            <span className={styles.note}>{ov.popularNote}</span>
           </Card>
-          <Card title="Peak booking hours">
+          <Card title={ov.peakHours}>
             <div
               className={styles.heat}
               style={{ gridTemplateColumns: `repeat(${data.peak.length}, minmax(0, 1fr))` }}
@@ -376,30 +381,32 @@ export function OverviewView({
                   <div
                     key={h.hour}
                     className={styles.heatCell}
-                    title={`${h.count} appointments starting ${hourLong(h.hour)}`}
+                    title={an.startingAt({ n: h.count, hour: hourLong(h.hour, locale) })}
                   >
                     <span
                       style={{
                         background: `oklch(${(0.96 - v * 0.5).toFixed(3)} ${(0.02 + v * 0.09).toFixed(3)} 160)`,
                       }}
                     />
-                    <span>{hourShort(h.hour)}</span>
+                    <span>{hourShort(h.hour, locale)}</span>
                   </div>
                 );
               })}
             </div>
             <span className={styles.note}>
-              Appointments by start hour.
-              {peakTop && peakTop.count > 0 ? ` Busiest: ${hourLong(peakTop.hour)}.` : ''}
+              {ov.peakNote}
+              {peakTop && peakTop.count > 0
+                ? ov.busiestAt({ hour: hourLong(peakTop.hour, locale) })
+                : ''}
             </span>
           </Card>
-          <Card title="Busiest days">
+          <Card title={ov.busiestDays}>
             <div className={styles.days}>
               {data.days.map((d) => (
                 <div
                   key={d.weekday}
                   className={styles.dayCol}
-                  title={`${WEEKDAYS[d.weekday - 1]}: ${d.average.toFixed(1)} per day`}
+                  title={an.perDay({ day: WEEKDAYS[d.weekday - 1]!, avg: oneDecimal(d.average) })}
                 >
                   <span
                     style={{
@@ -413,12 +420,15 @@ export function OverviewView({
               ))}
             </div>
             <span className={styles.note}>
-              Average appointments per day.
+              {ov.daysNote}
               {dayTop.average > 0
-                ? ` ${WEEKDAYS[dayTop.weekday - 1]} leads with ${dayTop.average.toFixed(1)}`
+                ? ov.dayLeads({
+                    day: WEEKDAYS[dayTop.weekday - 1]!,
+                    avg: oneDecimal(dayTop.average),
+                  })
                 : ''}
               {closedDays.length && dayTop.average > 0
-                ? `; ${closedDays.join(', ')} had none.`
+                ? ov.hadNone({ days: closedDays.join(', ') })
                 : dayTop.average > 0
                   ? '.'
                   : ''}
@@ -429,11 +439,11 @@ export function OverviewView({
     </>
   );
 
-  function fmtD(iso: string) {
-    return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      timeZone: 'UTC',
-    });
+  function fmtD(iso: string, opts?: Intl.DateTimeFormatOptions) {
+    return fmtDate(iso, locale, opts);
+  }
+
+  function oneDecimal(n: number) {
+    return n.toLocaleString(intl, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   }
 }

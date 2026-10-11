@@ -17,6 +17,9 @@ import {
 import { createAppointment } from '@/modules/bookings/engine';
 import { LOCAL_DATE_RE } from '@/modules/scheduling/time';
 import { errorResponse, ok, readJson } from '@/modules/public/http';
+import { msg } from '@/i18n/message-ref';
+import { INTL_LOCALE } from '@/i18n/config';
+import { getI18n } from '@/i18n/server';
 
 const bodySchema = z.object({
   serviceId: uuidSchema,
@@ -47,7 +50,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
 
     // Bot heuristics: silently-generic rejection (no hint about which check failed).
     if (body.website || (body.startedAt && Date.now() - body.startedAt < MIN_FILL_MS)) {
-      throw new AppError('VALIDATION', "We couldn't complete that booking. Please try again.");
+      throw new AppError('VALIDATION', msg('bookingFailed'));
     }
 
     const tenant = await getDb().tenant.findUnique({
@@ -60,7 +63,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
         profile: { select: { address: true } },
       },
     });
-    if (!tenant) throw new AppError('NOT_FOUND', 'Not found.');
+    if (!tenant) throw new AppError('NOT_FOUND', msg('notFound'));
     await enforceRateLimit('bookingByTenant', tenant.id);
     const phone = normalizePhone(body.phone, body.phoneCountry);
     if (phone.ok) await enforceRateLimit('bookingByPhone', tenant.id, phone.e164);
@@ -86,13 +89,22 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     const managePath = created.manageToken ? `/book/${slug}/manage/${created.manageToken}` : null;
     let emailed = false;
     if (body.email && managePath && !created.replayed) {
-      const when = DateTime.fromJSDate(created.startAt, { zone: tenant.timezone }).toFormat(
-        "cccc, LLLL d 'at' h:mm a",
-      );
+      const { locale, t } = await getI18n();
+      const when = DateTime.fromJSDate(created.startAt, { zone: tenant.timezone })
+        .setLocale(INTL_LOCALE[locale])
+        .toFormat(t.emails.bookedWhenFormat);
       const res = await sendMail({
         to: body.email,
-        subject: `Booked: ${created.serviceName} at ${tenant.name}`,
-        text: `You're booked.\n\n${created.serviceName} with ${created.staffName}\n${when} (${tenant.timezone})\n${tenant.profile?.address ?? ''}\nConfirmation ${created.confirmationCode}\n\nView, reschedule or cancel:\n${getEnv().APP_URL}${managePath}\n`,
+        subject: t.emails.bookedSubject({ service: created.serviceName, business: tenant.name }),
+        text: t.emails.bookedBody({
+          service: created.serviceName,
+          staff: created.staffName,
+          when,
+          timezone: tenant.timezone,
+          address: tenant.profile?.address ?? '',
+          code: created.confirmationCode,
+          link: `${getEnv().APP_URL}${managePath}`,
+        }),
       });
       emailed = res.sent;
     }

@@ -7,6 +7,7 @@ import { assertCan, assertCanManageAssigned, requireTenant } from '@/lib/auth/au
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { moneyInputSchema, optionalTextSchema, parseInput, uuidSchema } from '@/lib/validation';
 import { recordPayment, voidPayment } from './service';
+import { msg } from '@/i18n/message-ref';
 
 const recordSchema = z.object({
   appointmentId: uuidSchema,
@@ -46,7 +47,7 @@ export async function recordPaymentAction(
 
 const voidSchema = z.object({
   paymentId: uuidSchema,
-  reason: z.string().trim().min(1, 'Add a reason').max(200),
+  reason: z.string().trim().min(1, msg('addReason')).max(200),
 });
 
 export async function voidPaymentAction(

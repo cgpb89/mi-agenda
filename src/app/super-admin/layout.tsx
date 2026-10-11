@@ -1,11 +1,15 @@
 import type { Metadata } from 'next';
 import { requirePlatformAdminPage } from '@/lib/auth/authorize';
 import { AdminShell } from '@/components/features/admin/AdminShell';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = {
-  title: { default: 'Platform admin', template: '%s · Tempo platform' },
-  robots: { index: false, follow: false },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return {
+    title: { default: t.admin.metaTitle, template: t.admin.metaTemplate },
+    robots: { index: false, follow: false },
+  };
+}
 
 export default async function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   // Platform role is checked on every request; non-admins get a 404.

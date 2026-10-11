@@ -2,9 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
-import { COPY, THEMES, type TemplateKey } from './themes';
+import { THEMES, type TemplateKey } from './themes';
 import { demoAvailability, type DemoBusiness } from '@/components/features/landing/demo-data';
 import styles from './BookingFlow.module.scss';
+import { LOCALE_HEADER } from '@/i18n/config';
+import { useI18n } from '@/i18n/client';
+import { countryName, formatMinutesOfDay, formatPrice } from '@/i18n/format';
 
 export interface FlowService {
   id: string;
@@ -81,30 +84,13 @@ interface Availability {
   slots: { startMin: number; available: boolean }[] | null;
 }
 
-const STEP_NAMES = (staffLabel: string) => ['Service', staffLabel, 'Time', 'Details', 'Review'];
-
-function fmtMin(m: number) {
-  const h = Math.floor(m / 60);
-  const mm = m % 60;
-  return `${((h + 11) % 12) + 1}:${String(mm).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+function dateLabel(iso: string, opts: Intl.DateTimeFormatOptions, intl: string) {
+  return new Date(`${iso}T12:00:00Z`).toLocaleDateString(intl, { ...opts, timeZone: 'UTC' });
 }
 
-function money(minor: number, currency: string) {
-  if (minor === 0) return 'Free';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: minor % 100 ? 2 : 0,
-  }).format(minor / 100);
-}
-
-function dateLabel(iso: string, opts: Intl.DateTimeFormatOptions) {
-  return new Date(`${iso}T12:00:00Z`).toLocaleDateString('en-US', { ...opts, timeZone: 'UTC' });
-}
-
-function tzLabel(tz: string) {
+function tzLabel(tz: string, intl: string) {
   try {
-    const part = new Intl.DateTimeFormat('en-US', { timeZone: tz, timeZoneName: 'longGeneric' })
+    const part = new Intl.DateTimeFormat(intl, { timeZone: tz, timeZoneName: 'longGeneric' })
       .formatToParts(new Date())
       .find((p) => p.type === 'timeZoneName');
     return part?.value ?? tz;
@@ -122,8 +108,8 @@ function initials(name: string) {
     .slice(0, 2);
 }
 
-function inZone(iso: string, tz: string, opts: Intl.DateTimeFormatOptions) {
-  return new Date(iso).toLocaleString('en-US', { ...opts, timeZone: tz });
+function inZone(iso: string, tz: string, opts: Intl.DateTimeFormatOptions, intl: string) {
+  return new Date(iso).toLocaleString(intl, { ...opts, timeZone: tz });
 }
 
 function localDate(iso: string, tz: string) {
@@ -155,9 +141,16 @@ function newKey() {
 
 export function BookingFlow(props: Props) {
   const t = THEMES[props.template];
-  const copy = COPY[props.template];
+  const { locale, intl, t: tr } = useI18n();
+  const f = tr.booking.flow;
+  const copy = tr.booking.vocab[props.template];
   const tz = props.timezone;
-  const names = STEP_NAMES(copy.staffLabel);
+  const names = [f.steps.service, copy.staffLabel, f.steps.time, f.steps.details, f.steps.review];
+  const fmtMin = (m: number) => formatMinutesOfDay(m, locale);
+  const money = (minor: number, currency: string) =>
+    minor === 0 ? f.free : formatPrice(minor, currency, locale);
+  const day = (iso: string, opts: Intl.DateTimeFormatOptions) => dateLabel(iso, opts, intl);
+  const LONG_DAY: Intl.DateTimeFormatOptions = { weekday: 'long', month: 'long', day: 'numeric' };
 
   const [step, setStep] = useState(props.existing ? 5 : 0);
   const [svcId, setSvcId] = useState<string | null>(props.existing?.serviceId ?? null);
@@ -228,6 +221,7 @@ export function BookingFlow(props: Props) {
         const qs = new URLSearchParams({ serviceId, staff, ...(day ? { date: day } : {}) });
         const res = await fetch(`/api/public/${props.slug}/availability?${qs}`, {
           cache: 'no-store',
+          headers: { [LOCALE_HEADER]: locale },
         });
         if (!res.ok) throw new Error();
         return (await res.json()) as Availability;
@@ -260,9 +254,9 @@ export function BookingFlow(props: Props) {
     const slots = avail?.slots ?? [];
     return (
       [
-        ['Morning', 0, 720],
-        ['Afternoon', 720, 1020],
-        ['Evening', 1020, 1440],
+        [f.morning, 0, 720],
+        [f.afternoon, 720, 1020],
+        [f.evening, 1020, 1440],
       ] as const
     )
       .map(([label, a, z]) => ({
@@ -270,7 +264,7 @@ export function BookingFlow(props: Props) {
         slots: slots.filter((s) => s.startMin >= a && s.startMin < z),
       }))
       .filter((g) => g.slots.length);
-  }, [avail]);
+  }, [avail, f]);
 
   const noSlots =
     step === 2 && avail !== null && !loading && !(avail.slots ?? []).some((s) => s.available);
@@ -278,11 +272,11 @@ export function BookingFlow(props: Props) {
 
   function validate() {
     const e: Record<string, string> = {};
-    if (!form.name.trim()) e.name = 'Enter your name';
+    if (!form.name.trim()) e.name = f.enterName;
     if (props.requireEmail || form.email.trim()) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = 'Enter a valid email';
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = f.enterValidEmail;
     }
-    if (form.phone.replace(/\D/g, '').length < 6) e.phone = 'Enter a phone number we can reach';
+    if (form.phone.replace(/\D/g, '').length < 6) e.phone = f.enterPhone;
     setErrors(e);
     return Object.keys(e).length === 0;
   }
@@ -310,7 +304,7 @@ export function BookingFlow(props: Props) {
       return;
     }
     if (props.preview) {
-      setSubmitErr('This is a preview of an unpublished page. Publish it to take bookings.');
+      setSubmitErr(f.previewNoBooking);
       return;
     }
     setSubmitting(true);
@@ -319,7 +313,7 @@ export function BookingFlow(props: Props) {
       if (resched && props.existing) {
         const res = await fetch(`/api/public/${props.slug}/manage`, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'application/json', [LOCALE_HEADER]: locale },
           body: JSON.stringify({
             action: 'reschedule',
             token: props.existing.token,
@@ -328,7 +322,7 @@ export function BookingFlow(props: Props) {
           }),
         });
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.error?.message ?? 'Something went wrong.');
+        if (!res.ok) throw new Error(data?.error?.message ?? f.genericError);
         setDone({ ...done!, startAt: data.startAt, endAt: data.endAt, status: data.status });
         setStep(5);
         return;
@@ -336,7 +330,7 @@ export function BookingFlow(props: Props) {
       idemKey.current ??= newKey();
       const res = await fetch(`/api/public/${props.slug}/bookings`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', [LOCALE_HEADER]: locale },
         body: JSON.stringify({
           serviceId: svcId,
           staffId: staffSel === 'any' ? null : staffSel,
@@ -364,7 +358,7 @@ export function BookingFlow(props: Props) {
         }
         if (fe.phone && fe.phone !== 'limit') setErrors({ phone: fe.phone });
         if (fe.email) setErrors({ email: fe.email });
-        throw new Error(data?.error?.message ?? 'Something went wrong. Please try again.');
+        throw new Error(data?.error?.message ?? f.genericError);
       }
       setDone(data as Done);
       setStep(5);
@@ -376,7 +370,7 @@ export function BookingFlow(props: Props) {
         }
       }
     } catch (err) {
-      setSubmitErr(err instanceof Error ? err.message : 'Something went wrong.');
+      setSubmitErr(err instanceof Error ? err.message : f.genericError);
     } finally {
       setSubmitting(false);
     }
@@ -392,15 +386,15 @@ export function BookingFlow(props: Props) {
     try {
       const res = await fetch(`/api/public/${props.slug}/manage`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', [LOCALE_HEADER]: locale },
         body: JSON.stringify({ action: 'cancel', token: props.existing.token }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error?.message ?? 'Something went wrong.');
+      if (!res.ok) throw new Error(data?.error?.message ?? f.genericError);
       setCancelled(true);
       setAskCancel(false);
     } catch (err) {
-      setSubmitErr(err instanceof Error ? err.message : 'Something went wrong.');
+      setSubmitErr(err instanceof Error ? err.message : f.genericError);
     } finally {
       setSubmitting(false);
     }
@@ -417,7 +411,7 @@ export function BookingFlow(props: Props) {
       `DTSTAMP:${icsStamp(new Date().toISOString())}`,
       `DTSTART:${icsStamp(done.startAt)}`,
       `DTEND:${icsStamp(done.endAt)}`,
-      `SUMMARY:${icsEscape(`${done.serviceName} at ${props.businessName}`)}`,
+      `SUMMARY:${icsEscape(f.icsSummary({ service: done.serviceName, business: props.businessName }))}`,
       ...(props.address ? [`LOCATION:${icsEscape(props.address)}`] : []),
       'END:VEVENT',
       'END:VCALENDAR',
@@ -433,39 +427,36 @@ export function BookingFlow(props: Props) {
     staffSel === null
       ? null
       : staffSel === 'any'
-        ? 'First available'
+        ? f.firstAvailable
         : (props.staff.find((s) => s.id === staffSel)?.name ?? props.existing?.staffName ?? null);
   const timeStr = time === null ? '' : `${fmtMin(time)} – ${fmtMin(time + dur)}`;
   const stepCanContinue =
     [svcId !== null, staffSel !== null, time !== null, true, !submitting][step] ?? false;
   const isDone = step === 5;
-  const title = isDone ? props.businessName : resched ? 'Pick a new time' : 'Book an appointment';
-  const serviceLabelCap = copy.serviceLabel[0]!.toUpperCase() + copy.serviceLabel.slice(1);
+  const title = isDone ? props.businessName : resched ? f.titleReschedule : f.titleBook;
+  const serviceLabelCap = copy.serviceLabel;
 
   const summary =
     svc || props.existing
       ? [
           { k: serviceLabelCap, v: svc?.name ?? props.existing!.serviceName },
-          { k: copy.staffLabel, v: staffSel === 'any' ? 'First available' : (staffName ?? '—') },
+          { k: copy.staffLabel, v: staffSel === 'any' ? f.firstAvailable : (staffName ?? '—') },
+          { k: f.date, v: date ? day(date, LONG_DAY) : '' },
+          { k: f.time, v: `${timeStr} · ${dur} ${f.min}` },
           {
-            k: 'Date',
-            v: date ? dateLabel(date, { weekday: 'long', month: 'long', day: 'numeric' }) : '',
-          },
-          { k: 'Time', v: `${timeStr} · ${dur} min` },
-          {
-            k: 'Price',
-            v: `${money(svc?.priceMinor ?? props.existing?.priceMinor ?? 0, props.currency)}${(svc?.priceMinor ?? 1) ? ' · pay at the visit' : ''}`,
+            k: f.price,
+            v: `${money(svc?.priceMinor ?? props.existing?.priceMinor ?? 0, props.currency)}${(svc?.priceMinor ?? 1) ? f.payAtVisit : ''}`,
           },
           ...(resched
             ? []
             : [
                 {
-                  k: 'Contact',
+                  k: f.contact,
                   v: [form.name, form.email, form.phone].filter(Boolean).join(' · '),
                 },
               ]),
-          ...(props.address ? [{ k: 'Where', v: props.address }] : []),
-          ...(form.notes && !resched ? [{ k: 'Notes', v: form.notes }] : []),
+          ...(props.address ? [{ k: f.where, v: props.address }] : []),
+          ...(form.notes && !resched ? [{ k: f.notes, v: form.notes }] : []),
         ]
       : [];
 
@@ -473,17 +464,14 @@ export function BookingFlow(props: Props) {
     ? [
         { k: serviceLabelCap, v: done.serviceName },
         { k: copy.staffLabel, v: done.staffName },
+        { k: f.date, v: inZone(done.startAt, tz, LONG_DAY, intl) },
         {
-          k: 'Date',
-          v: inZone(done.startAt, tz, { weekday: 'long', month: 'long', day: 'numeric' }),
+          k: f.time,
+          v: `${inZone(done.startAt, tz, { hour: 'numeric', minute: '2-digit' }, intl)} – ${inZone(done.endAt, tz, { hour: 'numeric', minute: '2-digit' }, intl)} · ${done.durationMin} ${f.min}`,
         },
         {
-          k: 'Time',
-          v: `${inZone(done.startAt, tz, { hour: 'numeric', minute: '2-digit' })} – ${inZone(done.endAt, tz, { hour: 'numeric', minute: '2-digit' })} · ${done.durationMin} min`,
-        },
-        {
-          k: 'Price',
-          v: `${money(done.priceMinor, props.currency)}${done.priceMinor ? ' · pay at the visit' : ''}`,
+          k: f.price,
+          v: `${money(done.priceMinor, props.currency)}${done.priceMinor ? f.payAtVisit : ''}`,
         },
       ]
     : [];
@@ -493,11 +481,11 @@ export function BookingFlow(props: Props) {
       svc?.name,
       staffName,
       time !== null && date
-        ? `${dateLabel(date, { weekday: 'short', month: 'short', day: 'numeric' })}, ${fmtMin(time)}`
+        ? `${day(date, { weekday: 'short', month: 'short', day: 'numeric' })}, ${fmtMin(time)}`
         : null,
     ]
       .filter(Boolean)
-      .join(' · ') || 'No selection yet';
+      .join(' · ') || f.noSelection;
 
   const vars = {
     '--bf-surface': t.surface,
@@ -526,16 +514,16 @@ export function BookingFlow(props: Props) {
     props.minNoticeMin === 0
       ? ''
       : props.minNoticeMin >= 1440
-        ? ` (${props.minNoticeMin / 1440} day minimum notice)`
-        : ` (${props.minNoticeMin / 60} hour minimum notice)`;
+        ? f.noticeDays({ n: props.minNoticeMin / 1440 })
+        : f.noticeHours({ n: props.minNoticeMin / 60 });
 
   return (
-    <section className={styles.root} style={vars} aria-label="Book an appointment">
+    <section className={styles.root} style={vars} aria-label={f.ariaLabel}>
       <div className={styles.head}>
         <div className={styles.titleRow}>
           <h2 className={styles.title}>{title}</h2>
           <span className={styles.stepLabel}>
-            {isDone ? (cancelled ? 'Cancelled' : 'Booked') : `Step ${step + 1} of 5`}
+            {isDone ? (cancelled ? f.cancelled : f.booked) : f.stepOf({ n: step + 1, total: 5 })}
           </span>
         </div>
         {!isDone ? (
@@ -570,10 +558,10 @@ export function BookingFlow(props: Props) {
       <div className={styles.body}>
         {step === 0 ? (
           <>
-            <div className={styles.lead}>Choose a {copy.serviceLabel}</div>
+            <div className={styles.lead}>{copy.chooseLead}</div>
             <div className={styles.list}>
               {props.services.length === 0 ? (
-                <div className={styles.small}>Online booking isn&rsquo;t available right now.</div>
+                <div className={styles.small}>{f.noOnline}</div>
               ) : null}
               {props.services.map((s) => (
                 <button
@@ -594,7 +582,9 @@ export function BookingFlow(props: Props) {
                   <span>{s.name}</span>
                   <span>{money(s.priceMinor, props.currency)}</span>
                   <span>{s.description}</span>
-                  <span>{s.durationMin} min</span>
+                  <span>
+                    {s.durationMin} {f.min}
+                  </span>
                 </button>
               ))}
             </div>
@@ -603,10 +593,10 @@ export function BookingFlow(props: Props) {
 
         {step === 1 && svc ? (
           <>
-            <div className={styles.lead}>Who would you like to see?</div>
+            <div className={styles.lead}>{f.whoLead}</div>
             <div className={styles.people}>
               {[
-                { id: 'any', name: 'No preference', title: 'First available' },
+                { id: 'any', name: f.noPreference, title: f.firstAvailable },
                 ...props.staff.filter((p) => svc.staffIds.includes(p.id)),
               ].map((p) => (
                 <button
@@ -638,8 +628,8 @@ export function BookingFlow(props: Props) {
         {step === 2 ? (
           <>
             <div className={styles.monthRow}>
-              <span>{date ? dateLabel(date, { month: 'long', year: 'numeric' }) : ''}</span>
-              <span>Times in {tzLabel(tz)}</span>
+              <span>{date ? day(date, { month: 'long', year: 'numeric' }) : ''}</span>
+              <span>{f.timesIn({ zone: tzLabel(tz, intl) })}</span>
             </div>
             {avail ? (
               <div className={styles.days}>
@@ -654,15 +644,15 @@ export function BookingFlow(props: Props) {
                       className={[styles.day, sel && styles.daySel].filter(Boolean).join(' ')}
                       onClick={() => pickDate(d.date)}
                     >
-                      <span>{dateLabel(d.date, { weekday: 'short' })}</span>
+                      <span>{day(d.date, { weekday: 'short' })}</span>
                       <span>{Number(d.date.slice(8))}</span>
                       <span>
                         {d.status === 'closed'
-                          ? 'Closed'
+                          ? f.dayClosed
                           : d.status === 'full'
-                            ? 'Full'
+                            ? f.dayFull
                             : i === 0
-                              ? 'Today'
+                              ? f.today
                               : ''}
                       </span>
                     </button>
@@ -670,18 +660,14 @@ export function BookingFlow(props: Props) {
                 })}
               </div>
             ) : null}
-            {loading ? <div className={styles.loading}>Loading times…</div> : null}
+            {loading ? <div className={styles.loading}>{f.loadingTimes}</div> : null}
             {!loading && avail === null && svcId && staffSel ? (
-              <div className={styles.alert}>We couldn&rsquo;t load times. Please try again.</div>
+              <div className={styles.alert}>{f.loadFailed}</div>
             ) : null}
             {noSlots ? (
               <div className={styles.noSlots}>
                 <div style={{ fontWeight: 600 }}>
-                  No times left on{' '}
-                  {date
-                    ? dateLabel(date, { weekday: 'long', month: 'long', day: 'numeric' })
-                    : 'this day'}
-                  .
+                  {f.noTimesOn({ day: date ? day(date, LONG_DAY) : f.thisDay })}
                 </div>
                 {nextOpen ? (
                   <button
@@ -689,13 +675,10 @@ export function BookingFlow(props: Props) {
                     className={styles.ghost}
                     onClick={() => pickDate(nextOpen.date)}
                   >
-                    Show{' '}
-                    {dateLabel(nextOpen.date, { weekday: 'long', month: 'long', day: 'numeric' })}
+                    {f.show({ day: day(nextOpen.date, LONG_DAY) })}
                   </button>
                 ) : (
-                  <span className={styles.small}>
-                    No openings in the next two weeks. Please contact the business.
-                  </span>
+                  <span className={styles.small}>{f.noOpenings}</span>
                 )}
               </div>
             ) : null}
@@ -710,7 +693,7 @@ export function BookingFlow(props: Props) {
                           type="button"
                           disabled={!s.available}
                           aria-pressed={time === s.startMin}
-                          aria-label={`${fmtMin(s.startMin)}${s.available ? '' : ' unavailable'}`}
+                          aria-label={`${fmtMin(s.startMin)}${s.available ? '' : ` ${f.unavailable}`}`}
                           className={[styles.slot, time === s.startMin && styles.slotSel]
                             .filter(Boolean)
                             .join(' ')}
@@ -724,21 +707,22 @@ export function BookingFlow(props: Props) {
                 ))
               : null}
             <div className={styles.small}>
-              Struck-through times are already booked or too soon to book{noticeLabel}.
+              {f.struckThrough}
+              {noticeLabel}.
             </div>
           </>
         ) : null}
 
         {step === 3 ? (
           <>
-            <div className={styles.lead}>We only use these details for this appointment.</div>
+            <div className={styles.lead}>{f.detailsLead}</div>
             <div className={styles.fields}>
               <label className={styles.label}>
-                Full name
+                {f.fullName}
                 <input
                   className={styles.input}
                   autoComplete="name"
-                  placeholder="Jordan Lee"
+                  placeholder={f.namePlaceholder}
                   maxLength={120}
                   value={form.name}
                   aria-invalid={errors.name ? true : undefined}
@@ -748,14 +732,16 @@ export function BookingFlow(props: Props) {
               </label>
               <label className={styles.label}>
                 <span>
-                  Email{' '}
-                  {props.requireEmail ? null : <span className={styles.optional}>Optional</span>}
+                  {f.email}{' '}
+                  {props.requireEmail ? null : (
+                    <span className={styles.optional}>{f.optional}</span>
+                  )}
                 </span>
                 <input
                   className={styles.input}
                   type="email"
                   autoComplete="email"
-                  placeholder="jordan@email.com"
+                  placeholder={f.emailPlaceholder}
                   maxLength={254}
                   value={form.email}
                   aria-invalid={errors.email ? true : undefined}
@@ -764,16 +750,20 @@ export function BookingFlow(props: Props) {
                 <span className={styles.err}>{errors.email}</span>
               </label>
               <label className={styles.label}>
-                Phone
+                {f.phone}
                 <span className={styles.phoneRow}>
                   <select
                     className={styles.input}
-                    aria-label="Country code"
+                    aria-label={f.countryCode}
                     value={form.country}
                     onChange={(e) => setForm({ ...form, country: e.target.value })}
                   >
                     {PHONE_COUNTRIES.map((c) => (
-                      <option key={c.code} value={c.code}>
+                      <option
+                        key={c.code}
+                        value={c.code}
+                        title={countryName(c.code, locale, c.name)}
+                      >
                         {c.code} {c.dial}
                       </option>
                     ))}
@@ -782,7 +772,7 @@ export function BookingFlow(props: Props) {
                     className={styles.input}
                     type="tel"
                     autoComplete="tel-national"
-                    placeholder="(555) 014-2290"
+                    placeholder={f.phonePlaceholder}
                     maxLength={32}
                     value={form.phone}
                     aria-invalid={errors.phone ? true : undefined}
@@ -793,7 +783,7 @@ export function BookingFlow(props: Props) {
               </label>
               <label className={styles.label}>
                 <span>
-                  Notes <span className={styles.optional}>Optional</span>
+                  {f.notes} <span className={styles.optional}>{f.optional}</span>
                 </span>
                 <input
                   className={styles.input}
@@ -803,9 +793,7 @@ export function BookingFlow(props: Props) {
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                 />
                 {props.template === 'consult' ? (
-                  <span className={styles.small}>
-                    Please don&rsquo;t include health details here.
-                  </span>
+                  <span className={styles.small}>{f.noHealthDetails}</span>
                 ) : null}
               </label>
               <label className={styles.hp} aria-hidden="true">
@@ -818,18 +806,13 @@ export function BookingFlow(props: Props) {
                 />
               </label>
             </div>
-            <div className={styles.small}>
-              Your phone number isn&rsquo;t verified; it&rsquo;s used to contact you about this
-              booking.
-            </div>
+            <div className={styles.small}>{f.phoneNotVerified}</div>
           </>
         ) : null}
 
         {step === 4 ? (
           <>
-            <div className={styles.lead}>
-              Check the details. Nothing is booked until you confirm.
-            </div>
+            <div className={styles.lead}>{f.reviewLead}</div>
             <div className={styles.summary}>
               {summary.map((r) => (
                 <div key={r.k} className={styles.summaryRow}>
@@ -862,26 +845,26 @@ export function BookingFlow(props: Props) {
                 </span>
                 <div className={styles.title} style={{ lineHeight: 1.05, marginTop: 6 }}>
                   {done.status === 'PENDING'
-                    ? 'Request received.'
+                    ? f.requestReceived
                     : resched
-                      ? 'Rescheduled.'
+                      ? f.rescheduled
                       : props.existing
-                        ? 'Your appointment'
-                        : "You're booked."}
+                        ? f.yourAppointment
+                        : f.youreBooked}
                 </div>
                 <div className={styles.small} style={{ fontSize: 14 }}>
-                  Confirmation <span className={styles.mono}>{done.confirmationCode}</span>
-                  {done.emailed ? ` · sent to ${form.email}` : ''}
-                  {done.status === 'PENDING' ? ` · ${props.businessName} will confirm it` : ''}
+                  {f.confirmation} <span className={styles.mono}>{done.confirmationCode}</span>
+                  {done.emailed ? f.sentTo({ email: form.email }) : ''}
+                  {done.status === 'PENDING' ? f.willConfirm({ business: props.businessName }) : ''}
                 </div>
               </div>
             ) : (
               <div className={styles.doneHead}>
                 <div className={styles.title} style={{ lineHeight: 1.05 }}>
-                  Appointment cancelled
+                  {f.cancelledTitle}
                 </div>
                 <div className={styles.small} style={{ fontSize: 14 }}>
-                  {done.confirmationCode} was cancelled. The time is open for others to book.
+                  {f.cancelledBody({ code: done.confirmationCode })}
                 </div>
               </div>
             )}
@@ -896,12 +879,8 @@ export function BookingFlow(props: Props) {
             {!cancelled ? (
               <>
                 {askCancel ? (
-                  <div
-                    role="alertdialog"
-                    aria-label="Cancel appointment"
-                    className={styles.confirmBox}
-                  >
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>Cancel this appointment?</div>
+                  <div role="alertdialog" aria-label={f.cancelDialog} className={styles.confirmBox}>
+                    <div style={{ fontSize: 14, fontWeight: 600 }}>{f.cancelQuestion}</div>
                     <div className={styles.actions}>
                       <button
                         type="button"
@@ -909,21 +888,21 @@ export function BookingFlow(props: Props) {
                         disabled={submitting}
                         onClick={doCancel}
                       >
-                        Yes, cancel
+                        {f.yesCancel}
                       </button>
                       <button
                         type="button"
                         className={styles.secondary}
                         onClick={() => setAskCancel(false)}
                       >
-                        Keep appointment
+                        {f.keep}
                       </button>
                     </div>
                   </div>
                 ) : null}
                 <div className={styles.actions}>
                   <button type="button" className={styles.primary} onClick={addToCalendar}>
-                    Add to calendar
+                    {f.addToCalendar}
                   </button>
                   {done.managePath && !props.existing ? (
                     <a
@@ -931,7 +910,7 @@ export function BookingFlow(props: Props) {
                       href={done.managePath}
                       style={{ textDecoration: 'none', color: 'inherit' }}
                     >
-                      Reschedule or cancel
+                      {f.rescheduleOrCancel}
                     </a>
                   ) : null}
                   {props.existing && canModify ? (
@@ -951,30 +930,25 @@ export function BookingFlow(props: Props) {
                           );
                         }}
                       >
-                        Reschedule
+                        {f.reschedule}
                       </button>
                       <button
                         type="button"
                         className={styles.secondary}
                         onClick={() => setAskCancel(true)}
                       >
-                        Cancel
+                        {f.cancel}
                       </button>
                     </>
                   ) : null}
                 </div>
                 {props.existing && !canModify ? (
                   <div className={styles.small}>
-                    Online changes close {props.existing.cancellationWindowMin / 60} hours before
-                    the appointment. Please contact the business.
+                    {f.changesClosed({ hours: props.existing.cancellationWindowMin / 60 })}
                   </div>
                 ) : null}
                 {!props.existing && done.managePath ? (
-                  <div className={styles.small}>
-                    {done.emailed
-                      ? 'The email includes a private link to manage this booking.'
-                      : 'Bookmark this page — its address is your private link to reschedule or cancel.'}
-                  </div>
+                  <div className={styles.small}>{done.emailed ? f.emailHasLink : f.bookmark}</div>
                 ) : null}
               </>
             ) : null}
@@ -998,13 +972,13 @@ export function BookingFlow(props: Props) {
                     setAvail(null);
                   }}
                 >
-                  Book another time
+                  {f.bookAnother}
                 </button>
                 <div
                   className={styles.small}
                   style={{ fontFamily: 'var(--font-mono), monospace', fontSize: 11 }}
                 >
-                  Demo · no appointment was created and no email was sent.
+                  {f.demoNote}
                 </div>
               </>
             ) : null}
@@ -1022,7 +996,7 @@ export function BookingFlow(props: Props) {
                 className={styles.secondary}
                 onClick={() => setStep(resched && step === 4 ? 2 : step - 1)}
               >
-                Back
+                {f.back}
               </button>
             ) : null}
             {resched && step === 2 ? (
@@ -1034,7 +1008,7 @@ export function BookingFlow(props: Props) {
                   setStep(5);
                 }}
               >
-                Keep current time
+                {f.keepTime}
               </button>
             ) : null}
             <button
@@ -1054,11 +1028,11 @@ export function BookingFlow(props: Props) {
             >
               {step === 4
                 ? submitting
-                  ? 'Confirming…'
+                  ? f.confirming
                   : resched
-                    ? 'Confirm new time'
-                    : 'Confirm booking'
-                : 'Continue'}
+                    ? f.confirmNewTime
+                    : f.confirmBooking
+                : f.continue}
             </button>
           </div>
         </div>

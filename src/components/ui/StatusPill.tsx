@@ -1,12 +1,9 @@
+'use client';
+
+import { useI18n } from '@/i18n/client';
 import styles from './StatusPill.module.scss';
 
-export const APPOINTMENT_STATUS_LABEL = {
-  PENDING: 'Pending',
-  CONFIRMED: 'Confirmed',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
-  NO_SHOW: 'No-show',
-} as const;
+export type AppointmentStatusKey = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 
 export const STATUS_BAR_COLOR: Record<string, string> = {
   PENDING: '#c9a227',
@@ -24,16 +21,7 @@ export const STATUS_BG: Record<string, string> = {
   NO_SHOW: '#f8dedb',
 };
 
-type Status =
-  keyof typeof APPOINTMENT_STATUS_LABEL | 'ACTIVE' | 'TRIAL' | 'SUSPENDED' | 'CHURNED' | 'INACTIVE';
-
-const OTHER_LABEL: Record<string, string> = {
-  ACTIVE: 'Active',
-  TRIAL: 'Trial',
-  SUSPENDED: 'Suspended',
-  CHURNED: 'Churned',
-  INACTIVE: 'Inactive',
-};
+type Status = AppointmentStatusKey | 'ACTIVE' | 'TRIAL' | 'SUSPENDED' | 'CHURNED' | 'INACTIVE';
 
 export function StatusPill({
   status,
@@ -44,18 +32,14 @@ export function StatusPill({
   label?: string;
   size?: 'sm';
 }) {
-  const text =
-    label ??
-    (status in APPOINTMENT_STATUS_LABEL
-      ? APPOINTMENT_STATUS_LABEL[status as keyof typeof APPOINTMENT_STATUS_LABEL]
-      : OTHER_LABEL[status]);
+  const { t } = useI18n();
   return (
     <span
       className={[styles.pill, styles[status], size === 'sm' && styles.sm]
         .filter(Boolean)
         .join(' ')}
     >
-      {text}
+      {label ?? t.common.status[status]}
     </span>
   );
 }

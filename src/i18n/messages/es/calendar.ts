@@ -1,0 +1,33 @@
+import type { Messages } from '../en';
+
+export const calendar: Messages['calendar'] = {
+  sub: ({ business, zone }) => `${business} · hora de ${zone}`,
+  today: 'Hoy',
+  previous: 'Anterior',
+  next: 'Siguiente',
+  view: 'Vista',
+  views: { day: 'Día', week: 'Semana', month: 'Mes' },
+  staff: 'Equipo',
+  everyone: 'Todos',
+  serviceFilter: 'Filtrar por servicio',
+  allServices: 'Todos los servicios',
+  statusFilter: 'Filtrar por estado',
+  statuses: {
+    active: 'Ocultar canceladas',
+    all: 'Todos los estados',
+    pending: 'Solo pendientes',
+    confirmed: 'Solo confirmadas',
+    completed: 'Solo completadas',
+    noshow: 'Solo inasistencias',
+  },
+  available: 'Disponible',
+  booked: 'Reservado',
+  break: 'Descanso',
+  blocked: 'Bloqueado',
+  blockedWith: ({ label }) => `Bloqueado · ${label}`,
+  notWorking: 'No trabaja',
+  clickToBook: 'Haz clic en un horario libre para reservarlo.',
+  todaySuffix: ' · Hoy',
+  nAppts: ({ n }) => `${n} ${n === 1 ? 'cita' : 'citas'}`,
+  more: ({ n }) => `+${n} más`,
+};

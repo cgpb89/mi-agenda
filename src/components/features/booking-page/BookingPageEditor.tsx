@@ -5,18 +5,19 @@ import { useState, useTransition } from 'react';
 import { PageContent, PageHeader, useShell } from '@/components/layout/AppShell';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { Field, FormMessage, Input, Textarea, formStyles } from '@/components/ui/Form';
+import { Field, FormMessage, Input, Select, Textarea, formStyles } from '@/components/ui/Form';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { useToast } from '@/components/ui/Toast';
 import { saveBookingPageAction, setPageStatusAction } from '@/modules/businesses/actions';
 import type { PageContent as Content } from '@/modules/businesses/page-content';
+import { useI18n } from '@/i18n/client';
+import { LOCALES, LOCALE_NAMES, type Locale } from '@/i18n/config';
 
 type Template = 'BARBER' | 'WELLNESS' | 'CONSULT' | 'FITNESS' | 'SERVICES';
 
 // Swatches from the design system's "Template identities".
 const TEMPLATES: {
   key: Template;
-  label: string;
   sample: string;
   bg: string;
   ink: string;
@@ -26,7 +27,6 @@ const TEMPLATES: {
 }[] = [
   {
     key: 'BARBER',
-    label: 'Barber & hair',
     sample: 'NORTHSIDE',
     bg: '#16120f',
     ink: '#f3ece2',
@@ -35,7 +35,6 @@ const TEMPLATES: {
   },
   {
     key: 'WELLNESS',
-    label: 'Beauty & wellness',
     sample: 'Sable & Sage',
     bg: '#f4efe6',
     ink: '#3a3128',
@@ -45,7 +44,6 @@ const TEMPLATES: {
   },
   {
     key: 'CONSULT',
-    label: 'Consultations',
     sample: 'Harbor Physio',
     bg: '#fff',
     ink: '#14233a',
@@ -55,7 +53,6 @@ const TEMPLATES: {
   },
   {
     key: 'FITNESS',
-    label: 'Fitness & coaching',
     sample: 'FORGE/LAB',
     bg: '#0e0f0c',
     ink: '#f2f5ea',
@@ -65,7 +62,6 @@ const TEMPLATES: {
   },
   {
     key: 'SERVICES',
-    label: 'General services',
     sample: 'Mendwell',
     bg: '#efefec',
     ink: '#1d1f22',
@@ -85,6 +81,7 @@ interface Form {
   hoursNote: string;
   template: Template;
   content: Content;
+  locale: Locale;
 }
 
 export function BookingPageEditor({
@@ -103,6 +100,8 @@ export function BookingPageEditor({
   const [form, setForm] = useState<Form>(initial);
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { t } = useI18n();
+  const bp = t.bookingPage;
   const dirty = JSON.stringify(form) !== JSON.stringify(initial);
   const c = form.content;
   const setC = (patch: Partial<Content>) =>
@@ -126,7 +125,7 @@ export function BookingPageEditor({
             ? `${res.error.message} (${Object.keys(res.error.fieldErrors).join(', ')})`
             : res.error.message,
         );
-      toast('Booking page saved');
+      toast(bp.toastSaved);
       router.refresh();
     });
   }
@@ -136,7 +135,7 @@ export function BookingPageEditor({
     startTransition(async () => {
       const res = await setPageStatusAction(slug, { status });
       if (!res.ok) return setError(res.error.message);
-      toast(status === 'PUBLISHED' ? 'Booking page published' : 'Booking page unpublished');
+      toast(status === 'PUBLISHED' ? bp.toastPublished : bp.toastUnpublished);
       router.refresh();
     });
   }
@@ -145,46 +144,42 @@ export function BookingPageEditor({
 
   return (
     <>
-      <PageHeader title="Booking page" sub={`/book/${slug}`} hideNew>
+      <PageHeader title={t.app.nav['booking-page']} sub={`/book/${slug}`} hideNew>
         <a
           href={`/book/${slug}${published ? '' : '?preview=1'}`}
           target="_blank"
           rel="noopener"
           style={{ fontWeight: 600, fontSize: 13, color: '#c4581f' }}
         >
-          {published ? 'View live page ↗' : 'Preview ↗'}
+          {published ? bp.viewLive : bp.preview}
         </a>
       </PageHeader>
       <PageContent>
         <Card
-          title="Status"
+          title={bp.status}
           action={
             <StatusPill
               status={published ? 'ACTIVE' : 'INACTIVE'}
               label={
-                published ? 'Published' : pageStatus === 'UNPUBLISHED' ? 'Unpublished' : 'Draft'
+                published ? bp.published : pageStatus === 'UNPUBLISHED' ? bp.unpublished : bp.draft
               }
             />
           }
         >
-          <span style={{ color: '#5d564b' }}>
-            {published
-              ? 'Customers can find your page and book online.'
-              : 'Customers can’t see this page yet. Publish it when your services and hours are ready.'}
-          </span>
+          <span style={{ color: '#5d564b' }}>{published ? bp.liveNote : bp.draftNote}</span>
           {!published && (!ready.services || !ready.hours) ? (
             <FormMessage kind="warning">
-              Before publishing:{' '}
-              {[!ready.services && 'add an online service', !ready.hours && 'set business hours']
+              {bp.beforePublishing}{' '}
+              {[!ready.services && bp.addOnlineService, !ready.hours && bp.setHours]
                 .filter(Boolean)
-                .join(' and ')}
+                .join(bp.and)}
               .
             </FormMessage>
           ) : null}
           <div>
             {published ? (
               <Button variant="danger" disabled={pending} onClick={() => setStatus('UNPUBLISHED')}>
-                Unpublish
+                {bp.unpublish}
               </Button>
             ) : (
               <Button
@@ -192,13 +187,13 @@ export function BookingPageEditor({
                 disabled={pending || dirty}
                 onClick={() => setStatus('PUBLISHED')}
               >
-                Publish booking page
+                {bp.publish}
               </Button>
             )}
           </div>
         </Card>
 
-        <Card title="Template">
+        <Card title={bp.template}>
           <div
             style={{
               display: 'grid',
@@ -233,16 +228,13 @@ export function BookingPageEditor({
                     {tp.sample}
                   </span>
                   <span style={{ fontSize: 12, color: tp.accent, fontWeight: 600 }}>
-                    {tp.label}
+                    {bp.templates[tp.key]}
                   </span>
                 </button>
               );
             })}
           </div>
-          <span style={{ fontSize: 12, color: '#6b6358' }}>
-            Each template changes layout, type and mood. Services, staff and availability work the
-            same underneath.
-          </span>
+          <span style={{ fontSize: 12, color: '#6b6358' }}>{bp.templateNote}</span>
         </Card>
 
         <div
@@ -253,29 +245,46 @@ export function BookingPageEditor({
             alignItems: 'start',
           }}
         >
-          <Card title="Business details">
-            <Field label="Name on the page">
-              {(p) => (
-                <Input
-                  {...p}
-                  maxLength={120}
-                  value={form.displayName}
-                  onChange={(e) => setForm({ ...form, displayName: e.target.value })}
-                />
-              )}
-            </Field>
-            <Field label="Tagline" hint="Optional">
+          <Card title={bp.details}>
+            <div className={formStyles.grid2}>
+              <Field label={bp.nameOnPage}>
+                {(p) => (
+                  <Input
+                    {...p}
+                    maxLength={120}
+                    value={form.displayName}
+                    onChange={(e) => setForm({ ...form, displayName: e.target.value })}
+                  />
+                )}
+              </Field>
+              <Field label={bp.language} hint={bp.languageHint}>
+                {(p) => (
+                  <Select
+                    {...p}
+                    value={form.locale}
+                    onChange={(e) => setForm({ ...form, locale: e.target.value as Locale })}
+                  >
+                    {LOCALES.map((l) => (
+                      <option key={l} value={l}>
+                        {LOCALE_NAMES[l]}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+              </Field>
+            </div>
+            <Field label={bp.tagline} hint={bp.optional}>
               {(p) => (
                 <Input
                   {...p}
                   maxLength={160}
-                  placeholder="Brooklyn · Cuts, fades, shaves"
+                  placeholder={bp.taglinePlaceholder}
                   value={form.tagline}
                   onChange={(e) => setForm({ ...form, tagline: e.target.value })}
                 />
               )}
             </Field>
-            <Field label="About" hint="Optional">
+            <Field label={bp.about} hint={bp.optional}>
               {(p) => (
                 <Textarea
                   {...p}
@@ -287,7 +296,7 @@ export function BookingPageEditor({
               )}
             </Field>
             <div className={formStyles.grid2}>
-              <Field label="Public phone">
+              <Field label={bp.publicPhone}>
                 {(p) => (
                   <Input
                     {...p}
@@ -297,7 +306,7 @@ export function BookingPageEditor({
                   />
                 )}
               </Field>
-              <Field label="Public email">
+              <Field label={bp.publicEmail}>
                 {(p) => (
                   <Input
                     {...p}
@@ -309,7 +318,7 @@ export function BookingPageEditor({
                 )}
               </Field>
             </div>
-            <Field label="Address">
+            <Field label={bp.address}>
               {(p) => (
                 <Input
                   {...p}
@@ -319,12 +328,12 @@ export function BookingPageEditor({
                 />
               )}
             </Field>
-            <Field label="Hours text" hint="Optional — otherwise shown from your business hours">
+            <Field label={bp.hoursText} hint={bp.hoursHint}>
               {(p) => (
                 <Input
                   {...p}
                   maxLength={240}
-                  placeholder="Mon–Sat 9:00 AM – 7:00 PM · Sunday closed"
+                  placeholder={bp.hoursPlaceholder}
                   value={form.hoursNote}
                   onChange={(e) => setForm({ ...form, hoursNote: e.target.value })}
                 />
@@ -332,8 +341,8 @@ export function BookingPageEditor({
             </Field>
           </Card>
 
-          <Card title="Page copy">
-            <Field label="Headline" hint="Optional">
+          <Card title={bp.copy}>
+            <Field label={bp.headline} hint={bp.optional}>
               {(p) => (
                 <Input
                   {...p}
@@ -343,7 +352,7 @@ export function BookingPageEditor({
                 />
               )}
             </Field>
-            <Field label="Intro" hint="Optional">
+            <Field label={bp.intro} hint={bp.optional}>
               {(p) => (
                 <Textarea
                   {...p}
@@ -355,7 +364,7 @@ export function BookingPageEditor({
               )}
             </Field>
             <div className={formStyles.grid2}>
-              <Field label="Eyebrow" hint="Barber">
+              <Field label={bp.eyebrow} hint={bp.eyebrowHint}>
                 {(p) => (
                   <Input
                     {...p}
@@ -365,7 +374,7 @@ export function BookingPageEditor({
                   />
                 )}
               </Field>
-              <Field label="Button label" hint="Wellness, fitness">
+              <Field label={bp.ctaLabel} hint={bp.ctaHint}>
                 {(p) => (
                   <Input
                     {...p}
@@ -376,14 +385,12 @@ export function BookingPageEditor({
                 )}
               </Field>
             </div>
-            <span style={{ fontSize: 12, fontWeight: 600, color: '#5d564b' }}>
-              Highlights (category strip / info cards)
-            </span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: '#5d564b' }}>{bp.highlights}</span>
             {highlights.map((h, i) => (
               <div key={i} className={formStyles.grid2}>
                 <Input
-                  aria-label={`Highlight ${i + 1} title`}
-                  placeholder="Title"
+                  aria-label={bp.highlightTitle({ n: i + 1 })}
+                  placeholder={bp.titlePlaceholder}
                   maxLength={40}
                   value={h.title}
                   onChange={(e) =>
@@ -395,8 +402,8 @@ export function BookingPageEditor({
                   }
                 />
                 <Input
-                  aria-label={`Highlight ${i + 1} text`}
-                  placeholder="Short description"
+                  aria-label={bp.highlightText({ n: i + 1 })}
+                  placeholder={bp.descPlaceholder}
                   maxLength={160}
                   value={h.body}
                   onChange={(e) =>
@@ -409,7 +416,7 @@ export function BookingPageEditor({
                 />
               </div>
             ))}
-            <Field label="Notes section title" hint="e.g. Before your visit">
+            <Field label={bp.notesTitle} hint={bp.notesTitleHint}>
               {(p) => (
                 <Input
                   {...p}
@@ -419,7 +426,7 @@ export function BookingPageEditor({
                 />
               )}
             </Field>
-            <Field label="Notes" hint="One per line, up to 5">
+            <Field label={bp.notes} hint={bp.notesHint}>
               {(p) => (
                 <Textarea
                   {...p}
@@ -436,9 +443,7 @@ export function BookingPageEditor({
                 />
               )}
             </Field>
-            <span style={{ fontSize: 12, color: '#6b6358' }}>
-              Photos are shown as neutral placeholders. Image uploads are not part of this release.
-            </span>
+            <span style={{ fontSize: 12, color: '#6b6358' }}>{bp.photosNote}</span>
           </Card>
         </div>
 
@@ -460,7 +465,7 @@ export function BookingPageEditor({
               flexWrap: 'wrap',
             }}
           >
-            <span style={{ fontWeight: 600 }}>Unsaved booking page changes</span>
+            <span style={{ fontWeight: 600 }}>{bp.unsaved}</span>
             <button
               type="button"
               onClick={() => setForm(initial)}
@@ -475,10 +480,10 @@ export function BookingPageEditor({
                 fontWeight: 600,
               }}
             >
-              Discard
+              {bp.discard}
             </button>
             <Button variant="accent" disabled={pending || !form.displayName.trim()} onClick={save}>
-              Save changes
+              {bp.save}
             </Button>
           </div>
         ) : null}

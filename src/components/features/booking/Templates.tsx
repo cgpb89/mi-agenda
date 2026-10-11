@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { formatPrice } from '@/i18n/format';
+import { messages } from '@/i18n/messages';
 import type { PublicPage } from '@/modules/public/booking-page';
 import s from './Templates.module.scss';
 
@@ -12,13 +14,11 @@ export interface TemplateProps {
   flow: ReactNode;
 }
 
-function price(minor: number, currency: string) {
-  if (minor === 0) return 'Free';
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    minimumFractionDigits: minor % 100 ? 2 : 0,
-  }).format(minor / 100);
+function copyFor(page: PublicPage) {
+  const t = messages[page.locale].booking;
+  const price = (minor: number) =>
+    minor === 0 ? t.flow.free : formatPrice(minor, page.currency, page.locale);
+  return { tp: t.page, price, min: t.flow.min };
 }
 
 function Lines({ lines }: { lines: (string | null | undefined)[] }) {
@@ -37,6 +37,7 @@ function Lines({ lines }: { lines: (string | null | undefined)[] }) {
 
 // ── 1. Barber & hair ─────────────────────────────────────────────────────────
 export function BarberTemplate({ page, flow }: TemplateProps) {
+  const { tp, price } = copyFor(page);
   const p = page.profile;
   const c = p.content;
   const words = p.displayName.split(/\s+/);
@@ -44,11 +45,11 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
     <div className={s.barber}>
       <div className={s.bHead}>
         <span className={s.bLogo}>{words[0]}</span>
-        <nav className={s.bNav} aria-label="Page">
-          {page.staff.length ? <a href="#team">{c.notesTitle ? 'Team' : 'Barbers'}</a> : null}
-          <a href="#visit">Visit</a>
+        <nav className={s.bNav} aria-label={tp.pageNav}>
+          {page.staff.length ? <a href="#team">{c.notesTitle ? tp.team : tp.barbers}</a> : null}
+          <a href="#visit">{tp.visit}</a>
           <a href="#book" className={s.bBook}>
-            Book
+            {tp.book}
           </a>
         </nav>
       </div>
@@ -67,20 +68,22 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
       <div id="book" className={s.bBookRow}>
         <div className={s.bCol}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-            <h2 className={s.bH2}>SERVICES</h2>
+            <h2 className={s.bH2}>{tp.services}</h2>
             {page.services.map((x) => (
               <div key={x.id} className={s.bSvc}>
                 <span className={s.bSvcName}>{x.name}</span>
-                <span className={`${s.mono} ${s.bSvcDur}`}>{x.durationMin} MIN</span>
+                <span className={`${s.mono} ${s.bSvcDur}`}>
+                  {x.durationMin} {tp.minUpper}
+                </span>
                 <span className={s.bDots} />
-                <span className={s.bPrice}>{price(x.priceMinor, page.currency)}</span>
+                <span className={s.bPrice}>{price(x.priceMinor)}</span>
               </div>
             ))}
           </div>
           {page.staff.length ? (
             <div id="team" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <h2 className={s.bH2} style={{ margin: 0 }}>
-                {c.notesTitle?.toUpperCase() ?? 'BARBERS'}
+                {c.notesTitle?.toUpperCase() ?? tp.barbersUpper}
               </h2>
               <div className={s.bTeam}>
                 {page.staff.map((m) => (
@@ -102,13 +105,13 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
       </div>
       <div id="visit" className={s.bVisit}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span className={s.bVisitTitle}>VISIT</span>
+          <span className={s.bVisitTitle}>{tp.visitUpper}</span>
           <span className={s.bVisitText}>
             <Lines lines={[p.address, p.phone]} />
           </span>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-          <span className={s.bVisitTitle}>HOURS</span>
+          <span className={s.bVisitTitle}>{tp.hoursUpper}</span>
           <span className={s.bVisitText}>
             <Lines lines={p.hoursLines} />
           </span>
@@ -124,16 +127,17 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
 
 // ── 2. Beauty & wellness ─────────────────────────────────────────────────────
 export function WellnessTemplate({ page, flow }: TemplateProps) {
+  const { tp } = copyFor(page);
   const p = page.profile;
   const c = p.content;
-  const headline = c.headline ?? 'A quieter hour, set aside for you.';
+  const headline = c.headline ?? tp.wellnessHeadline;
   const comma = headline.indexOf(',');
   const highlights =
     c.highlights && c.highlights.length
       ? c.highlights
       : page.services
           .slice(0, 3)
-          .map((x) => ({ title: x.name, body: x.description ?? `${x.durationMin} minutes` }));
+          .map((x) => ({ title: x.name, body: x.description ?? tp.minutes({ n: x.durationMin }) }));
   return (
     <div className={s.wellness}>
       <div className={s.wHead}>
@@ -151,7 +155,7 @@ export function WellnessTemplate({ page, flow }: TemplateProps) {
           )}
         </h1>
         <a href="#book" className={s.wCta}>
-          {c.ctaLabel ?? 'Book a treatment'}
+          {c.ctaLabel ?? tp.bookTreatment}
         </a>
         <div className={s.wArch} aria-hidden="true" />
       </div>
@@ -171,14 +175,14 @@ export function WellnessTemplate({ page, flow }: TemplateProps) {
       <div className={s.wInfo}>
         {c.notes?.length || page.policy.policyText ? (
           <div>
-            <span className={s.wInfoTitle}>{c.notesTitle ?? 'Before your visit'}</span>
+            <span className={s.wInfoTitle}>{c.notesTitle ?? tp.beforeVisit}</span>
             <span className={s.wInfoText}>
               <Lines lines={c.notes?.length ? c.notes : [page.policy.policyText]} />
             </span>
           </div>
         ) : null}
         <div>
-          <span className={s.wInfoTitle}>Find us</span>
+          <span className={s.wInfoTitle}>{tp.findUs}</span>
           <span className={s.wInfoText}>
             <Lines lines={[p.address, ...p.hoursLines, p.email, p.phone]} />
           </span>
@@ -190,19 +194,18 @@ export function WellnessTemplate({ page, flow }: TemplateProps) {
 
 // ── 3. Health & consultation ─────────────────────────────────────────────────
 export function ConsultTemplate({ page, flow }: TemplateProps) {
+  const { tp } = copyFor(page);
   const p = page.profile;
   const c = p.content;
   const cards =
     c.highlights && c.highlights.length
       ? c.highlights
       : [
-          ...(p.address ? [{ title: 'In person', body: p.address }] : []),
-          ...(p.hoursLines[0] ? [{ title: 'Hours', body: p.hoursLines[0] }] : []),
-          ...(p.phone ? [{ title: 'Phone', body: p.phone }] : []),
+          ...(p.address ? [{ title: tp.inPerson, body: p.address }] : []),
+          ...(p.hoursLines[0] ? [{ title: tp.hours, body: p.hoursLines[0] }] : []),
+          ...(p.phone ? [{ title: tp.phone, body: p.phone }] : []),
         ];
-  const policy = c.notes?.length
-    ? c.notes
-    : [page.policy.policyText, 'We ask only for contact details when you book.'];
+  const policy = c.notes?.length ? c.notes : [page.policy.policyText, tp.contactOnly];
   return (
     <div className={s.consult}>
       <div className={s.cTop}>
@@ -217,7 +220,7 @@ export function ConsultTemplate({ page, flow }: TemplateProps) {
       <div className={s.cMain}>
         <div className={s.cCol}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            <h1 className={s.cH1}>{c.headline ?? 'Book a consultation'}</h1>
+            <h1 className={s.cH1}>{c.headline ?? tp.consultHeadline}</h1>
             {(c.intro ?? p.description) ? (
               <p className={s.cLead}>{c.intro ?? p.description}</p>
             ) : null}
@@ -234,7 +237,7 @@ export function ConsultTemplate({ page, flow }: TemplateProps) {
           ) : null}
           {page.staff.length ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <h2 style={{ margin: 0, fontSize: 20 }}>Practitioners</h2>
+              <h2 style={{ margin: 0, fontSize: 20 }}>{tp.practitioners}</h2>
               {page.staff.map((m) => (
                 <div key={m.id} className={s.cPerson}>
                   <div className={s.cAvatar} aria-hidden="true" />
@@ -250,7 +253,7 @@ export function ConsultTemplate({ page, flow }: TemplateProps) {
             </div>
           ) : null}
           <div className={s.cPolicy}>
-            <h2>{c.notesTitle ?? 'Appointment policies'}</h2>
+            <h2>{c.notesTitle ?? tp.policies}</h2>
             <span>
               <Lines lines={policy} />
             </span>
@@ -266,10 +269,11 @@ export function ConsultTemplate({ page, flow }: TemplateProps) {
 
 // ── 4. Fitness & coaching ────────────────────────────────────────────────────
 export function FitnessTemplate({ page, flow }: TemplateProps) {
+  const { tp, price, min } = copyFor(page);
   const p = page.profile;
   const c = p.content;
   const words = p.displayName.split(/\s+/);
-  const headline = (c.headline ?? 'Train with intent.').trim();
+  const headline = (c.headline ?? tp.fitnessHeadline).trim();
   const lastSpace = headline.lastIndexOf(' ');
   return (
     <div className={s.fitness}>
@@ -284,7 +288,7 @@ export function FitnessTemplate({ page, flow }: TemplateProps) {
           ) : null}
         </span>
         <a href="#book" className={s.fCta}>
-          {c.ctaLabel ?? 'Book a session'}
+          {c.ctaLabel ?? tp.bookSession}
         </a>
       </div>
       <div className={s.fHero}>
@@ -313,10 +317,11 @@ export function FitnessTemplate({ page, flow }: TemplateProps) {
               <span style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 <span className={s.fName}>{x.name}</span>
                 <span className={s.fSub}>
-                  {x.durationMin} min{x.description ? ` · ${x.description}` : ''}
+                  {x.durationMin} {min}
+                  {x.description ? ` · ${x.description}` : ''}
                 </span>
               </span>
-              <span className={s.fPrice}>{price(x.priceMinor, page.currency)}</span>
+              <span className={s.fPrice}>{price(x.priceMinor)}</span>
             </div>
           ))}
           {page.staff.length ? (
@@ -345,6 +350,7 @@ export function FitnessTemplate({ page, flow }: TemplateProps) {
 
 // ── 5. General services ──────────────────────────────────────────────────────
 export function ServicesTemplate({ page, flow }: TemplateProps) {
+  const { tp, price, min } = copyFor(page);
   const p = page.profile;
   const c = p.content;
   return (
@@ -356,7 +362,7 @@ export function ServicesTemplate({ page, flow }: TemplateProps) {
             <span>{p.displayName}</span>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <h1 className={s.sH1}>{c.headline ?? p.tagline ?? 'Book an appointment.'}</h1>
+            <h1 className={s.sH1}>{c.headline ?? p.tagline ?? tp.servicesHeadline}</h1>
             {(c.intro ?? p.description) ? (
               <p className={s.sLead}>{c.intro ?? p.description}</p>
             ) : null}
@@ -364,7 +370,7 @@ export function ServicesTemplate({ page, flow }: TemplateProps) {
         </div>
         <div className={s.sPhoto} aria-hidden="true" />
         <div className={s.sContact}>
-          <span className={s.sContactLabel}>Contact</span>
+          <span className={s.sContactLabel}>{tp.contact}</span>
           {p.address ? (
             <span style={{ fontSize: 20, fontWeight: 700, lineHeight: 1.35 }}>{p.address}</span>
           ) : null}
@@ -378,11 +384,13 @@ export function ServicesTemplate({ page, flow }: TemplateProps) {
         <div className={s.sCatalog}>
           {page.services.map((x) => (
             <div key={x.id} className={s.sCard}>
-              <span className={s.sDur}>{x.durationMin} min</span>
+              <span className={s.sDur}>
+                {x.durationMin} {min}
+              </span>
               <span className={s.sName}>{x.name}</span>
               <span className={s.sDesc}>{x.description}</span>
               <span className={s.sFrom}>
-                {x.priceMinor === 0 ? 'Free' : `From ${price(x.priceMinor, page.currency)}`}
+                {x.priceMinor === 0 ? price(0) : tp.from({ price: price(x.priceMinor) })}
               </span>
             </div>
           ))}

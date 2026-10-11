@@ -1,6 +1,7 @@
 'use client';
 
 import type { CSSProperties, ReactNode } from 'react';
+import { useI18n } from '@/i18n/client';
 import styles from './Landing.module.scss';
 
 /** CSS-3D isometric street of five businesses (ported from Tempo Landing.dc.html `buildWorld`). */
@@ -17,7 +18,8 @@ interface Build {
   si: string;
   win: string;
   sw: string;
-  pin: [string, string];
+  /** Booking time shown on the pin; the booked service text comes from `t.landing.pins`. */
+  pin: string;
   ex: [number, number, number, number, number, number, [string, string, string]][];
 }
 
@@ -32,7 +34,7 @@ const BUILD: Build[] = [
     si: '#f3ece2',
     win: 'repeating-linear-gradient(90deg,#3a2a22 0 38px,#c26a43 38px 50px)',
     sw: 'repeating-linear-gradient(90deg,#9a5134 0 30px,#7f4029 30px 36px)',
-    pin: ['08:40', 'Skin Fade · Marcus'],
+    pin: '08:40',
     ex: [
       [
         -122,
@@ -64,7 +66,7 @@ const BUILD: Build[] = [
     si: '#5c4a3a',
     win: 'repeating-linear-gradient(90deg,#f7efe8 0 44px,#e2bfb3 44px 56px)',
     sw: 'repeating-linear-gradient(90deg,#c49c8f 0 26px,#b38a7d 26px 30px)',
-    pin: ['11:15', 'Signature Facial · Amara'],
+    pin: '11:15',
     ex: [
       [-80, 85, 160, 18, 6, 66, ['#a9bb9d', '#8aa07e', '#71866a']],
       [100, 40, 30, 30, 30, 0, ['#93ad7f', '#7d9a62', '#627f4a']],
@@ -80,7 +82,7 @@ const BUILD: Build[] = [
     si: '#ffffff',
     win: 'repeating-linear-gradient(90deg,#9fb8d9 0 34px,#e3e6e2 34px 44px)',
     sw: 'repeating-linear-gradient(90deg,#c3c8c4 0 10px,#8ea4c2 10px 34px)',
-    pin: ['13:30', 'Initial assessment · Dr. Ruiz'],
+    pin: '13:30',
     ex: [
       [-150, -60, 26, 26, 34, 0, ['#93ad7f', '#7d9a62', '#627f4a']],
       [-150, 0, 26, 26, 26, 0, ['#93ad7f', '#7d9a62', '#627f4a']],
@@ -96,7 +98,7 @@ const BUILD: Build[] = [
     si: '#0e0f0c',
     win: 'repeating-linear-gradient(90deg,#55594a 0 70px,#2a2b26 70px 78px)',
     sw: 'repeating-linear-gradient(90deg,#1e1f1b 0 40px,#c8f542 40px 44px)',
-    pin: ['17:45', 'Small Group HIIT · 4 of 6'],
+    pin: '17:45',
     ex: [[-130, 95, 260, 6, 10, 0, ['#c8f542', '#a9d12f', '#86a823']]],
   },
   {
@@ -109,7 +111,7 @@ const BUILD: Build[] = [
     si: '#ffffff',
     win: 'repeating-linear-gradient(180deg,#b4bbc5 0 10px,#6f7a8a 10px 34px)',
     sw: 'repeating-linear-gradient(90deg,#8f97a3 0 10px,#5e6877 10px 34px)',
-    pin: ['19:20', 'Laptop diagnostic · Ravi'],
+    pin: '19:20',
     ex: [[110, -40, 34, 34, 40, 0, ['#93ad7f', '#7d9a62', '#627f4a']]],
   },
 ];
@@ -191,6 +193,7 @@ function Box({
 }
 
 export function Street({ active, dotP }: { active: number; dotP: number }) {
+  const { t } = useI18n();
   const S = STREET_SPACING;
   const L = (4 * S + 900) * Math.SQRT2;
   return (
@@ -333,9 +336,9 @@ export function Street({ active, dotP }: { active: number; dotP: number }) {
                       color: '#c4581f',
                     }}
                   >
-                    BOOKED · {b.pin[0]}
+                    {t.landing.bookedPin} · {b.pin}
                   </span>
-                  <span style={{ fontWeight: 700, fontSize: 15 }}>{b.pin[1]}</span>
+                  <span style={{ fontWeight: 700, fontSize: 15 }}>{t.landing.pins[i]}</span>
                 </div>
               </div>
             </div>

@@ -1,18 +1,18 @@
-/** Business categories ↔ booking templates (labels from the design). */
-export const CATEGORY_OPTIONS = [
-  { value: 'BARBER', label: 'Barber & hair', template: 'Barber' },
-  { value: 'WELLNESS', label: 'Beauty & wellness', template: 'Wellness' },
-  { value: 'CONSULT', label: 'Health & consultation', template: 'Consultation' },
-  { value: 'FITNESS', label: 'Fitness & coaching', template: 'Fitness' },
-  { value: 'SERVICES', label: 'General services', template: 'General services' },
-] as const;
+import type { Messages } from '@/i18n/messages';
 
-export type CategoryValue = (typeof CATEGORY_OPTIONS)[number]['value'];
+/** Business categories ↔ booking templates. Labels live in `t.common.categories/templates`. */
+export const CATEGORY_VALUES = ['BARBER', 'WELLNESS', 'CONSULT', 'FITNESS', 'SERVICES'] as const;
 
-export function categoryLabel(v: string): string {
-  return CATEGORY_OPTIONS.find((c) => c.value === v)?.label ?? v;
+export type CategoryValue = (typeof CATEGORY_VALUES)[number];
+
+function isCategory(v: string): v is CategoryValue {
+  return (CATEGORY_VALUES as readonly string[]).includes(v);
 }
 
-export function templateLabel(v: string): string {
-  return CATEGORY_OPTIONS.find((c) => c.value === v)?.template ?? v;
+export function categoryLabel(v: string, t: Messages): string {
+  return isCategory(v) ? t.common.categories[v] : v;
+}
+
+export function templateLabel(v: string, t: Messages): string {
+  return isCategory(v) ? t.common.templates[v] : v;
 }

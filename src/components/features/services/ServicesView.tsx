@@ -8,11 +8,13 @@ import { AlertDialog, Drawer, dialogStyles } from '@/components/ui/Dialog';
 import { Field, FormMessage, Input, Select, Textarea, formStyles } from '@/components/ui/Form';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { useToast } from '@/components/ui/Toast';
-import t from '@/components/ui/Table.module.scss';
+import tbl from '@/components/ui/Table.module.scss';
 import segStyles from '@/components/ui/Segmented.module.scss';
 import { moneyFmt } from '@/components/features/shared/format';
 import { saveServiceAction, setServiceActiveAction } from '@/modules/services/actions';
 import { DURATIONS } from '@/modules/services/constants';
+import { useI18n } from '@/i18n/client';
+import type { Messages } from '@/i18n/messages';
 
 export interface ServiceView {
   id: string;
@@ -55,10 +57,10 @@ function initials(n: string) {
     .slice(0, 2);
 }
 
-function bufferLabel(b: number, a: number) {
-  if (!b && !a) return 'None';
-  if (b && a) return `${b} before, ${a} after`;
-  return b ? `${b} before` : `${a} after`;
+function bufferLabel(b: number, a: number, sv: Messages['services']) {
+  if (!b && !a) return sv.none;
+  if (b && a) return sv.bufferBoth({ b, a });
+  return b ? sv.bufferBefore({ n: b }) : sv.bufferAfter({ n: a });
 }
 
 function blankDraft(staff: { id: string }[]): Draft {
@@ -97,6 +99,8 @@ export function ServicesView({
     null,
   );
   const [pending, startTransition] = useTransition();
+  const { t, locale } = useI18n();
+  const sv = t.services;
 
   const blank = (): Draft => blankDraft(staff);
 
@@ -136,7 +140,11 @@ export function ServicesView({
       });
       if (!res.ok)
         return setError({ message: res.error.message, fields: res.error.fieldErrors ?? {} });
-      toast(`${res.data.name} ${res.data.created ? 'added' : 'saved'}`);
+      toast(
+        res.data.created
+          ? sv.toastAdded({ name: res.data.name })
+          : sv.toastSaved({ name: res.data.name }),
+      );
       close();
       router.refresh();
     });
@@ -148,7 +156,11 @@ export function ServicesView({
       const res = await setServiceActiveAction(slug, { id: draft.id, active: activeNext });
       setConfirmDeactivate(false);
       if (!res.ok) return setError({ message: res.error.message, fields: {} });
-      toast(`${res.data.name} ${activeNext ? 'reactivated' : 'deactivated'}`);
+      toast(
+        activeNext
+          ? sv.toastReactivated({ name: res.data.name })
+          : sv.toastDeactivated({ name: res.data.name }),
+      );
       close();
       router.refresh();
     });
@@ -159,34 +171,34 @@ export function ServicesView({
 
   return (
     <>
-      <PageHeader title="Services" />
+      <PageHeader title={t.app.nav.services} />
       <PageContent>
-        <div className={t.footer}>
+        <div className={tbl.footer}>
           <span style={{ color: '#5d564b' }}>
-            {active} active · {services.length - active} inactive · prices in {currency}
+            {sv.summary({ active, inactive: services.length - active, currency })}
           </span>
           <Button variant="primary" onClick={() => setDraft(blank())}>
-            + Add service
+            {sv.add}
           </Button>
         </div>
-        <div className={t.wrap}>
-          <table className={t.table} style={{ minWidth: 820 }}>
+        <div className={tbl.wrap}>
+          <table className={tbl.table} style={{ minWidth: 820 }}>
             <thead>
               <tr>
-                <th>Service</th>
-                <th>Duration</th>
-                <th>Buffer</th>
-                <th className={t.right}>Price</th>
-                <th>Staff</th>
-                <th>Booked, last 30 days</th>
-                <th>Status</th>
+                <th>{sv.cols.service}</th>
+                <th>{sv.cols.duration}</th>
+                <th>{sv.cols.buffer}</th>
+                <th className={tbl.right}>{sv.cols.price}</th>
+                <th>{sv.cols.staff}</th>
+                <th>{sv.cols.booked30}</th>
+                <th>{sv.cols.status}</th>
               </tr>
             </thead>
             <tbody>
               {services.map((s) => (
                 <tr
                   key={s.id}
-                  className={t.clickable}
+                  className={tbl.clickable}
                   tabIndex={0}
                   style={{ opacity: s.isActive ? 1 : 0.6 }}
                   onClick={() => edit(s)}
@@ -198,10 +210,14 @@ export function ServicesView({
                       <span style={{ fontSize: 12, color: '#6b6358' }}>{s.description}</span>
                     </div>
                   </td>
-                  <td>{s.durationMin} min</td>
-                  <td className={t.muted}>{bufferLabel(s.bufferBeforeMin, s.bufferAfterMin)}</td>
-                  <td className={t.right} style={{ fontWeight: 600 }}>
-                    {s.priceMinor === 0 ? 'Free' : moneyFmt(s.priceMinor, currency)}
+                  <td>
+                    {s.durationMin} {sv.min}
+                  </td>
+                  <td className={tbl.muted}>
+                    {bufferLabel(s.bufferBeforeMin, s.bufferAfterMin, sv)}
+                  </td>
+                  <td className={tbl.right} style={{ fontWeight: 600 }}>
+                    {s.priceMinor === 0 ? sv.free : moneyFmt(s.priceMinor, currency, locale)}
                   </td>
                   <td>
                     <div style={{ display: 'flex', gap: 3 }}>
@@ -228,13 +244,13 @@ export function ServicesView({
                       })}
                     </div>
                   </td>
-                  <td className={t.mono}>{s.booked30}</td>
+                  <td className={tbl.mono}>{s.booked30}</td>
                   <td>
                     {s.isActive ? (
                       <StatusPill
                         status="ACTIVE"
                         size="sm"
-                        label={s.isOnline ? 'Active' : 'Active · hidden online'}
+                        label={s.isOnline ? sv.active : sv.activeHidden}
                       />
                     ) : (
                       <StatusPill status="INACTIVE" size="sm" />
@@ -245,10 +261,10 @@ export function ServicesView({
             </tbody>
           </table>
           {services.length === 0 ? (
-            <div className={t.empty}>
-              No services yet.{' '}
-              <button type="button" className={t.linkBtn} onClick={() => setDraft(blank())}>
-                Add your first service
+            <div className={tbl.empty}>
+              {sv.empty}{' '}
+              <button type="button" className={tbl.linkBtn} onClick={() => setDraft(blank())}>
+                {sv.addFirst}
               </button>
             </div>
           ) : null}
@@ -259,17 +275,17 @@ export function ServicesView({
         open={draft !== null}
         onClose={close}
         wide
-        label={draft?.id ? 'Edit service' : 'New service'}
+        label={draft?.id ? sv.edit : sv.new}
         header={
           <span className={dialogStyles.modalTitle}>
-            {draft?.id ? `Edit ${current?.name ?? ''}` : 'New service'}
+            {draft?.id ? sv.editNamed({ name: current?.name ?? '' }) : sv.new}
           </span>
         }
         footer={
           draft ? (
             <>
               <Button variant="primary" disabled={bad || pending} onClick={save}>
-                {pending ? 'Saving…' : 'Save service'}
+                {pending ? sv.saving : sv.save}
               </Button>
               {draft.id ? (
                 draft.isActive ? (
@@ -278,11 +294,11 @@ export function ServicesView({
                     disabled={pending}
                     onClick={() => setConfirmDeactivate(true)}
                   >
-                    Deactivate
+                    {sv.deactivate}
                   </Button>
                 ) : (
                   <Button disabled={pending} onClick={() => setActive(true)}>
-                    Reactivate
+                    {sv.reactivate}
                   </Button>
                 )
               ) : null}
@@ -294,7 +310,7 @@ export function ServicesView({
           <>
             {error ? <FormMessage kind="error">{error.message}</FormMessage> : null}
             <Field
-              label="Service name"
+              label={sv.name}
               error={error?.fields.name ?? (draft.name.trim() ? undefined : ' ')}
             >
               {(p) => (
@@ -306,7 +322,7 @@ export function ServicesView({
                 />
               )}
             </Field>
-            <Field label="Description" error={error?.fields.description}>
+            <Field label={sv.description} error={error?.fields.description}>
               {(p) => (
                 <Textarea
                   {...p}
@@ -318,7 +334,7 @@ export function ServicesView({
               )}
             </Field>
             <div className={formStyles.grid2} style={{ gridTemplateColumns: '1fr 1fr' }}>
-              <Field label="Duration">
+              <Field label={sv.duration}>
                 {(p) => (
                   <Select
                     {...p}
@@ -327,13 +343,13 @@ export function ServicesView({
                   >
                     {DURATIONS.map((d) => (
                       <option key={d} value={d}>
-                        {d} min
+                        {d} {sv.min}
                       </option>
                     ))}
                   </Select>
                 )}
               </Field>
-              <Field label={`Price (${currency})`} error={error?.fields.price}>
+              <Field label={sv.price({ currency })} error={error?.fields.price}>
                 {(p) => (
                   <Input
                     {...p}
@@ -343,7 +359,7 @@ export function ServicesView({
                   />
                 )}
               </Field>
-              <Field label="Buffer before">
+              <Field label={sv.bufferBeforeLabel}>
                 {(p) => (
                   <Select
                     {...p}
@@ -352,30 +368,34 @@ export function ServicesView({
                       setDraft({ ...draft, bufferBeforeMin: Number(e.target.value) })
                     }
                   >
-                    <option value={0}>None</option>
-                    <option value={5}>5 min</option>
-                    <option value={10}>10 min</option>
-                    <option value={15}>15 min</option>
+                    {[0, 5, 10, 15].map((n) => (
+                      <option key={n} value={n}>
+                        {n ? `${n} ${sv.min}` : sv.none}
+                      </option>
+                    ))}
                   </Select>
                 )}
               </Field>
-              <Field label="Buffer after">
+              <Field label={sv.bufferAfterLabel}>
                 {(p) => (
                   <Select
                     {...p}
                     value={draft.bufferAfterMin}
                     onChange={(e) => setDraft({ ...draft, bufferAfterMin: Number(e.target.value) })}
                   >
-                    <option value={0}>None</option>
-                    <option value={5}>5 min</option>
-                    <option value={10}>10 min</option>
-                    <option value={15}>15 min</option>
+                    {[0, 5, 10, 15].map((n) => (
+                      <option key={n} value={n}>
+                        {n ? `${n} ${sv.min}` : sv.none}
+                      </option>
+                    ))}
                   </Select>
                 )}
               </Field>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: '#5d564b' }}>Who offers it</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: '#5d564b' }}>
+                {sv.whoOffers}
+              </span>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                 {staff.map((p) => {
                   const on = draft.staffIds.includes(p.id);
@@ -401,12 +421,12 @@ export function ServicesView({
               </div>
               {noStaff ? (
                 <span style={{ fontSize: 12, color: '#b3261e', fontWeight: 600 }}>
-                  Pick at least one person, or customers can&rsquo;t book it.
+                  {sv.pickStaff}
                 </span>
               ) : null}
             </div>
             <div className={formStyles.grid2} style={{ gridTemplateColumns: '1fr 1fr' }}>
-              <Field label="Available on">
+              <Field label={sv.availableOn}>
                 {(p) => (
                   <Select
                     {...p}
@@ -415,23 +435,25 @@ export function ServicesView({
                       setDraft({ ...draft, availableOn: e.target.value as Draft['availableOn'] })
                     }
                   >
-                    <option value="ALL">Any working day</option>
-                    <option value="WEEKDAYS">Weekdays only</option>
-                    <option value="SATURDAYS">Saturdays only</option>
+                    <option value="ALL">{sv.availability.ALL}</option>
+                    <option value="WEEKDAYS">{sv.availability.WEEKDAYS}</option>
+                    <option value="SATURDAYS">{sv.availability.SATURDAYS}</option>
                   </Select>
                 )}
               </Field>
-              <Field label="Bookable up to">
+              <Field label={sv.bookableUpTo}>
                 {(p) => (
                   <Select
                     {...p}
                     value={draft.maxAdvanceDays}
                     onChange={(e) => setDraft({ ...draft, maxAdvanceDays: e.target.value })}
                   >
-                    <option value="">Business default</option>
-                    <option value="7">7 days ahead</option>
-                    <option value="14">14 days ahead</option>
-                    <option value="30">30 days ahead</option>
+                    <option value="">{sv.businessDefault}</option>
+                    {[7, 14, 30].map((n) => (
+                      <option key={n} value={String(n)}>
+                        {sv.daysAhead({ n })}
+                      </option>
+                    ))}
                   </Select>
                 )}
               </Field>
@@ -442,7 +464,7 @@ export function ServicesView({
                 checked={draft.isOnline}
                 onChange={(e) => setDraft({ ...draft, isOnline: e.target.checked })}
               />
-              Show on the public booking page
+              {sv.showOnline}
             </label>
           </>
         ) : null}
@@ -451,18 +473,17 @@ export function ServicesView({
       <AlertDialog
         open={confirmDeactivate}
         onClose={() => setConfirmDeactivate(false)}
-        title={`Deactivate ${current?.name ?? 'service'}?`}
+        title={sv.deactivateTitle({ name: current?.name ?? sv.thisService })}
         actions={
           <>
-            <Button onClick={() => setConfirmDeactivate(false)}>Keep active</Button>
+            <Button onClick={() => setConfirmDeactivate(false)}>{sv.keepActive}</Button>
             <Button variant="dangerSolid" disabled={pending} onClick={() => setActive(false)}>
-              Deactivate
+              {sv.deactivate}
             </Button>
           </>
         }
       >
-        It disappears from your booking page. {current?.upcoming ?? 0} upcoming appointment
-        {current?.upcoming === 1 ? '' : 's'} stay booked.
+        {sv.deactivateBody({ n: current?.upcoming ?? 0 })}
       </AlertDialog>
     </>
   );

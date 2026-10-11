@@ -3,8 +3,12 @@ import { getDb } from '@/lib/db/client';
 import { requireTenantPage } from '@/lib/auth/authorize';
 import { summarizeHours } from '@/modules/public/booking-page';
 import { OnboardingView } from '@/components/features/onboarding/OnboardingView';
+import { getI18n, getLocale } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Set up your business' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.titles.onboarding };
+}
 
 export default async function OnboardingPage({ params }: { params: Promise<{ tenant: string }> }) {
   const { tenant } = await params;
@@ -28,7 +32,7 @@ export default async function OnboardingPage({ params }: { params: Promise<{ ten
       profileDone={Boolean(profile.address || profile.phone || profile.description)}
       services={services}
       staffIds={staff.map((s) => s.id)}
-      hours={summarizeHours(rules)}
+      hours={summarizeHours(rules, await getLocale())}
       maxPerPhone={policy.maxActiveAppointmentsPerPhone}
       published={profile.pageStatus === 'PUBLISHED'}
       currency={ctx.currency}

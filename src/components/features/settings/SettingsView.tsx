@@ -8,8 +8,8 @@ import { Card } from '@/components/ui/Card';
 import { Field, FormMessage, Input, Select, Textarea, formStyles } from '@/components/ui/Form';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { useToast } from '@/components/ui/Toast';
-import t from '@/components/ui/Table.module.scss';
-import { CATEGORY_OPTIONS } from '@/components/features/shared/categories';
+import tbl from '@/components/ui/Table.module.scss';
+import { CATEGORY_VALUES } from '@/components/features/shared/categories';
 import { fmtDay, fmtTime } from '@/components/features/shared/format';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
 import { saveBusinessAction, savePolicyAction } from '@/modules/businesses/actions';
@@ -18,43 +18,12 @@ import {
   revokeInvitationAction,
   updateMemberAction,
 } from '@/modules/tenants/actions';
+import { useI18n } from '@/i18n/client';
+import { countryName } from '@/i18n/format';
 
 type Role = 'OWNER' | 'MANAGER' | 'STAFF';
 
-const WINDOWS: [number, string][] = [
-  [0, 'Any time before the start'],
-  [60, '1 hour before'],
-  [120, '2 hours before'],
-  [240, '4 hours before'],
-  [720, '12 hours before'],
-  [1440, '24 hours before'],
-  [2880, '48 hours before'],
-];
-
-const ACTION_LABEL: Record<string, string> = {
-  'appointment.created': 'Appointment created',
-  'appointment.cancelled': 'Appointment cancelled',
-  'appointment.rescheduled': 'Appointment rescheduled',
-  'appointment.confirmed': 'Appointment confirmed',
-  'appointment.completed': 'Marked completed',
-  'appointment.no_show': 'Marked no-show',
-  'policy.updated': 'Booking policy changed',
-  'payment.recorded': 'Payment recorded',
-  'payment.voided': 'Payment voided',
-  'membership.invited': 'Team member invited',
-  'membership.joined': 'Team member joined',
-  'membership.role_changed': 'Role changed',
-  'membership.removed': 'Access removed',
-  'service.created': 'Service added',
-  'service.updated': 'Service edited',
-  'service.deactivated': 'Service deactivated',
-  'availability.updated': 'Hours updated',
-  'booking_page.updated': 'Booking page edited',
-  'booking_page.published': 'Booking page status changed',
-  'tenant.suspended': 'Business suspended by Tempo',
-  'tenant.reactivated': 'Business reactivated by Tempo',
-  'tenant.plan_changed': 'Plan changed',
-};
+const WINDOWS = [0, 60, 120, 240, 720, 1440, 2880];
 
 export function SettingsView(props: {
   business: {
@@ -95,6 +64,8 @@ export function SettingsView(props: {
   const router = useRouter();
   const toast = useToast();
   const [pending, startTransition] = useTransition();
+  const { t, locale } = useI18n();
+  const se = t.settings;
 
   const [biz, setBiz] = useState({
     name: props.business.name,
@@ -132,8 +103,11 @@ export function SettingsView(props: {
   return (
     <>
       <PageHeader
-        title="Business settings"
-        sub={`${props.business.name} · ${props.business.plan[0]}${props.business.plan.slice(1).toLowerCase()} plan`}
+        title={t.app.nav.settings}
+        sub={se.sub({
+          business: props.business.name,
+          plan: se.plans[props.business.plan] ?? props.business.plan,
+        })}
       />
       <PageContent>
         <div
@@ -144,9 +118,9 @@ export function SettingsView(props: {
             alignItems: 'start',
           }}
         >
-          <Card title="Booking policy">
+          <Card title={se.policy}>
             {errors.policy ? <FormMessage kind="error">{errors.policy}</FormMessage> : null}
-            <Field label="Active appointments per phone number" hint="1–20">
+            <Field label={se.perPhone} hint={se.perPhoneHint}>
               {(p) => (
                 <Input
                   {...p}
@@ -163,12 +137,9 @@ export function SettingsView(props: {
               )}
             </Field>
             <span style={{ fontSize: 12, color: '#6b6358', lineHeight: 1.5 }}>
-              How many upcoming pending or confirmed appointments one phone number can hold with
-              your business at the same time. Past, cancelled, completed and no-show appointments
-              don&rsquo;t count. Phone numbers are not verified, so this is an anti-spam limit, not
-              identity proof. It also applies to appointments your team creates.
+              {se.perPhoneHelp}
             </span>
-            <Field label="Customers can cancel or reschedule online until">
+            <Field label={se.window}>
               {(p) => (
                 <Select
                   {...p}
@@ -178,9 +149,9 @@ export function SettingsView(props: {
                     setPolicy({ ...policy, cancellationWindowMin: Number(e.target.value) })
                   }
                 >
-                  {WINDOWS.map(([v, l]) => (
+                  {WINDOWS.map((v) => (
                     <option key={v} value={v}>
-                      {l}
+                      {se.windows[v]}
                     </option>
                   ))}
                 </Select>
@@ -193,7 +164,7 @@ export function SettingsView(props: {
                 checked={policy.requireEmail}
                 onChange={(e) => setPolicy({ ...policy, requireEmail: e.target.checked })}
               />
-              Ask customers for an email address
+              {se.requireEmail}
             </label>
             <label className={formStyles.checkbox}>
               <input
@@ -202,16 +173,16 @@ export function SettingsView(props: {
                 checked={policy.autoConfirm}
                 onChange={(e) => setPolicy({ ...policy, autoConfirm: e.target.checked })}
               />
-              Confirm online bookings automatically (otherwise they arrive as Pending)
+              {se.autoConfirm}
             </label>
-            <Field label="Policy shown before booking" hint="Optional">
+            <Field label={se.policyText} hint={se.optional}>
               {(p) => (
                 <Textarea
                   {...p}
                   rows={3}
                   maxLength={600}
                   disabled={!props.canPolicy}
-                  placeholder="Free cancellation up to 4 hours before. Late arrivals over 15 minutes may need to rebook."
+                  placeholder={se.policyPlaceholder}
                   value={policy.policyText}
                   onChange={(e) => setPolicy({ ...policy, policyText: e.target.value })}
                 />
@@ -233,19 +204,19 @@ export function SettingsView(props: {
                           autoConfirm: policy.autoConfirm,
                           policyText: policy.policyText,
                         }),
-                      'Booking policy saved',
+                      se.policySaved,
                     )
                   }
                 >
-                  Save policy
+                  {se.savePolicy}
                 </Button>
               </div>
             ) : null}
           </Card>
 
-          <Card title="Business">
+          <Card title={se.business}>
             {errors.biz ? <FormMessage kind="error">{errors.biz}</FormMessage> : null}
-            <Field label="Business name">
+            <Field label={se.businessName}>
               {(p) => (
                 <Input
                   {...p}
@@ -256,22 +227,22 @@ export function SettingsView(props: {
               )}
             </Field>
             <div className={formStyles.grid2}>
-              <Field label="Type of business">
+              <Field label={se.category}>
                 {(p) => (
                   <Select
                     {...p}
                     value={biz.category}
                     onChange={(e) => setBiz({ ...biz, category: e.target.value })}
                   >
-                    {CATEGORY_OPTIONS.map((c) => (
-                      <option key={c.value} value={c.value}>
-                        {c.label}
+                    {CATEGORY_VALUES.map((c) => (
+                      <option key={c} value={c}>
+                        {t.common.categories[c]}
                       </option>
                     ))}
                   </Select>
                 )}
               </Field>
-              <Field label="Country" hint="Default for phone numbers">
+              <Field label={se.country} hint={se.countryHint}>
                 {(p) => (
                   <Select
                     {...p}
@@ -280,7 +251,7 @@ export function SettingsView(props: {
                   >
                     {PHONE_COUNTRIES.map((c) => (
                       <option key={c.code} value={c.code}>
-                        {c.name}
+                        {countryName(c.code, locale, c.name)}
                       </option>
                     ))}
                   </Select>
@@ -288,32 +259,33 @@ export function SettingsView(props: {
               </Field>
             </div>
             <span style={{ fontSize: 12, color: '#6b6358' }}>
-              Booking address /book/{props.business.slug} · Currency {props.business.currency} ·
-              Time zone {props.business.timezone} (change it in Availability).
+              {se.businessFacts({
+                slug: props.business.slug,
+                currency: props.business.currency,
+                timezone: props.business.timezone,
+              })}
             </span>
             <div>
               <Button
                 variant="primary"
                 disabled={pending}
-                onClick={() =>
-                  run('biz', () => saveBusinessAction(slug, biz), 'Business details saved')
-                }
+                onClick={() => run('biz', () => saveBusinessAction(slug, biz), se.businessSaved)}
               >
-                Save business
+                {se.saveBusiness}
               </Button>
             </div>
           </Card>
         </div>
 
         <section id="team">
-          <Card title="Team access" flush>
-            <div className={t.wrap} style={{ border: 0 }}>
-              <table className={t.table} style={{ minWidth: 640 }}>
+          <Card title={se.team} flush>
+            <div className={tbl.wrap} style={{ border: 0 }}>
+              <table className={tbl.table} style={{ minWidth: 640 }}>
                 <thead>
                   <tr>
-                    <th>Person</th>
-                    <th>Role</th>
-                    <th>Status</th>
+                    <th>{se.person}</th>
+                    <th>{se.role}</th>
+                    <th>{se.status}</th>
                     <th />
                   </tr>
                 </thead>
@@ -324,16 +296,16 @@ export function SettingsView(props: {
                         <div style={{ display: 'flex', flexDirection: 'column' }}>
                           <span style={{ fontWeight: 600 }}>
                             {m.name}
-                            {m.self ? ' (you)' : ''}
+                            {m.self ? se.you : ''}
                           </span>
-                          <span className={t.faint}>{m.email}</span>
+                          <span className={tbl.faint}>{m.email}</span>
                         </div>
                       </td>
                       <td>
                         {props.canRoles && !m.self ? (
                           <select
-                            className={t.select}
-                            aria-label={`Role for ${m.name}`}
+                            className={tbl.select}
+                            aria-label={se.roleFor({ name: m.name })}
                             value={m.role}
                             disabled={pending}
                             onChange={(e) =>
@@ -344,22 +316,22 @@ export function SettingsView(props: {
                                     membershipId: m.id,
                                     role: e.target.value,
                                   }),
-                                'Role updated',
+                                se.roleUpdated,
                               )
                             }
                           >
-                            <option value="OWNER">Owner</option>
-                            <option value="MANAGER">Manager</option>
-                            <option value="STAFF">Staff</option>
+                            <option value="OWNER">{t.app.roles.OWNER}</option>
+                            <option value="MANAGER">{t.app.roles.MANAGER}</option>
+                            <option value="STAFF">{t.app.roles.STAFF}</option>
                           </select>
                         ) : (
-                          m.role[0] + m.role.slice(1).toLowerCase()
+                          t.app.roles[m.role]
                         )}
                       </td>
                       <td>
                         <StatusPill status={m.status} size="sm" />
                       </td>
-                      <td className={t.right}>
+                      <td className={tbl.right}>
                         {props.canRoles && !m.self ? (
                           <Button
                             size="sm"
@@ -374,12 +346,12 @@ export function SettingsView(props: {
                                     status: m.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE',
                                   }),
                                 m.status === 'ACTIVE'
-                                  ? `${m.name} can no longer sign in here`
-                                  : `${m.name} reactivated`,
+                                  ? se.accessRemoved({ name: m.name })
+                                  : se.reactivated({ name: m.name }),
                               )
                             }
                           >
-                            {m.status === 'ACTIVE' ? 'Remove access' : 'Restore access'}
+                            {m.status === 'ACTIVE' ? se.removeAccess : se.restoreAccess}
                           </Button>
                         ) : null}
                       </td>
@@ -389,28 +361,24 @@ export function SettingsView(props: {
                     <tr key={i.id}>
                       <td>
                         <span style={{ fontWeight: 600 }}>{i.email}</span>{' '}
-                        <span className={t.faint}>
-                          · invited, expires {fmtDay(i.expiresAt, tz)}
+                        <span className={tbl.faint}>
+                          {se.invitedExpires({ date: fmtDay(i.expiresAt, tz, locale) })}
                         </span>
                       </td>
-                      <td>{i.role[0] + i.role.slice(1).toLowerCase()}</td>
+                      <td>{t.app.roles[i.role]}</td>
                       <td>
-                        <StatusPill status="TRIAL" size="sm" label="Pending" />
+                        <StatusPill status="TRIAL" size="sm" label={se.pending} />
                       </td>
-                      <td className={t.right}>
+                      <td className={tbl.right}>
                         {props.canInvite ? (
                           <Button
                             size="sm"
                             disabled={pending}
                             onClick={() =>
-                              run(
-                                'team',
-                                () => revokeInvitationAction(slug, i.id),
-                                'Invitation revoked',
-                              )
+                              run('team', () => revokeInvitationAction(slug, i.id), se.revoked)
                             }
                           >
-                            Revoke
+                            {se.revoke}
                           </Button>
                         ) : null}
                       </td>
@@ -430,27 +398,25 @@ export function SettingsView(props: {
             >
               {errors.team ? <FormMessage kind="error">{errors.team}</FormMessage> : null}
               {props.canInvite ? (
-                <div className={t.toolbar}>
+                <div className={tbl.toolbar}>
                   <input
-                    className={t.search}
+                    className={tbl.search}
                     type="email"
-                    placeholder="Email address"
-                    aria-label="Invite email"
+                    placeholder={se.emailPlaceholder}
+                    aria-label={se.inviteEmail}
                     value={invite.email}
                     onChange={(e) => setInvite({ ...invite, email: e.target.value })}
                   />
                   <select
-                    className={t.select}
-                    aria-label="Invite role"
+                    className={tbl.select}
+                    aria-label={se.inviteRole}
                     value={invite.role}
                     onChange={(e) =>
                       setInvite({ ...invite, role: e.target.value as 'STAFF' | 'MANAGER' })
                     }
                   >
-                    <option value="STAFF">Staff · own calendar</option>
-                    {props.canRoles ? (
-                      <option value="MANAGER">Manager · everything except roles</option>
-                    ) : null}
+                    <option value="STAFF">{se.staffOption}</option>
+                    {props.canRoles ? <option value="MANAGER">{se.managerOption}</option> : null}
                   </select>
                   <Button
                     variant="primary"
@@ -464,41 +430,34 @@ export function SettingsView(props: {
                             ...e,
                             team: res.error.fieldErrors?.email ?? res.error.message,
                           }));
-                        toast(
-                          res.data.emailed
-                            ? 'Invitation sent'
-                            : 'Invitation created — email isn’t set up, so share the link from the server log (development only)',
-                        );
+                        toast(res.data.emailed ? se.invitationSent : se.invitationCreated);
                         setInvite({ ...invite, email: '' });
                         router.refresh();
                       });
                     }}
                   >
-                    Send invitation
+                    {se.sendInvitation}
                   </Button>
                 </div>
               ) : null}
-              <span style={{ fontSize: 12, color: '#6b6358' }}>
-                Staff see the calendar and appointments and manage only their own bookings. Managers
-                can change services, hours, policies and the booking page. Changing someone&rsquo;s
-                role signs them out everywhere.
-              </span>
+              <span style={{ fontSize: 12, color: '#6b6358' }}>{se.rolesHelp}</span>
             </div>
           </Card>
         </section>
 
         {props.events.length ? (
-          <Card title="Recent activity" flush>
-            <div className={t.wrap} style={{ border: 0 }}>
-              <table className={t.table}>
+          <Card title={se.activity} flush>
+            <div className={tbl.wrap} style={{ border: 0 }}>
+              <table className={tbl.table}>
                 <tbody>
                   {props.events.map((e) => (
                     <tr key={e.id}>
-                      <td className={t.mono} style={{ width: 150 }}>
-                        {fmtDay(e.at, tz, { month: 'short', day: 'numeric' })}, {fmtTime(e.at, tz)}
+                      <td className={tbl.mono} style={{ width: 150 }}>
+                        {fmtDay(e.at, tz, locale, { month: 'short', day: 'numeric' })},{' '}
+                        {fmtTime(e.at, tz, locale)}
                       </td>
                       <td style={{ width: 160, fontWeight: 700 }}>{e.actor}</td>
-                      <td>{ACTION_LABEL[e.action] ?? e.action}</td>
+                      <td>{se.actions[e.action] ?? e.action}</td>
                     </tr>
                   ))}
                 </tbody>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, type ReactNode } from 'react';
 import styles from './Dialog.module.scss';
+import { useI18n } from '@/i18n/client';
 
 export const dialogStyles = styles;
 
@@ -70,9 +71,7 @@ export function Drawer({
     >
       <div className={styles.drawerHead}>
         <div style={{ minWidth: 0, flex: 1 }}>{header}</div>
-        <button type="button" className={styles.close} aria-label="Close" onClick={onClose}>
-          ×
-        </button>
+        <CloseButton onClick={onClose}>×</CloseButton>
       </div>
       <div className={styles.drawerBody}>{children}</div>
       {footer ? <div className={styles.drawerFoot}>{footer}</div> : null}
@@ -91,9 +90,7 @@ export function Modal({
     <NativeDialog open={open} onClose={onClose} label={title} className={styles.modal}>
       <div className={styles.modalHead}>
         <h2 className={styles.modalTitle}>{title}</h2>
-        <button type="button" className={styles.close} aria-label="Close" onClick={onClose}>
-          ×
-        </button>
+        <CloseButton onClick={onClose}>×</CloseButton>
       </div>
       <div className={styles.modalBody}>{children}</div>
       {footer ? <div className={styles.modalFoot}>{footer}</div> : null}
@@ -120,5 +117,14 @@ export function AlertDialog({
       <div className={styles.alertBody}>{children}</div>
       <div className={styles.alertActions}>{actions}</div>
     </NativeDialog>
+  );
+}
+
+function CloseButton({ onClick, children }: { onClick: () => void; children: ReactNode }) {
+  const { t } = useI18n();
+  return (
+    <button type="button" className={styles.close} aria-label={t.common.close} onClick={onClick}>
+      {children}
+    </button>
   );
 }

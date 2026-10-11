@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { PageContent, PageHeader, useShell } from '@/components/layout/AppShell';
-import t from '@/components/ui/Table.module.scss';
+import tbl from '@/components/ui/Table.module.scss';
 import { fmtDay, moneyFmt } from '@/components/features/shared/format';
+import { useI18n } from '@/i18n/client';
 
 interface Row {
   id: string;
@@ -34,6 +35,8 @@ export function CustomersView({
   const router = useRouter();
   const [query, setQuery] = useState(q);
   const base = `/app/${slug}/customers`;
+  const { t, locale } = useI18n();
+  const cu = t.customers;
 
   useEffect(() => {
     if (query === q) return;
@@ -50,78 +53,74 @@ export function CustomersView({
 
   return (
     <>
-      <PageHeader
-        title="Customers"
-        sub={`${total} customer${total === 1 ? '' : 's'} · phone numbers are not verified`}
-      />
+      <PageHeader title={t.app.nav.customers} sub={cu.sub({ n: total })} />
       <PageContent>
-        <div className={t.toolbar}>
+        <div className={tbl.toolbar}>
           <input
-            className={t.search}
+            className={tbl.search}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search name, email or phone"
-            aria-label="Search customers"
+            placeholder={cu.search}
+            aria-label={cu.searchLabel}
           />
         </div>
-        <div className={t.wrap}>
-          <table className={t.table} style={{ minWidth: 820 }}>
+        <div className={tbl.wrap}>
+          <table className={tbl.table} style={{ minWidth: 820 }}>
             <thead>
               <tr>
-                <th>Customer</th>
-                <th>Phone</th>
-                <th>Email</th>
-                <th>Completed visits</th>
-                <th>Last visit</th>
-                <th>Next visit</th>
-                <th className={t.right}>Est. lifetime value</th>
+                <th>{cu.cols.customer}</th>
+                <th>{cu.cols.phone}</th>
+                <th>{cu.cols.email}</th>
+                <th>{cu.cols.completed}</th>
+                <th>{cu.cols.last}</th>
+                <th>{cu.cols.next}</th>
+                <th className={tbl.right}>{cu.cols.value}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr
                   key={r.id}
-                  className={t.clickable}
+                  className={tbl.clickable}
                   tabIndex={0}
                   onClick={() => router.push(`${base}/${r.id}`)}
                   onKeyDown={(e) => e.key === 'Enter' && router.push(`${base}/${r.id}`)}
                 >
-                  <td className={t.strong}>{r.name}</td>
-                  <td className={t.nowrap}>{r.phone || <span className={t.faint}>—</span>}</td>
-                  <td className={t.muted}>{r.email || <span className={t.faint}>—</span>}</td>
-                  <td className={t.mono}>{r.completed}</td>
-                  <td className={t.nowrap}>
+                  <td className={tbl.strong}>{r.name}</td>
+                  <td className={tbl.nowrap}>{r.phone || <span className={tbl.faint}>—</span>}</td>
+                  <td className={tbl.muted}>{r.email || <span className={tbl.faint}>—</span>}</td>
+                  <td className={tbl.mono}>{r.completed}</td>
+                  <td className={tbl.nowrap}>
                     {r.lastVisit
-                      ? fmtDay(r.lastVisit, tz, { month: 'short', day: 'numeric', year: 'numeric' })
+                      ? fmtDay(r.lastVisit, tz, locale, {
+                          month: 'short',
+                          day: 'numeric',
+                          year: 'numeric',
+                        })
                       : '—'}
                   </td>
-                  <td className={t.nowrap}>{r.nextVisit ? fmtDay(r.nextVisit, tz) : '—'}</td>
-                  <td className={t.right}>{moneyFmt(r.valueMinor, currency)}</td>
+                  <td className={tbl.nowrap}>
+                    {r.nextVisit ? fmtDay(r.nextVisit, tz, locale) : '—'}
+                  </td>
+                  <td className={tbl.right}>{moneyFmt(r.valueMinor, currency, locale)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
           {rows.length === 0 ? (
-            <div className={t.empty}>
-              {q
-                ? 'No customers match that search.'
-                : 'Customers appear here after their first booking.'}
-            </div>
+            <div className={tbl.empty}>{q ? cu.noMatch : cu.emptyList}</div>
           ) : null}
         </div>
-        <div className={t.footer}>
-          <span>
-            Showing {rows.length} of {total} · Lifetime value is the price of completed
-            appointments, not payments.
-          </span>
+        <div className={tbl.footer}>
+          <span>{cu.showing({ n: rows.length, total })}</span>
           {rows.length < total ? (
             <Link
-              className={t.chip}
+              className={tbl.chip}
               style={{ padding: '8px 14px', borderRadius: 8, fontSize: 13 }}
               href={`${base}?${new URLSearchParams({ ...(q ? { q } : {}), limit: String(limit + 50) })}`}
               scroll={false}
             >
-              Show 50 more
+              {cu.showMore}
             </Link>
           ) : null}
         </div>

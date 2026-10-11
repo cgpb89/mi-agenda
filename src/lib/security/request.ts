@@ -2,6 +2,7 @@ import 'server-only';
 import { headers } from 'next/headers';
 import { getEnv } from '@/lib/env';
 import { AppError } from '@/lib/errors';
+import { msg } from '@/i18n/message-ref';
 
 /**
  * Client IP for rate limiting. Forwarded headers are only trusted when the
@@ -34,7 +35,7 @@ export function assertSameOrigin(request: Request): void {
   const expected = new URL(getEnv().APP_URL).origin;
   const origin = request.headers.get('origin');
   if (origin) {
-    if (origin !== expected) throw new AppError('FORBIDDEN', 'Cross-site request blocked.');
+    if (origin !== expected) throw new AppError('FORBIDDEN', msg('crossSite'));
     return;
   }
   const referer = request.headers.get('referer');
@@ -45,7 +46,7 @@ export function assertSameOrigin(request: Request): void {
       /* fallthrough */
     }
   }
-  throw new AppError('FORBIDDEN', 'Cross-site request blocked.');
+  throw new AppError('FORBIDDEN', msg('crossSite'));
 }
 
 export { safeRedirectPath } from './redirect';

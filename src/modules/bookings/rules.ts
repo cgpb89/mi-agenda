@@ -2,6 +2,8 @@
  * Booking domain rules (pure). Single source of truth for statuses, the
  * phone-limit "active" definition and lifecycle transitions.
  */
+import { msg } from '@/i18n/message-ref';
+
 export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 
 /** Statuses that occupy staff time (enforced by the DB exclusion constraint too). */
@@ -34,6 +36,9 @@ export function wouldExceedPhoneLimit(activeCount: number, max: number): boolean
 
 export type Transition = 'confirm' | 'cancel' | 'complete' | 'no_show';
 
+/** Stored as the cancel reason when a customer cancels via their manage link (shown translated). */
+export const CUSTOMER_CANCEL_REASON = 'Cancelled by customer online';
+
 const TARGET: Record<Transition, AppointmentStatus> = {
   confirm: 'CONFIRMED',
   cancel: 'CANCELLED',
@@ -57,16 +62,13 @@ export function transitionError(
   const started = startAt.getTime() <= now.getTime();
   switch (action) {
     case 'confirm':
-      return current === 'PENDING' ? null : 'Only pending appointments can be confirmed.';
+      return current === 'PENDING' ? null : msg('onlyPendingConfirm');
     case 'cancel':
-      return current === 'PENDING' || current === 'CONFIRMED'
-        ? null
-        : 'This appointment can no longer be cancelled.';
+      return current === 'PENDING' || current === 'CONFIRMED' ? null : msg('cantCancel');
     case 'complete':
     case 'no_show':
-      if (current !== 'CONFIRMED' && current !== 'PENDING')
-        return 'This appointment is already closed.';
-      if (!started) return "This appointment hasn't started yet.";
+      if (current !== 'CONFIRMED' && current !== 'PENDING') return msg('alreadyClosed');
+      if (!started) return msg('notStarted');
       return null;
   }
 }

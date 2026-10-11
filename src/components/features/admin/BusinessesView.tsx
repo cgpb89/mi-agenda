@@ -7,9 +7,9 @@ import { AlertDialog, Drawer, dialogStyles } from '@/components/ui/Dialog';
 import { Field, FormMessage, Input } from '@/components/ui/Form';
 import { StatusPill } from '@/components/ui/StatusPill';
 import { useToast } from '@/components/ui/Toast';
-import t from '@/components/ui/Table.module.scss';
+import tbl from '@/components/ui/Table.module.scss';
 import {
-  CATEGORY_OPTIONS,
+  CATEGORY_VALUES,
   categoryLabel,
   templateLabel,
 } from '@/components/features/shared/categories';
@@ -18,25 +18,21 @@ import { PLANS, type PlanKey } from '@/modules/platform/constants';
 import type { TenantRow } from '@/modules/platform/service';
 import { AdminHeader } from './AdminShell';
 import s from './Admin.module.scss';
+import { useI18n } from '@/i18n/client';
+import type { Messages } from '@/i18n/messages';
 
-const PAGE_LABEL: Record<string, string> = {
-  PUBLISHED: 'Published',
-  DRAFT: 'Draft',
-  UNPUBLISHED: 'Unpublished',
-};
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', {
+function fmtDate(iso: string, intl: string) {
+  return new Date(iso).toLocaleDateString(intl, {
     month: 'short',
     day: 'numeric',
     year: 'numeric',
   });
 }
 
-function ago(iso: string | null) {
+function ago(iso: string | null, bz: Messages['admin']['businesses']) {
   if (!iso) return '—';
   const days = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
-  return days <= 0 ? 'Today' : days === 1 ? 'Yesterday' : `${days} days ago`;
+  return days <= 0 ? bz.today : days === 1 ? bz.yesterday : bz.daysAgo({ n: days });
 }
 
 type Confirm =
@@ -61,6 +57,10 @@ export function BusinessesView({
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
+  const { t, intl } = useI18n();
+  const bz = t.admin.businesses;
+  const planLabel = (p: PlanKey) => t.settings.plans[p] ?? PLANS[p].label;
+  const PAGE_LABEL = bz.page;
 
   const rows = useMemo(() => {
     const needle = q.trim().toLowerCase();
@@ -99,8 +99,10 @@ export function BusinessesView({
       }
       toast(
         confirm.kind === 'plan'
-          ? `Plan changed to ${PLANS[confirm.plan].label}`
-          : `${b.name} ${confirm.kind === 'suspend' ? 'suspended' : 'reactivated'}`,
+          ? bz.toastPlan({ plan: planLabel(confirm.plan) })
+          : confirm.kind === 'suspend'
+            ? bz.toastSuspended({ name: b.name })
+            : bz.toastReactivated({ name: b.name }),
       );
       setConfirm(null);
       setReason('');
@@ -113,94 +115,99 @@ export function BusinessesView({
     b && confirm
       ? confirm.kind === 'suspend'
         ? {
-            title: `Suspend ${b.name}?`,
-            body: 'The booking page goes offline and the team is signed out and can no longer sign in. Existing appointments are kept.',
-            cta: 'Suspend account',
+            title: bz.suspendTitle({ name: b.name }),
+            body: bz.suspendBody,
+            cta: bz.suspendCta,
           }
         : confirm.kind === 'reactivate'
           ? {
-              title: `Reactivate ${b.name}?`,
-              body: 'The booking page and team logins come back immediately.',
-              cta: 'Reactivate',
+              title: bz.reactivateTitle({ name: b.name }),
+              body: bz.reactivateBody,
+              cta: bz.reactivateCta,
             }
           : {
-              title: `Change plan to ${PLANS[confirm.plan].label}?`,
-              body: `${b.name} moves from ${PLANS[b.plan].label} to ${PLANS[confirm.plan].label}. Plans are labels in this release; no billing changes.`,
-              cta: 'Change plan',
+              title: bz.planTitle({ plan: planLabel(confirm.plan) }),
+              body: bz.planBody({
+                name: b.name,
+                from: planLabel(b.plan),
+                to: planLabel(confirm.plan),
+              }),
+              cta: bz.planCta,
             }
       : null;
 
   return (
     <>
-      <AdminHeader title="Businesses" sub={`${tenants.length} businesses`} />
+      <AdminHeader title={bz.title} sub={bz.sub({ n: tenants.length })} />
       <div className={s.content}>
-        <div className={t.toolbar}>
+        <div className={tbl.toolbar}>
           <input
-            className={t.search}
+            className={tbl.search}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search business, owner or slug"
-            aria-label="Search businesses"
+            placeholder={bz.search}
+            aria-label={bz.searchLabel}
           />
           <select
-            className={t.select}
-            aria-label="Category"
+            className={tbl.select}
+            aria-label={bz.category}
             value={cat}
             onChange={(e) => setCat(e.target.value)}
           >
-            <option value="all">All categories</option>
-            {CATEGORY_OPTIONS.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
+            <option value="all">{bz.allCategories}</option>
+            {CATEGORY_VALUES.map((c) => (
+              <option key={c} value={c}>
+                {t.common.categories[c]}
               </option>
             ))}
           </select>
           <select
-            className={t.select}
-            aria-label="Plan"
+            className={tbl.select}
+            aria-label={bz.plan}
             value={plan}
             onChange={(e) => setPlan(e.target.value)}
           >
-            <option value="all">All plans</option>
+            <option value="all">{bz.allPlans}</option>
             {(Object.keys(PLANS) as PlanKey[]).map((p) => (
               <option key={p} value={p}>
-                {PLANS[p].label}
+                {planLabel(p)}
               </option>
             ))}
           </select>
           <select
-            className={t.select}
-            aria-label="Status"
+            className={tbl.select}
+            aria-label={bz.status}
             value={status}
             onChange={(e) => setStatus(e.target.value)}
           >
-            <option value="all">All statuses</option>
-            <option value="ACTIVE">Active</option>
-            <option value="TRIAL">Trial</option>
-            <option value="SUSPENDED">Suspended</option>
-            <option value="CHURNED">Churned</option>
+            <option value="all">{bz.allStatuses}</option>
+            {(['ACTIVE', 'TRIAL', 'SUSPENDED', 'CHURNED'] as const).map((k) => (
+              <option key={k} value={k}>
+                {t.common.status[k]}
+              </option>
+            ))}
           </select>
         </div>
-        <div className={t.wrap} style={{ borderColor: '#e2e2dc' }}>
-          <table className={t.table} style={{ minWidth: 1000 }}>
+        <div className={tbl.wrap} style={{ borderColor: '#e2e2dc' }}>
+          <table className={tbl.table} style={{ minWidth: 1000 }}>
             <thead>
               <tr>
-                <th>Business</th>
-                <th>Category</th>
-                <th>Owner</th>
-                <th>Registered</th>
-                <th>Plan</th>
-                <th>Account</th>
-                <th>Booking page</th>
-                <th className={t.right}>Appts, 30 days</th>
-                <th>Last activity</th>
+                <th>{bz.cols.business}</th>
+                <th>{bz.cols.category}</th>
+                <th>{bz.cols.owner}</th>
+                <th>{bz.cols.registered}</th>
+                <th>{bz.cols.plan}</th>
+                <th>{bz.cols.account}</th>
+                <th>{bz.cols.page}</th>
+                <th className={tbl.right}>{bz.cols.appts30}</th>
+                <th>{bz.cols.lastActivity}</th>
               </tr>
             </thead>
             <tbody>
               {rows.map((x) => (
                 <tr
                   key={x.id}
-                  className={t.clickable}
+                  className={tbl.clickable}
                   tabIndex={0}
                   onClick={() => open(x.id)}
                   onKeyDown={(e) => e.key === 'Enter' && open(x.id)}
@@ -208,35 +215,35 @@ export function BusinessesView({
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
                       <span style={{ fontWeight: 700 }}>{x.name}</span>
-                      <span className={t.mono} style={{ fontSize: 11, color: '#62666d' }}>
+                      <span className={tbl.mono} style={{ fontSize: 11, color: '#62666d' }}>
                         /{x.slug}
                       </span>
                     </div>
                   </td>
-                  <td>{categoryLabel(x.category)}</td>
+                  <td>{categoryLabel(x.category, t)}</td>
                   <td>{x.owner}</td>
-                  <td className={t.nowrap}>{fmtDate(x.createdAt)}</td>
-                  <td>{PLANS[x.plan].label}</td>
+                  <td className={tbl.nowrap}>{fmtDate(x.createdAt, intl)}</td>
+                  <td>{planLabel(x.plan)}</td>
                   <td>
                     <StatusPill status={x.status as 'ACTIVE'} size="sm" />
                   </td>
                   <td style={{ color: x.pageStatus === 'PUBLISHED' ? undefined : '#8a8e94' }}>
                     {PAGE_LABEL[x.pageStatus]}
                   </td>
-                  <td className={`${t.right} ${t.mono}`}>{x.appts30}</td>
-                  <td className={t.nowrap} style={{ color: '#62666d' }}>
-                    {ago(x.lastActivity)}
+                  <td className={`${tbl.right} ${tbl.mono}`}>{x.appts30}</td>
+                  <td className={tbl.nowrap} style={{ color: '#62666d' }}>
+                    {ago(x.lastActivity, bz)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
           {rows.length === 0 ? (
-            <div className={t.empty}>
-              No businesses match.{' '}
+            <div className={tbl.empty}>
+              {bz.noMatch}{' '}
               <button
                 type="button"
-                className={t.linkBtn}
+                className={tbl.linkBtn}
                 style={{ color: '#2f6e5a' }}
                 onClick={() => {
                   setQ('');
@@ -245,13 +252,13 @@ export function BusinessesView({
                   setStatus('all');
                 }}
               >
-                Clear filters
+                {bz.clearFilters}
               </button>
             </div>
           ) : null}
         </div>
         <span style={{ fontSize: 13, color: '#62666d' }}>
-          {rows.length} of {tenants.length} businesses · appointment counts only, no customer data
+          {bz.footer({ n: rows.length, total: tenants.length })}
         </span>
       </div>
 
@@ -259,7 +266,7 @@ export function BusinessesView({
         open={b !== null}
         onClose={() => setSelected(null)}
         wide
-        label="Business account"
+        label={bz.drawer}
         header={
           b ? (
             <div
@@ -269,7 +276,7 @@ export function BusinessesView({
                 {b.name}
               </span>
               <span style={{ fontSize: 13, color: '#62666d' }}>
-                {categoryLabel(b.category)} · owner {b.owner}
+                {bz.ownerLine({ category: categoryLabel(b.category, t), owner: b.owner })}
               </span>
               <StatusPill status={b.status as 'ACTIVE'} size="sm" />
             </div>
@@ -278,10 +285,12 @@ export function BusinessesView({
         footer={
           b ? (
             b.status === 'SUSPENDED' ? (
-              <Button onClick={() => setConfirm({ kind: 'reactivate' })}>Reactivate account</Button>
+              <Button onClick={() => setConfirm({ kind: 'reactivate' })}>
+                {bz.reactivateAccount}
+              </Button>
             ) : (
               <Button variant="danger" onClick={() => setConfirm({ kind: 'suspend' })}>
-                Suspend account
+                {bz.suspendAccount}
               </Button>
             )
           ) : undefined
@@ -291,36 +300,39 @@ export function BusinessesView({
           <>
             <div className={s.tiles}>
               <div>
-                <span>Registered</span>
-                <span>{fmtDate(b.createdAt)}</span>
+                <span>{bz.registered}</span>
+                <span>{fmtDate(b.createdAt, intl)}</span>
               </div>
               <div>
-                <span>Last activity</span>
-                <span>{ago(b.lastActivity)}</span>
+                <span>{bz.lastActivity}</span>
+                <span>{ago(b.lastActivity, bz)}</span>
               </div>
               <div>
-                <span>Appointments, 30 days</span>
+                <span>{bz.appts30}</span>
                 <span>{b.appts30}</span>
               </div>
               <div>
-                <span>Staff seats</span>
+                <span>{bz.seats}</span>
                 <span>
-                  {b.staff} of {seats === null ? 'Unlimited' : seats}
+                  {bz.seatsValue({
+                    n: b.staff,
+                    max: seats === null ? bz.unlimited : String(seats),
+                  })}
                 </span>
               </div>
             </div>
             <div className={s.box}>
-              <span className={s.boxTitle}>SUBSCRIPTION</span>
+              <span className={s.boxTitle}>{bz.subscription}</span>
               <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
                 <select
-                  className={t.select}
-                  aria-label="Plan"
+                  className={tbl.select}
+                  aria-label={bz.plan}
                   value={planPick}
                   onChange={(e) => setPlanPick(e.target.value as PlanKey)}
                 >
                   {(Object.keys(PLANS) as PlanKey[]).map((p) => (
                     <option key={p} value={p}>
-                      {PLANS[p].label}
+                      {planLabel(p)}
                     </option>
                   ))}
                 </select>
@@ -330,20 +342,20 @@ export function BusinessesView({
                   disabled={planPick === b.plan}
                   onClick={() => setConfirm({ kind: 'plan', plan: planPick })}
                 >
-                  Change plan
+                  {bz.changePlan}
                 </Button>
               </div>
-              <span className={s.muted}>
-                Plan prices are placeholders until launch. Plans are labels only; limits are not
-                enforced in this release.
-              </span>
+              <span className={s.muted}>{bz.planNote}</span>
             </div>
             <div className={s.box}>
-              <span className={s.boxTitle}>BOOKING PAGE</span>
+              <span className={s.boxTitle}>{bz.bookingPage}</span>
               <span style={{ fontWeight: 600 }}>
-                {PAGE_LABEL[b.pageStatus]} · {templateLabel(b.template)} template
+                {bz.templateLine({
+                  page: PAGE_LABEL[b.pageStatus] ?? b.pageStatus,
+                  template: templateLabel(b.template, t),
+                })}
               </span>
-              <span className={t.mono} style={{ color: '#62666d' }}>
+              <span className={tbl.mono} style={{ color: '#62666d' }}>
                 /book/{b.slug}
               </span>
               {b.pageStatus === 'PUBLISHED' && b.status !== 'SUSPENDED' ? (
@@ -353,14 +365,11 @@ export function BusinessesView({
                   rel="noopener"
                   style={{ fontWeight: 700, color: '#2f6e5a', fontSize: 13 }}
                 >
-                  Open public page →
+                  {bz.openPublic}
                 </a>
               ) : null}
             </div>
-            <div className={s.privacy}>
-              Customer names, contacts and notes belong to the business and are hidden from platform
-              admins. Support access through an owner-approved session is planned.
-            </div>
+            <div className={s.privacy}>{bz.privacy}</div>
           </>
         ) : null}
       </Drawer>
@@ -375,7 +384,7 @@ export function BusinessesView({
         title={confirmCopy?.title ?? ''}
         actions={
           <>
-            <Button onClick={() => setConfirm(null)}>Cancel</Button>
+            <Button onClick={() => setConfirm(null)}>{bz.cancel}</Button>
             <Button
               variant="dangerSolid"
               disabled={pending || reason.trim().length < 3}
@@ -388,13 +397,13 @@ export function BusinessesView({
       >
         <p>{confirmCopy?.body}</p>
         <div style={{ marginTop: 12 }}>
-          <Field label="Reason, saved to the audit log" error={error ?? undefined}>
+          <Field label={bz.reason} error={error ?? undefined}>
             {(p) => (
               <Input
                 {...p}
                 value={reason}
                 maxLength={300}
-                placeholder="Required"
+                placeholder={bz.required}
                 onChange={(e) => setReason(e.target.value)}
               />
             )}

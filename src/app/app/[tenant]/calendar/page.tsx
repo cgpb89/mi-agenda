@@ -13,8 +13,12 @@ import {
   todayIn,
 } from '@/modules/scheduling/time';
 import { CalendarView, type CalDay } from '@/components/features/calendar/CalendarView';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Calendar' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.nav.calendar };
+}
 
 const STATUS_FILTERS: Record<string, string[]> = {
   active: ['PENDING', 'CONFIRMED', 'COMPLETED', 'NO_SHOW'],
@@ -128,7 +132,7 @@ export default async function CalendarPage({
             (e) =>
               e.type === 'BLOCK' && (e.staffId === null || e.staffId === s.id) && e.date === date,
           )
-          .map((e) => ({ start: e.startMin!, end: e.endMin!, label: e.reason ?? 'Blocked' }));
+          .map((e) => ({ start: e.startMin!, end: e.endMin!, label: e.reason ?? null }));
         return {
           staffId: s.id,
           shifts: d.shiftMinutes,

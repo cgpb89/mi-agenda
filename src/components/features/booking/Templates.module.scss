@@ -20,6 +20,11 @@
 .poweredBy {
   padding: 14px;
   text-align: center;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px 16px;
   font-size: 12px;
   color: #7a746b;
   background: #e9e6e1;

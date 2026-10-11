@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { msg } from '@/i18n/message-ref';
 import {
   appointmentRef,
   canReschedule,
@@ -49,7 +50,7 @@ describe('status transitions', () => {
     expect(transitionError('CANCELLED', 'confirm', future, now)).not.toBeNull();
   });
   it('only completes or marks no-show once the appointment has started', () => {
-    expect(transitionError('CONFIRMED', 'complete', future, now)).toMatch(/started/);
+    expect(transitionError('CONFIRMED', 'complete', future, now)).toBe(msg('notStarted'));
     expect(transitionError('CONFIRMED', 'complete', past, now)).toBeNull();
     expect(transitionError('CONFIRMED', 'no_show', past, now)).toBeNull();
     expect(transitionError('NO_SHOW', 'complete', past, now)).not.toBeNull();
@@ -100,9 +101,9 @@ describe('payments ledger', () => {
   it('validates new entries', () => {
     expect(ledgerEntryError('PAYMENT', 0, 0, 3800)).not.toBeNull();
     expect(ledgerEntryError('PAYMENT', 3800, 0, 3800)).toBeNull();
-    expect(ledgerEntryError('REFUND', 5000, 3800, 3800)).toMatch(/cannot exceed/);
+    expect(ledgerEntryError('REFUND', 5000, 3800, 3800)).toBe(msg('refundTooLarge'));
     expect(ledgerEntryError('REFUND', 3800, 3800, 3800)).toBeNull();
-    expect(ledgerEntryError('PAYMENT', 380000, 0, 3800)).toMatch(/much higher/);
+    expect(ledgerEntryError('PAYMENT', 380000, 0, 3800)).toBe(msg('amountTooHigh'));
   });
   it('estimated value counts only completed appointments (never collected money)', () => {
     expect(

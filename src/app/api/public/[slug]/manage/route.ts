@@ -10,6 +10,8 @@ import { transitionAppointment } from '@/modules/bookings/lifecycle';
 import { LOCAL_DATE_RE } from '@/modules/scheduling/time';
 import { findByManageToken } from '@/modules/public/manage';
 import { errorResponse, ok, readJson } from '@/modules/public/http';
+import { msg } from '@/i18n/message-ref';
+import { CUSTOMER_CANCEL_REASON } from '@/modules/bookings/rules';
 
 const bodySchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('cancel'), token: z.string().min(40).max(64) }),
@@ -31,13 +33,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
     await enforceRateLimit('manageByToken', hmacHex(getEnv().RATE_LIMIT_SECRET, body.token));
     const appt = await findByManageToken(slug, body.token);
     // Same response for unknown and foreign tokens.
-    if (!appt) throw new AppError('NOT_FOUND', 'This booking link is no longer valid.');
+    if (!appt) throw new AppError('NOT_FOUND', msg('manageLinkInvalid'));
     if (!appt.canModify) {
       throw new AppError(
         'POLICY',
         appt.status === 'CANCELLED' || appt.status === 'COMPLETED' || appt.status === 'NO_SHOW'
-          ? 'This appointment can no longer be changed online.'
-          : 'It’s too close to the appointment to change it online. Please contact the business.',
+          ? msg('cantChangeOnline')
+          : msg('tooCloseToChange'),
       );
     }
     if (body.action === 'cancel') {
@@ -46,7 +48,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slu
         appointmentId: appt.id,
         action: 'cancel',
         actorType: 'customer',
-        reason: 'Cancelled by customer online',
+        reason: CUSTOMER_CANCEL_REASON,
       });
       return ok({ status: 'CANCELLED' });
     }

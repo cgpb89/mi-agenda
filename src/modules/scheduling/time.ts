@@ -1,4 +1,6 @@
 import { DateTime } from 'luxon';
+import type { Locale } from '@/i18n/config';
+import { formatMinutesOfDay } from '@/i18n/format';
 
 /**
  * Time conventions
@@ -66,12 +68,9 @@ export function todayIn(tz: string, nowMs: number = Date.now()): string {
   return localDateOf(nowMs, tz);
 }
 
-/** Format minutes-from-midnight as "9:00 AM". */
-export function formatMinutes(m: number): string {
-  const h = Math.floor(m / 60) % 24;
-  const mm = m % 60;
-  const h12 = ((h + 11) % 12) + 1;
-  return `${h12}:${String(mm).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
+/** Format minutes-from-midnight as "9:00 AM" (en) / "9:00 a.m." (es). */
+export function formatMinutes(m: number, locale: Locale = 'en'): string {
+  return formatMinutesOfDay(m, locale);
 }
 
 export function formatInstantTime(instantMs: number, tz: string, locale = 'en-US'): string {

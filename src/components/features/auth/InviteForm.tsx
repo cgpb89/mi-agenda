@@ -6,17 +6,19 @@ import type { FormState } from '@/app/(auth)/actions';
 import { Button } from '@/components/ui/Button';
 import { Field, FormMessage, Input } from '@/components/ui/Form';
 import styles from './Auth.module.scss';
+import { useI18n } from '@/i18n/client';
 
 export function InviteForm({ token, signedIn }: { token: string; signedIn: boolean }) {
   const [state, action, pending] = useActionState<FormState, FormData>(acceptInviteAction, {});
   const fe = state.error?.fieldErrors ?? {};
+  const { t } = useI18n();
   return (
     <form action={action} className={styles.form} noValidate>
       {state.error ? <FormMessage kind="error">{state.error.message}</FormMessage> : null}
       <input type="hidden" name="token" value={token} />
       {signedIn ? null : (
         <>
-          <Field label="Your name" error={fe.name}>
+          <Field label={t.auth.yourName} error={fe.name}>
             {(p) => (
               <Input
                 {...p}
@@ -26,7 +28,7 @@ export function InviteForm({ token, signedIn }: { token: string; signedIn: boole
               />
             )}
           </Field>
-          <Field label="Choose a password" hint="At least 10 characters" error={fe.password}>
+          <Field label={t.auth.invite.choosePassword} hint={t.auth.atLeast10} error={fe.password}>
             {(p) => (
               <Input
                 {...p}
@@ -40,7 +42,7 @@ export function InviteForm({ token, signedIn }: { token: string; signedIn: boole
         </>
       )}
       <Button type="submit" variant="primary" size="lg" block disabled={pending}>
-        {pending ? 'Joining…' : 'Accept invitation'}
+        {pending ? t.auth.invite.submitting : t.auth.invite.submit}
       </Button>
     </form>
   );

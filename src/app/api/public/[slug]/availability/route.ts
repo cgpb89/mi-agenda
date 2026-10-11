@@ -8,6 +8,7 @@ import { daySlots } from '@/modules/scheduling/availability';
 import { loadScheduleData } from '@/modules/scheduling/load';
 import { LOCAL_DATE_RE, addDays, daysBetween, todayIn } from '@/modules/scheduling/time';
 import { errorResponse, ok } from '@/modules/public/http';
+import { msg } from '@/i18n/message-ref';
 
 const DAYS = 14;
 
@@ -44,12 +45,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       tenant.profile?.pageStatus !== 'PUBLISHED' ||
       (tenant.status !== 'ACTIVE' && tenant.status !== 'TRIAL')
     ) {
-      throw new AppError('NOT_FOUND', 'Not found.');
+      throw new AppError('NOT_FOUND', msg('notFound'));
     }
     const service = await db.service.findFirst({
       where: { id: q.serviceId, tenantId: tenant.id, isActive: true, isOnline: true },
     });
-    if (!service) throw new AppError('NOT_FOUND', 'Not found.');
+    if (!service) throw new AppError('NOT_FOUND', msg('notFound'));
     const staff = await db.staff.findMany({
       where: {
         tenantId: tenant.id,
@@ -60,7 +61,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       orderBy: [{ sortOrder: 'asc' }, { displayName: 'asc' }],
       select: { id: true },
     });
-    if (!staff.length) throw new AppError('NOT_FOUND', 'Not found.');
+    if (!staff.length) throw new AppError('NOT_FOUND', msg('notFound'));
 
     const now = Date.now();
     const today = todayIn(tenant.timezone, now);

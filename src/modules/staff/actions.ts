@@ -8,6 +8,7 @@ import { requireTenant } from '@/lib/auth/authorize';
 import { enforceRateLimit } from '@/lib/rate-limit';
 import { nameSchema, optionalTextSchema, parseInput, uuidSchema } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
+import { msg } from '@/i18n/message-ref';
 
 const staffSchema = z.object({
   id: uuidSchema.optional(),
@@ -31,7 +32,7 @@ export async function saveStaffAction(
         where: { tenantId: ctx.tenantId, id: { in: input.serviceIds } },
       });
       if (svcCount !== new Set(input.serviceIds).size)
-        throw new AppError('VALIDATION', 'Choose services from your list.');
+        throw new AppError('VALIDATION', msg('chooseServicesFromList'));
       const data = {
         displayName: input.displayName,
         title: input.title ?? null,
@@ -45,7 +46,7 @@ export async function saveStaffAction(
           where: { id: input.id, tenantId: ctx.tenantId },
           select: { id: true },
         });
-        if (!existing) throw new AppError('NOT_FOUND', 'Staff member not found.');
+        if (!existing) throw new AppError('NOT_FOUND', msg('staffNotFound'));
         await tx.staff.update({ where: { id: existing.id }, data });
         id = existing.id;
       } else {

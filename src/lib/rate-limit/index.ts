@@ -6,6 +6,7 @@ import { logger } from '@/lib/observability/logger';
 import { MemoryRateLimitStore } from './memory';
 import { PostgresRateLimitStore } from './postgres';
 import type { RateLimitStore } from './types';
+import { msg } from '@/i18n/message-ref';
 
 /**
  * Fixed-window limits. Keys are HMACed before storage so raw IPs, emails and
@@ -69,7 +70,7 @@ export async function enforceRateLimit(name: LimitName, ...keyParts: string[]): 
   const res = await checkRateLimit(name, ...keyParts);
   if (!res.allowed) {
     logger.warn('rate limit exceeded', { limit: name });
-    throw new AppError('RATE_LIMITED', 'Too many attempts. Please wait a moment and try again.', {
+    throw new AppError('RATE_LIMITED', msg('rateLimited'), {
       retryAfterSec: res.retryAfterSec,
     });
   }

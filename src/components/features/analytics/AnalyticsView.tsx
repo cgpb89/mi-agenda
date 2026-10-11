@@ -4,11 +4,19 @@ import { useRouter } from 'next/navigation';
 import { PageContent, PageHeader, useShell } from '@/components/layout/AppShell';
 import { Card, Kpi, KpiGrid } from '@/components/ui/Card';
 import { Segmented } from '@/components/ui/Segmented';
-import t from '@/components/ui/Table.module.scss';
+import tbl from '@/components/ui/Table.module.scss';
 import o from '@/components/features/overview/Overview.module.scss';
-import { hourLong, hourShort, moneyFmt, pct, WEEKDAYS } from '@/components/features/shared/format';
+import {
+  fmtDate,
+  hourLong,
+  hourShort,
+  moneyFmt,
+  pct,
+  weekdayNames,
+} from '@/components/features/shared/format';
 import type { Bucket, Totals } from '@/modules/analytics/aggregate';
 import type { ResolvedRange } from '@/modules/analytics/service';
+import { useI18n } from '@/i18n/client';
 
 interface Props {
   rangeKey: string;
@@ -32,6 +40,12 @@ export function AnalyticsView(p: Props) {
   const { slug, currency } = data.tenant;
   const router = useRouter();
   const base = `/app/${slug}/analytics`;
+  const { t, locale, intl } = useI18n();
+  const an = t.analytics;
+  const WEEKDAYS = weekdayNames(locale);
+  const money = (minor: number) => moneyFmt(minor, currency, locale);
+  const oneDecimal = (n: number) =>
+    n.toLocaleString(intl, { minimumFractionDigits: 1, maximumFractionDigits: 1 });
   const href = (patch: Record<string, string | null>) => {
     const cur: Record<string, string | null> = {
       range: p.rangeKey === '30d' ? null : p.rangeKey,
@@ -49,8 +63,8 @@ export function AnalyticsView(p: Props) {
   };
   const delta = (a: number, b: number) =>
     b
-      ? `${a >= b ? '+' : ''}${Math.round(((a - b) / b) * 100)}% vs previous period`
-      : 'No data for previous period';
+      ? an.vsPrevious({ pct: `${a >= b ? '+' : ''}${Math.round(((a - b) / b) * 100)}%` })
+      : an.noPrevious;
 
   const maxVol = Math.max(1, ...p.series.map((b) => b.volume));
   const maxMoney = Math.max(
@@ -62,41 +76,39 @@ export function AnalyticsView(p: Props) {
   const dayMax = Math.max(0.0001, ...p.days.map((d) => d.average));
   const statusTotal = Math.max(1, p.cur.total);
   const breakdown = [
-    ['Upcoming', p.cur.upcoming, '#e0773a'],
-    ['Completed', p.cur.completed, '#2f6e5a'],
-    ['Cancelled', p.cur.cancelled, '#b9b1a4'],
-    ['No-show', p.cur.noShow, '#c4483a'],
+    [an.upcoming, p.cur.upcoming, '#e0773a'],
+    [an.completed, p.cur.completed, '#2f6e5a'],
+    [an.cancelled, p.cur.cancelled, '#b9b1a4'],
+    [an.noShow, p.cur.noShow, '#c4483a'],
   ] as const;
 
   return (
     <>
-      <PageHeader title="Analytics" sub={`${p.range.from} – ${p.range.to} · ${data.tenant.name}`}>
+      <PageHeader
+        title={t.app.nav.analytics}
+        sub={`${fmtDate(p.range.from, locale, { month: 'short', day: 'numeric', year: 'numeric' })} – ${fmtDate(p.range.to, locale, { month: 'short', day: 'numeric', year: 'numeric' })} · ${data.tenant.name}`}
+      >
         <Segmented
-          label="Date range"
-          items={[
-            ['7d', '7 days'],
-            ['30d', '30 days'],
-            ['90d', '90 days'],
-            ['12m', '12 months'],
-          ].map(([k, l]) => ({
-            key: k!,
-            label: l,
+          label={an.dateRange}
+          items={(['7d', '30d', '90d', '12m'] as const).map((k) => ({
+            key: k,
+            label: an.ranges[k],
             selected: p.rangeKey === k,
-            href: href({ range: k === '30d' ? null : k!, from: null, to: null }),
+            href: href({ range: k === '30d' ? null : k, from: null, to: null }),
           }))}
         />
       </PageHeader>
       <PageContent>
-        <div className={t.toolbar}>
+        <div className={tbl.toolbar}>
           <select
-            className={t.select}
-            aria-label="Staff"
+            className={tbl.select}
+            aria-label={an.staff}
             value={p.filters.staffId ?? ''}
             onChange={(e) =>
               router.replace(href({ staff: e.target.value || null }), { scroll: false })
             }
           >
-            <option value="">All staff</option>
+            <option value="">{an.allStaff}</option>
             {p.staff.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -104,14 +116,14 @@ export function AnalyticsView(p: Props) {
             ))}
           </select>
           <select
-            className={t.select}
-            aria-label="Service"
+            className={tbl.select}
+            aria-label={an.service}
             value={p.filters.serviceId ?? ''}
             onChange={(e) =>
               router.replace(href({ svc: e.target.value || null }), { scroll: false })
             }
           >
-            <option value="">All services</option>
+            <option value="">{an.allServices}</option>
             {p.services.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -119,10 +131,10 @@ export function AnalyticsView(p: Props) {
             ))}
           </select>
           <Segmented
-            label="Group by"
+            label={an.groupBy}
             items={(['day', 'week', 'month'] as const).map((g) => ({
               key: g,
-              label: `By ${g}`,
+              label: an.by[g],
               selected: p.granularity === g,
               href: href({ by: g }),
             }))}
@@ -130,52 +142,46 @@ export function AnalyticsView(p: Props) {
         </div>
 
         <KpiGrid>
-          <Kpi label="Booked" value={p.cur.booked} note={delta(p.cur.booked, p.prev.booked)} />
+          <Kpi label={an.booked} value={p.cur.booked} note={delta(p.cur.booked, p.prev.booked)} />
           <Kpi
-            label="Completed"
+            label={an.completed}
             value={p.cur.completed}
             note={delta(p.cur.completed, p.prev.completed)}
           />
           <Kpi
-            label="Estimated appointment value"
-            value={moneyFmt(p.cur.estimatedMinor, currency)}
-            note="Price × completed, not payments"
+            label={an.estimatedValue}
+            value={money(p.cur.estimatedMinor)}
+            note={an.estimatedValueNote}
+          />
+          <Kpi label={an.collected} value={money(p.collected)} note={an.collectedNote} />
+          <Kpi
+            label={an.cancellationRate}
+            value={pct(p.cur.cancellationRate, locale)}
+            note={an.cancellationRateNote}
           />
           <Kpi
-            label="Collected"
-            value={moneyFmt(p.collected, currency)}
-            note="Recorded payments minus refunds, by date recorded"
+            label={an.noShowRate}
+            value={pct(p.cur.noShowRate, locale)}
+            note={an.noShowRateNote}
           />
           <Kpi
-            label="Cancellation rate"
-            value={pct(p.cur.cancellationRate)}
-            note="Cancelled ÷ all booked"
-          />
-          <Kpi
-            label="No-show rate"
-            value={pct(p.cur.noShowRate)}
-            note="No-shows ÷ (completed + no-shows)"
-          />
-          <Kpi
-            label="Utilisation"
-            value={pct(p.utilisation, 0)}
-            note="Booked minutes ÷ staff working minutes"
+            label={an.utilisation}
+            value={pct(p.utilisation, locale, 0)}
+            note={an.utilisationNote}
           />
         </KpiGrid>
 
         <div className={o.chartCard}>
           <div className={o.chartHead}>
-            <span style={{ fontWeight: 700 }}>Appointment volume</span>
-            <span className={o.note}>
-              Booked appointments by start date, excluding cancellations.
-            </span>
+            <span style={{ fontWeight: 700 }}>{an.volume}</span>
+            <span className={o.note}>{an.volumeNote}</span>
           </div>
           <div className={o.bars} style={{ gap: p.series.length > 20 ? 3 : 8 }}>
             {p.series.map((b, i) => (
               <div
                 key={b.key}
                 className={o.barCol}
-                title={`${b.tooltip}: ${b.volume} appointments`}
+                title={`${b.tooltip}: ${an.nAppointments({ n: b.volume })}`}
               >
                 <span className={o.barTop}>
                   {p.series.length <= 14 && b.volume ? b.volume : ''}
@@ -198,7 +204,7 @@ export function AnalyticsView(p: Props) {
 
         <div className={o.chartCard}>
           <div className={o.chartHead}>
-            <span style={{ fontWeight: 700 }}>Estimated vs collected</span>
+            <span style={{ fontWeight: 700 }}>{an.estVsCollected}</span>
             <span className={o.note} style={{ display: 'flex', gap: 12 }}>
               <span>
                 <i
@@ -210,7 +216,7 @@ export function AnalyticsView(p: Props) {
                     borderRadius: 2,
                   }}
                 />{' '}
-                Estimated (completed × price)
+                {an.estimatedLegend}
               </span>
               <span>
                 <i
@@ -222,7 +228,7 @@ export function AnalyticsView(p: Props) {
                     borderRadius: 2,
                   }}
                 />{' '}
-                Collected (recorded)
+                {an.collectedLegend}
               </span>
             </span>
           </div>
@@ -231,7 +237,11 @@ export function AnalyticsView(p: Props) {
               <div
                 key={b.key}
                 className={o.barCol}
-                title={`${b.tooltip}: estimated ${moneyFmt(b.estimatedMinor, currency)}, collected ${moneyFmt(b.collectedMinor, currency)}`}
+                title={an.estVsCollectedTip({
+                  date: b.tooltip,
+                  est: money(b.estimatedMinor),
+                  col: money(b.collectedMinor),
+                })}
                 style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 2 }}
               >
                 <span
@@ -253,14 +263,11 @@ export function AnalyticsView(p: Props) {
               <span key={b.key}>{b.label}</span>
             ))}
           </div>
-          <span className={o.note}>
-            Estimated value is attributed to the appointment date; collected money to the date it
-            was recorded, so the two can fall in different periods.
-          </span>
+          <span className={o.note}>{an.estVsCollectedNote}</span>
         </div>
 
         <div className={o.three}>
-          <Card title="Status breakdown">
+          <Card title={an.statusBreakdown}>
             {breakdown.map(([label, n, color]) => (
               <div key={label} className={o.popRow}>
                 <span>{label}</span>
@@ -273,24 +280,22 @@ export function AnalyticsView(p: Props) {
                 <span className={o.count}>{n}</span>
               </div>
             ))}
-            <span className={o.note}>All appointments starting in the range ({p.cur.total}).</span>
+            <span className={o.note}>{an.allInRange({ n: p.cur.total })}</span>
           </Card>
-          <Card title="Popular services">
-            {p.popular.length === 0 ? (
-              <span className={o.note}>No bookings in this range.</span>
-            ) : null}
+          <Card title={an.popular}>
+            {p.popular.length === 0 ? <span className={o.note}>{an.noBookings}</span> : null}
             {p.popular.map((x) => (
               <div key={x.name} className={o.popRow}>
                 <span>{x.name}</span>
                 <span className={o.track}>
                   <span className={o.fill} style={{ width: `${(x.count / popMax) * 100}%` }} />
                 </span>
-                <span className={o.count}>{Math.round(x.share * 100)}%</span>
+                <span className={o.count}>{pct(x.share, locale, 0)}</span>
               </div>
             ))}
-            <span className={o.note}>Share of booked appointments, excluding cancellations.</span>
+            <span className={o.note}>{an.shareNote}</span>
           </Card>
-          <Card title="Peak hours">
+          <Card title={an.peakHours}>
             <div
               className={o.heat}
               style={{ gridTemplateColumns: `repeat(${p.peak.length}, minmax(0, 1fr))` }}
@@ -301,14 +306,14 @@ export function AnalyticsView(p: Props) {
                   <div
                     key={h.hour}
                     className={o.heatCell}
-                    title={`${h.count} appointments starting ${hourLong(h.hour)}`}
+                    title={an.startingAt({ n: h.count, hour: hourLong(h.hour, locale) })}
                   >
                     <span
                       style={{
                         background: `oklch(${(0.96 - v * 0.5).toFixed(3)} ${(0.02 + v * 0.09).toFixed(3)} 160)`,
                       }}
                     />
-                    <span>{hourShort(h.hour)}</span>
+                    <span>{hourShort(h.hour, locale)}</span>
                   </div>
                 );
               })}
@@ -318,7 +323,7 @@ export function AnalyticsView(p: Props) {
                 <div
                   key={d.weekday}
                   className={o.dayCol}
-                  title={`${WEEKDAYS[d.weekday - 1]}: ${d.average.toFixed(1)} per day`}
+                  title={an.perDay({ day: WEEKDAYS[d.weekday - 1]!, avg: oneDecimal(d.average) })}
                 >
                   <span
                     style={{ height: `${(d.average / dayMax) * 100}%`, background: '#d9d1c3' }}
@@ -327,7 +332,7 @@ export function AnalyticsView(p: Props) {
                 </div>
               ))}
             </div>
-            <span className={o.note}>Starts by hour, and average appointments per weekday.</span>
+            <span className={o.note}>{an.peakNote}</span>
           </Card>
         </div>
       </PageContent>

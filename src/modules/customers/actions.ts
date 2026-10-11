@@ -15,6 +15,7 @@ import {
   uuidSchema,
 } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
+import { msg } from '@/i18n/message-ref';
 
 const schema = z.object({
   id: uuidSchema,
@@ -37,8 +38,8 @@ export async function updateCustomerAction(
     if (input.phone && input.phone.trim()) {
       const p = normalizePhone(input.phone, input.phoneCountry ?? ctx.country);
       if (!p.ok)
-        throw new AppError('VALIDATION', 'That phone number doesn’t look right.', {
-          fieldErrors: { phone: 'Check the number and country' },
+        throw new AppError('VALIDATION', msg('phoneLooksWrong'), {
+          fieldErrors: { phone: msg('checkNumberAndCountry') },
         });
       phoneE164 = p.e164;
     }
@@ -53,7 +54,7 @@ export async function updateCustomerAction(
             notes: input.notes ?? null,
           },
         });
-        if (res.count !== 1) throw new AppError('NOT_FOUND', 'Customer not found.');
+        if (res.count !== 1) throw new AppError('NOT_FOUND', msg('customerNotFound'));
         await audit(
           {
             tenantId: ctx.tenantId,
@@ -68,8 +69,8 @@ export async function updateCustomerAction(
       });
     } catch (err) {
       if (isUniqueViolation(err))
-        throw new AppError('CONFLICT', 'Another customer already uses that phone number.', {
-          fieldErrors: { phone: 'Already used by another customer' },
+        throw new AppError('CONFLICT', msg('phoneUsedByOther'), {
+          fieldErrors: { phone: msg('phoneUsedByOtherField') },
         });
       throw err;
     }

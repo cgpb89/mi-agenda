@@ -8,6 +8,7 @@ import { revokeAllSessions } from '@/lib/auth/session';
 import { withTransaction } from '@/lib/db/tx';
 import { parseInput, uuidSchema } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
+import { msg } from '@/i18n/message-ref';
 
 /*
  * Platform administration. These actions manage ACCOUNTS (tenant status, plan,
@@ -15,7 +16,7 @@ import { audit } from '@/modules/audit/audit';
  * Every change requires a reason (where the design asks for one) and is audited.
  */
 
-const reason = z.string().trim().min(3, 'Add a reason').max(300);
+const reason = z.string().trim().min(3, msg('addReason')).max(300);
 
 const tenantStatusSchema = z.object({
   tenantId: uuidSchema,
@@ -32,9 +33,9 @@ export async function setTenantStatusAction(raw: unknown): Promise<ActionResult<
         where: { id: input.tenantId },
         select: { id: true, name: true, status: true, plan: true },
       });
-      if (!t) throw new AppError('NOT_FOUND', 'Business not found.');
+      if (!t) throw new AppError('NOT_FOUND', msg('businessNotFound'));
       if (input.action === 'suspend') {
-        if (t.status === 'SUSPENDED') throw new AppError('CONFLICT', 'Already suspended.');
+        if (t.status === 'SUSPENDED') throw new AppError('CONFLICT', msg('alreadySuspended'));
         await tx.tenant.update({
           where: { id: t.id },
           data: { status: 'SUSPENDED', suspendedAt: new Date() },
@@ -49,8 +50,7 @@ export async function setTenantStatusAction(raw: unknown): Promise<ActionResult<
           tx,
         );
       } else {
-        if (t.status !== 'SUSPENDED')
-          throw new AppError('CONFLICT', 'This business is not suspended.');
+        if (t.status !== 'SUSPENDED') throw new AppError('CONFLICT', msg('notSuspended'));
         await tx.tenant.update({
           where: { id: t.id },
           data: { status: t.plan === 'TRIAL' ? 'TRIAL' : 'ACTIVE', suspendedAt: null },
@@ -90,9 +90,8 @@ export async function changePlanAction(raw: unknown): Promise<ActionResult<{ pla
         where: { id: input.tenantId },
         select: { id: true, name: true, plan: true, status: true },
       });
-      if (!t) throw new AppError('NOT_FOUND', 'Business not found.');
-      if (t.plan === input.plan)
-        throw new AppError('CONFLICT', 'That is already the current plan.');
+      if (!t) throw new AppError('NOT_FOUND', msg('businessNotFound'));
+      if (t.plan === input.plan) throw new AppError('CONFLICT', msg('alreadyCurrentPlan'));
       await tx.tenant.update({
         where: { id: t.id },
         data: {
@@ -129,16 +128,14 @@ export async function setUserStatusAction(raw: unknown): Promise<ActionResult<{ 
   return runAction('platform.setUserStatus', async () => {
     const admin = await requirePlatformAdmin();
     const input = parseInput(userStatusSchema, raw);
-    if (input.userId === admin.userId)
-      throw new AppError('POLICY', "You can't suspend your own account.");
+    if (input.userId === admin.userId) throw new AppError('POLICY', msg('cantSuspendSelf'));
     const res = await withTransaction(async (tx) => {
       const u = await tx.user.findUnique({
         where: { id: input.userId },
         select: { id: true, name: true, platformRole: true },
       });
-      if (!u) throw new AppError('NOT_FOUND', 'User not found.');
-      if (u.platformRole === 'ADMIN')
-        throw new AppError('POLICY', 'Platform admins are managed with the admin CLI.');
+      if (!u) throw new AppError('NOT_FOUND', msg('userNotFound'));
+      if (u.platformRole === 'ADMIN') throw new AppError('POLICY', msg('adminsViaCli'));
       await tx.user.update({
         where: { id: u.id },
         data: { status: input.action === 'suspend' ? 'SUSPENDED' : 'ACTIVE' },
@@ -177,13 +174,12 @@ export async function platformChangeRoleAction(raw: unknown): Promise<ActionResu
         where: { id: input.membershipId },
         include: { user: { select: { name: true } }, tenant: { select: { name: true } } },
       });
-      if (!m) throw new AppError('NOT_FOUND', 'Membership not found.');
+      if (!m) throw new AppError('NOT_FOUND', msg('membershipNotFound'));
       if (m.role === 'OWNER' && input.role !== 'OWNER') {
         const owners = await tx.membership.count({
           where: { tenantId: m.tenantId, role: 'OWNER', status: 'ACTIVE' },
         });
-        if (owners <= 1)
-          throw new AppError('POLICY', 'A business needs at least one active owner.');
+        if (owners <= 1) throw new AppError('POLICY', msg('needsOwner'));
       }
       await tx.membership.update({ where: { id: m.id }, data: { role: input.role } });
       await revokeAllSessions([m.userId], tx);
@@ -222,7 +218,7 @@ export async function toggleFlagAction(raw: unknown): Promise<ActionResult<undef
     const input = parseInput(flagSchema, raw);
     await withTransaction(async (tx) => {
       const f = await tx.featureFlag.findUnique({ where: { key: input.key } });
-      if (!f) throw new AppError('NOT_FOUND', 'Flag not found.');
+      if (!f) throw new AppError('NOT_FOUND', msg('flagNotFound'));
       await tx.featureFlag.update({ where: { key: f.key }, data: { enabled: input.enabled } });
       await audit(
         {

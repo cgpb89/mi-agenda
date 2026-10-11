@@ -20,6 +20,8 @@ src/modules/<domain>/   business rules + server actions ('use server' files expo
   analytics · audit · platform · public
 src/lib/                env · db (client, tx/retry, error mapping) · auth (session, authorize, permissions,
                         password) · security · rate-limit · validation · phone · mail · observability
+src/i18n/               config (locales, cookie) · server (getI18n) · client (useI18n) · format ·
+                        message-ref (msg tokens) · messages/{en,es}/<namespace>.ts
 src/components/         ui/ (design-system primitives) · layout/ (AppShell) · features/<screen>/
 src/styles/             _tokens.scss · _mixins.scss · globals.scss
 tests/                  unit/ · integration/ (real PostgreSQL) · e2e/ (Playwright) · support/
@@ -34,6 +36,26 @@ tests/                  unit/ · integration/ (real PostgreSQL) · e2e/ (Playwri
    3. delegates to a domain module;
    4. returns an `ActionResult` (`{ ok, data } | { ok: false, error }`). Unexpected errors are logged and replaced with a generic message.
 3. **Public booking** uses JSON route handlers under `/api/public`. These handlers are rate limited, check the Origin and cap the body size.
+
+## Languages (English / Spanish)
+
+All user-facing text lives in `src/i18n/messages/<locale>/<namespace>.ts`. `en` is the source of
+truth; each `es` file is typed as `Messages['<namespace>']`, so a missing or extra key is a type
+error. Code, identifiers and database values stay in English.
+
+- **Choosing the language:** the `tempo_locale` cookie (set by the EN/ES switcher) wins, then the
+  browser's `Accept-Language`, then English. Server Components call `getI18n()`; Client Components
+  call `useI18n()` (the root layout provides the locale).
+- **Public booking pages** use the visitor's explicit choice, otherwise the business's page language
+  (`Tenant.locale`, chosen in the booking-page editor and defaulted to the language used at signup).
+  Fetches from the booking widget send `x-tempo-locale` so API errors match the page.
+- **Server messages:** server code never builds English sentences. It throws or returns
+  `msg('key', params)` tokens (from `message-ref.ts`), and `toPublicError` resolves them, including
+  field errors, into the request's language. Zod messages use the same tokens.
+- **Emails** (password reset, invitations, booking confirmation) use the language of the request
+  that triggers them.
+- **Formatting:** dates, times, prices and percentages go through helpers that take the locale
+  (`src/i18n/format.ts`, `components/features/shared/format.ts`); never call `toLocale*` without one.
 
 ## Data model (summary)
 

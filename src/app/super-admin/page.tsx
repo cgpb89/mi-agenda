@@ -8,8 +8,12 @@ import s from '@/components/features/admin/Admin.module.scss';
 import { requirePlatformAdminPage } from '@/lib/auth/authorize';
 import { PLANS, type PlanKey } from '@/modules/platform/constants';
 import { listTenants, platformAppointmentSeries } from '@/modules/platform/service';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Overview' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.admin.nav.overview };
+}
 
 const RANGES = { '30d': 30, '90d': 90, '12m': 365 } as const;
 const PLAN_COLOR: Record<PlanKey, string> = {
@@ -19,8 +23,8 @@ const PLAN_COLOR: Record<PlanKey, string> = {
   BUSINESS: '#1c1a17',
 };
 
-function money(minor: number) {
-  return new Intl.NumberFormat('en-US', {
+function money(minor: number, intl: string) {
+  return new Intl.NumberFormat(intl, {
     style: 'currency',
     currency: 'USD',
     maximumFractionDigits: 0,
@@ -33,6 +37,9 @@ export default async function PlatformOverview({
   searchParams: Promise<{ range?: string }>;
 }) {
   await requirePlatformAdminPage();
+  const { t, intl } = await getI18n();
+  const ov = t.admin.overview;
+  const planLabel = (p: PlanKey) => t.settings.plans[p] ?? PLANS[p].label;
   const { range: r } = await searchParams;
   const range = (r && r in RANGES ? r : '90d') as keyof typeof RANGES;
   const days = RANGES[range];
@@ -72,7 +79,13 @@ export default async function PlatformOverview({
       const c = DateTime.fromISO(t.createdAt);
       return c >= start && c < end;
     }).length;
-    return { label: range === '12m' ? start.toFormat('LLL') : start.toFormat('L/d'), v };
+    return {
+      label:
+        range === '12m'
+          ? start.setLocale(intl).toLocaleString({ month: 'short' })
+          : start.toFormat(intl.startsWith('es') ? 'd/L' : 'L/d'),
+      v,
+    };
   });
   const bMax = Math.max(1, ...buckets.map((b) => b.v));
 
@@ -101,65 +114,76 @@ export default async function PlatformOverview({
   const attention = tenants
     .flatMap((t) =>
       t.status === 'SUSPENDED'
-        ? [{ t, why: 'Suspended account' }]
+        ? [{ t, why: ov.whySuspended }]
         : t.status === 'TRIAL' && t.pageStatus !== 'PUBLISHED'
-          ? [{ t, why: 'Trial with an unpublished page' }]
+          ? [{ t, why: ov.whyTrial }]
           : t.status === 'ACTIVE' && t.pageStatus !== 'PUBLISHED'
-            ? [{ t, why: 'Paying, booking page still in draft' }]
+            ? [{ t, why: ov.whyDraft }]
             : [],
     )
     .slice(0, 5);
 
+  const pctLabel = (v: number, digits: number) =>
+    new Intl.NumberFormat(intl, {
+      style: 'percent',
+      minimumFractionDigits: digits,
+      maximumFractionDigits: digits,
+    }).format(v);
+  const shortDate = (iso: string) =>
+    DateTime.fromISO(iso).setLocale(intl).toLocaleString({ month: 'short', day: 'numeric' });
+
   const kpis = [
-    { label: 'Registered businesses', value: total, note: `${churned} churned all-time` },
+    { label: ov.registered, value: total, note: ov.churnedAllTime({ n: churned }) },
     {
-      label: 'Active businesses',
+      label: ov.active,
       value: active,
-      note: `${trial} in trial · ${suspended} suspended`,
+      note: ov.activeNote({ trial, suspended }),
     },
     {
-      label: 'New registrations',
+      label: ov.newRegs,
       value: newInRange,
-      note: `Last ${range === '12m' ? '12 months' : `${days} days`}`,
+      note: ov.last({ period: range === '12m' ? ov.twelveMonths : ov.nDays({ n: days }) }),
     },
     {
-      label: 'Appointments, all tenants',
-      value: apptsInRange.toLocaleString(),
-      note: 'Created in range · count only',
+      label: ov.appts,
+      value: apptsInRange.toLocaleString(intl),
+      note: ov.apptsNote,
     },
     {
-      label: 'Trial → paid',
-      value: cohort.length ? `${Math.round((paid / cohort.length) * 100)}%` : '—',
-      note: `${cohort.length} trials ended in range`,
+      label: ov.trialToPaid,
+      value: cohort.length ? pctLabel(paid / cohort.length, 0) : '—',
+      note: ov.trialsEnded({ n: cohort.length }),
     },
     {
-      label: 'Churn',
-      value: total ? `${((churned / total) * 100).toFixed(1)}%` : '—',
-      note: 'Share of all businesses ever registered',
+      label: ov.churn,
+      value: total ? pctLabel(churned / total, 1) : '—',
+      note: ov.churnNote,
     },
     {
-      label: 'Platform MRR (placeholder)',
-      value: money(mrr),
-      note: 'Tempo subscriptions at placeholder prices',
+      label: ov.mrr,
+      value: money(mrr, intl),
+      note: ov.mrrNote,
     },
   ];
 
   return (
     <>
       <AdminHeader
-        title="Platform overview"
-        sub={`All tenants · as of ${now.toFormat('LLL d, yyyy')}`}
+        title={ov.title}
+        sub={ov.sub({
+          date: now.setLocale(intl).toLocaleString({
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+        })}
       >
         <Segmented
           platform
-          label="Date range"
-          items={[
-            ['30d', '30 days'],
-            ['90d', '90 days'],
-            ['12m', '12 months'],
-          ].map(([k, l]) => ({
-            key: k!,
-            label: l,
+          label={ov.dateRange}
+          items={(['30d', '90d', '12m'] as const).map((k) => ({
+            key: k,
+            label: ov.ranges[k],
             selected: range === k,
             href: `/super-admin?range=${k}`,
           }))}
@@ -180,14 +204,14 @@ export default async function PlatformOverview({
             <div
               style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}
             >
-              <span className={s.cardTitle}>New registrations</span>
+              <span className={s.cardTitle}>{ov.newRegs}</span>
               <span className={s.muted}>
-                {range === '12m' ? 'Per month' : `Per ${bucketDays} days`}
+                {range === '12m' ? ov.perMonth : ov.perDays({ n: bucketDays })}
               </span>
             </div>
             <div className={s.bars}>
               {buckets.map((b, i) => (
-                <div key={i} title={`${b.v} new businesses`}>
+                <div key={i} title={ov.newBusinesses({ n: b.v })}>
                   <span>{b.v || ''}</span>
                   <span style={{ height: `${(b.v / bMax) * 100}%` }} />
                 </div>
@@ -203,8 +227,8 @@ export default async function PlatformOverview({
             <div
               style={{ display: 'flex', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}
             >
-              <span className={s.cardTitle}>Appointments booked across the platform</span>
-              <span className={s.muted}>Count only · all tenants</span>
+              <span className={s.cardTitle}>{ov.apptsChart}</span>
+              <span className={s.muted}>{ov.countOnly}</span>
             </div>
             <svg
               viewBox="0 0 600 170"
@@ -216,7 +240,7 @@ export default async function PlatformOverview({
                 borderBottom: '1px solid #e2e2dc',
               }}
               role="img"
-              aria-label="Appointments per day"
+              aria-label={ov.perDayAria}
             >
               <polygon points={`0,170 ${line} 600,170`} fill="#e3efe9" />
               <polyline
@@ -236,19 +260,19 @@ export default async function PlatformOverview({
                 fontFamily: 'var(--font-mono)',
               }}
             >
-              <span>{DateTime.fromISO(dayKeys[0]!).toFormat('LLL d')}</span>
-              <span>{DateTime.fromISO(dayKeys[dayKeys.length - 1]!).toFormat('LLL d')}</span>
+              <span>{shortDate(dayKeys[0]!)}</span>
+              <span>{shortDate(dayKeys[dayKeys.length - 1]!)}</span>
             </div>
           </div>
         </div>
         <div className={s.grid3}>
           <div className={s.card}>
-            <span className={s.cardTitle}>Subscription distribution</span>
+            <span className={s.cardTitle}>{ov.subscriptions}</span>
             <div className={s.dist}>
               {planDist.map((p) => (
                 <span
                   key={p.p}
-                  title={PLANS[p.p].label}
+                  title={planLabel(p.p)}
                   style={{
                     width: `${live.length ? (p.n / live.length) * 100 : 0}%`,
                     background: PLAN_COLOR[p.p],
@@ -259,7 +283,7 @@ export default async function PlatformOverview({
             {planDist.map((p) => (
               <div key={p.p} className={s.distRow}>
                 <i style={{ background: PLAN_COLOR[p.p] }} />
-                <span>{PLANS[p.p].label}</span>
+                <span>{planLabel(p.p)}</span>
                 <span>
                   {p.n} · {live.length ? Math.round((p.n / live.length) * 100) : 0}%
                 </span>
@@ -267,10 +291,10 @@ export default async function PlatformOverview({
             ))}
           </div>
           <div className={s.card}>
-            <span className={s.cardTitle}>Businesses by category</span>
+            <span className={s.cardTitle}>{ov.byCategory}</span>
             {cats.map((c) => (
               <div key={c.c} className={s.catRow}>
-                <span>{categoryLabel(c.c)}</span>
+                <span>{categoryLabel(c.c, t)}</span>
                 <span className={s.track}>
                   <span style={{ width: `${(c.n / cMax) * 100}%` }} />
                 </span>
@@ -279,10 +303,8 @@ export default async function PlatformOverview({
             ))}
           </div>
           <div className={s.card} style={{ gap: 10 }}>
-            <span className={s.cardTitle}>Needs attention</span>
-            {attention.length === 0 ? (
-              <span className={s.muted}>Nothing needs attention.</span>
-            ) : null}
+            <span className={s.cardTitle}>{ov.attention}</span>
+            {attention.length === 0 ? <span className={s.muted}>{ov.nothing}</span> : null}
             {attention.map((a) => (
               <Link
                 key={a.t.id}

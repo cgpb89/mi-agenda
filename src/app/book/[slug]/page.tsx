@@ -5,6 +5,9 @@ import { getSessionUser } from '@/lib/auth/session';
 import { loadPublicPage } from '@/modules/public/booking-page';
 import { BookingFlow } from '@/components/features/booking/BookingFlow';
 import { TEMPLATES, templateStyles as s } from '@/components/features/booking/Templates';
+import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
+import { I18nProvider } from '@/i18n/client';
+import { getI18n, i18nFor } from '@/i18n/server';
 
 type Params = { params: Promise<{ slug: string }>; searchParams: Promise<{ preview?: string }> };
 
@@ -16,9 +19,10 @@ async function load(slug: string, preview: boolean) {
 export async function generateMetadata({ params, searchParams }: Params): Promise<Metadata> {
   const { slug } = await params;
   const page = await load(slug, (await searchParams).preview === '1');
-  if (!page) return { title: 'Not found' };
+  if (!page) return { title: (await getI18n()).t.booking.page.notFound };
+  const { t } = i18nFor(page.locale);
   return {
-    title: { absolute: `${page.profile.displayName} — Book an appointment` },
+    title: { absolute: t.booking.page.metaTitle({ business: page.profile.displayName }) },
     description: page.profile.tagline ?? page.profile.description ?? undefined,
     robots: page.published ? undefined : { index: false, follow: false },
   };
@@ -30,6 +34,7 @@ export default async function BookingPage({ params, searchParams }: Params) {
   const page = await load(slug, preview);
   // Unknown, suspended and unpublished businesses are indistinguishable.
   if (!page) notFound();
+  const { t } = i18nFor(page.locale);
   const Template = TEMPLATES[page.template];
   const flow = (
     <BookingFlow
@@ -50,16 +55,17 @@ export default async function BookingPage({ params, searchParams }: Params) {
     />
   );
   return (
-    <main className={s.frame}>
-      {!page.published ? (
-        <div className={s.preview}>
-          Preview · this page isn&rsquo;t published, so customers can&rsquo;t see it or book yet.
+    <I18nProvider locale={page.locale}>
+      <main className={s.frame} lang={page.locale}>
+        {!page.published ? <div className={s.preview}>{t.booking.page.preview}</div> : null}
+        <Template page={page} flow={flow} />
+        <div className={s.poweredBy}>
+          <span>
+            {t.booking.page.poweredBy} <Link href="/">Tempo</Link>
+          </span>
+          <LocaleSwitcher />
         </div>
-      ) : null}
-      <Template page={page} flow={flow} />
-      <div className={s.poweredBy}>
-        Booking pages by <Link href="/">Tempo</Link>
-      </div>
-    </main>
+      </main>
+    </I18nProvider>
   );
 }

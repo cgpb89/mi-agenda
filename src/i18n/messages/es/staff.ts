@@ -1,0 +1,43 @@
+import type { Messages } from '../en';
+
+export const staff: Messages['staff'] = {
+  sub: ({ n }) =>
+    `${n} ${n === 1 ? 'activo' : 'activos'} · los horarios se gestionan en Disponibilidad`,
+  intro: 'Una agenda para cada persona. Para darle acceso a alguien, invítalo desde',
+  settingsLink: 'Configuración del negocio',
+  add: '+ Agregar persona',
+  cols: {
+    name: 'Nombre',
+    services: 'Servicios',
+    login: 'Acceso',
+    upcoming: 'Próximas',
+    completed30: 'Completadas, 30 días',
+    value30: 'Valor est., 30 días',
+    status: 'Estado',
+  },
+  nOfTotal: ({ n, total }) => `${n} de ${total}`,
+  noAccess: 'Sin acceso',
+  calendarOnly: 'Solo agenda',
+  valueNote: 'El valor estimado es el precio de las citas completadas, no los pagos cobrados.',
+  edit: 'Editar miembro del equipo',
+  editNamed: ({ name }) => `Editar a ${name}`,
+  new: 'Nuevo miembro del equipo',
+  saving: 'Guardando…',
+  save: 'Guardar',
+  markInactive: 'Marcar como inactivo',
+  markActive: 'Marcar como activo',
+  toastAdded: ({ name }) => `${name} agregado`,
+  toastSaved: ({ name }) => `${name} guardado`,
+  inactiveWarning: ({ n }) =>
+    `Las personas inactivas no aparecen para reservar. ${n} ${n === 1 ? 'cita próxima sigue reservada' : 'citas próximas siguen reservadas'}: reasígnalas o cancélalas desde la agenda.`,
+  name: 'Nombre',
+  role: 'Puesto que ven los clientes',
+  optional: 'Opcional',
+  rolePlaceholder: 'Barbero sénior',
+  bio: 'Biografía breve',
+  bioHint: 'Opcional, se muestra en algunas plantillas',
+  servicesOffered: 'Servicios que ofrece',
+  addServicesFirst: 'Primero agrega servicios.',
+  shiftsIn: 'Los días y turnos de trabajo se definen en',
+  availabilityLink: 'Disponibilidad',
+};

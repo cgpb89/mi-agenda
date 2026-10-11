@@ -12,13 +12,13 @@ import { saveServiceAction } from '@/modules/services/actions';
 import { saveAvailabilityAction } from '@/modules/scheduling/actions';
 import { setPageStatusAction } from '@/modules/businesses/actions';
 import { DURATIONS } from '@/modules/services/constants';
+import { useI18n } from '@/i18n/client';
 
 const PRESETS: Record<
-  string,
-  { label: string; week: Record<string, { start: number; end: number }[]> }
+  'weekdays' | 'shop' | 'late',
+  { week: Record<string, { start: number; end: number }[]> }
 > = {
   weekdays: {
-    label: 'Mon–Fri 9:00 AM – 5:00 PM',
     week: Object.fromEntries(
       ['1', '2', '3', '4', '5', '6', '7'].map((d) => [
         d,
@@ -27,7 +27,6 @@ const PRESETS: Record<
     ),
   },
   shop: {
-    label: 'Mon–Sat 9:00 AM – 7:00 PM, lunch 1:00–1:30',
     week: Object.fromEntries(
       ['1', '2', '3', '4', '5', '6', '7'].map((d) => [
         d,
@@ -41,7 +40,6 @@ const PRESETS: Record<
     ),
   },
   late: {
-    label: 'Tue–Sat 10:00 AM – 7:00 PM',
     week: Object.fromEntries(
       ['1', '2', '3', '4', '5', '6', '7'].map((d) => [
         d,
@@ -62,6 +60,7 @@ function Step({
   done: boolean;
   children: ReactNode;
 }) {
+  const { t } = useI18n();
   return (
     <section
       style={{
@@ -101,7 +100,7 @@ function Step({
           {title}{' '}
           {done ? (
             <span style={{ fontSize: 12, color: '#2f6e5a', fontFamily: 'var(--font-hanken)' }}>
-              · Done
+              {t.onboarding.done}
             </span>
           ) : null}
         </h2>
@@ -128,6 +127,8 @@ export function OnboardingView(props: {
   const [pending, startTransition] = useTransition();
   const [svc, setSvc] = useState({ name: '', durationMin: 45, price: '' });
   const [error, setError] = useState<string | null>(null);
+  const { t, locale } = useI18n();
+  const ob = t.onboarding;
 
   function addService() {
     setError(null);
@@ -146,16 +147,16 @@ export function OnboardingView(props: {
       });
       if (!res.ok) return setError(res.error.message);
       setSvc({ name: '', durationMin: 45, price: '' });
-      toast(`${res.data.name} added`);
+      toast(ob.toastAdded({ name: res.data.name }));
       router.refresh();
     });
   }
 
-  function applyPreset(key: string) {
+  function applyPreset(key: keyof typeof PRESETS) {
     setError(null);
     startTransition(async () => {
       const res = await saveAvailabilityAction(slug, {
-        business: PRESETS[key]!.week,
+        business: PRESETS[key].week,
         staff: {},
         rules: {
           slotIntervalMin: 30,
@@ -165,7 +166,7 @@ export function OnboardingView(props: {
         },
       });
       if (!res.ok) return setError(res.error.message);
-      toast('Business hours saved');
+      toast(ob.toastHours);
       router.refresh();
     });
   }
@@ -175,119 +176,109 @@ export function OnboardingView(props: {
     startTransition(async () => {
       const res = await setPageStatusAction(slug, { status: 'PUBLISHED' });
       if (!res.ok) return setError(res.error.message);
-      toast('Booking page published');
+      toast(ob.toastPublished);
       router.push(`${base}/overview`);
     });
   }
 
   return (
     <>
-      <PageHeader
-        title="Set up your business"
-        sub="Five steps to your first online booking"
-        hideNew
-      />
+      <PageHeader title={t.app.titles.onboarding} sub={ob.sub} hideNew />
       <PageContent>
         {error ? <FormMessage kind="error">{error}</FormMessage> : null}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, maxWidth: 820 }}>
-          <Step n={1} title="Business details" done={props.profileDone}>
-            <span style={{ color: '#5d564b' }}>
-              Address, phone and a short description customers will see on your page.
-            </span>
+          <Step n={1} title={ob.step1} done={props.profileDone}>
+            <span style={{ color: '#5d564b' }}>{ob.step1Body}</span>
             <div>
-              <ButtonLink href={`${base}/booking-page`}>Edit booking page details</ButtonLink>
+              <ButtonLink href={`${base}/booking-page`}>{ob.step1Cta}</ButtonLink>
             </div>
           </Step>
 
-          <Step n={2} title="Services and prices" done={props.services.length > 0}>
+          <Step n={2} title={ob.step2} done={props.services.length > 0}>
             {props.services.length ? (
               <ul style={{ margin: 0, paddingLeft: 18, color: '#5d564b' }}>
                 {props.services.map((x) => (
                   <li key={x.id}>
-                    {x.name} · {x.durationMin} min · {moneyFmt(x.priceMinor, props.currency)}
+                    {x.name} · {x.durationMin} {ob.min} ·{' '}
+                    {moneyFmt(x.priceMinor, props.currency, locale)}
                   </li>
                 ))}
               </ul>
             ) : null}
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               <Input
-                aria-label="Service name"
-                placeholder="Service name, e.g. Classic Cut"
+                aria-label={ob.serviceName}
+                placeholder={ob.serviceNamePlaceholder}
                 maxLength={80}
                 style={{ flex: '2 1 200px' }}
                 value={svc.name}
                 onChange={(e) => setSvc({ ...svc, name: e.target.value })}
               />
               <Select
-                aria-label="Duration"
+                aria-label={ob.duration}
                 style={{ flex: '1 1 110px' }}
                 value={svc.durationMin}
                 onChange={(e) => setSvc({ ...svc, durationMin: Number(e.target.value) })}
               >
                 {DURATIONS.map((d) => (
                   <option key={d} value={d}>
-                    {d} min
+                    {d} {ob.min}
                   </option>
                 ))}
               </Select>
               <Input
-                aria-label={`Price (${props.currency})`}
-                placeholder={`Price (${props.currency})`}
+                aria-label={ob.price({ currency: props.currency })}
+                placeholder={ob.price({ currency: props.currency })}
                 inputMode="decimal"
                 style={{ flex: '1 1 110px' }}
                 value={svc.price}
                 onChange={(e) => setSvc({ ...svc, price: e.target.value })}
               />
               <Button variant="primary" disabled={pending || !svc.name.trim()} onClick={addService}>
-                Add
+                {ob.add}
               </Button>
             </div>
             <span style={{ fontSize: 12, color: '#6b6358' }}>
-              Buffers, staff and online visibility can be changed in{' '}
-              <Link href={`${base}/services`}>Services</Link>.
+              {ob.step2Note} <Link href={`${base}/services`}>{ob.servicesLink}</Link>.
             </span>
           </Step>
 
-          <Step n={3} title="Business hours" done={props.hours.length > 0}>
+          <Step n={3} title={ob.step3} done={props.hours.length > 0}>
             <span style={{ color: '#5d564b' }}>
-              {props.hours.length ? `Currently: ${props.hours.join(' · ')}` : 'No hours yet.'}
+              {props.hours.length ? ob.currently({ hours: props.hours.join(' · ') }) : ob.noHours}
             </span>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              {Object.entries(PRESETS).map(([k, p]) => (
+              {(Object.keys(PRESETS) as (keyof typeof PRESETS)[]).map((k) => (
                 <Button key={k} pill disabled={pending} onClick={() => applyPreset(k)}>
-                  {p.label}
+                  {ob.presets[k]}
                 </Button>
               ))}
               <ButtonLink pill href={`${base}/availability`}>
-                Custom hours, staff shifts and holidays →
+                {ob.customHours}
               </ButtonLink>
             </div>
           </Step>
 
-          <Step n={4} title="Booking policy" done>
-            <span style={{ color: '#5d564b' }}>
-              Each phone number can hold up to <strong>{props.maxPerPhone}</strong> upcoming
-              appointment{props.maxPerPhone === 1 ? '' : 's'} at a time. Cancellation window and
-              confirmation rules are in settings.
-            </span>
+          <Step n={4} title={ob.step4} done>
+            <span style={{ color: '#5d564b' }}>{ob.policyBody({ n: props.maxPerPhone })}</span>
             <div>
-              <ButtonLink href={`${base}/settings`}>Review booking policy</ButtonLink>
+              <ButtonLink href={`${base}/settings`}>{ob.reviewPolicy}</ButtonLink>
             </div>
           </Step>
 
-          <Step n={5} title="Publish your booking page" done={props.published}>
+          <Step n={5} title={ob.step5} done={props.published}>
             <span style={{ color: '#5d564b' }}>
               {props.published ? (
                 <>
-                  Live at <a href={`/book/${slug}`}>/book/{slug}</a>.
+                  {ob.liveAt} <a href={`/book/${slug}`}>/book/{slug}</a>.
                 </>
               ) : (
                 <>
-                  Check the{' '}
+                  {ob.checkThe}{' '}
                   <a href={`/book/${slug}?preview=1`} target="_blank" rel="noopener">
-                    preview
+                    {ob.preview}
                   </a>
-                  , then publish.
+                  {ob.thenPublish}
                 </>
               )}
             </span>
@@ -298,13 +289,13 @@ export function OnboardingView(props: {
                   disabled={pending || !props.services.length || !props.hours.length}
                   onClick={publish}
                 >
-                  Publish booking page
+                  {ob.publish}
                 </Button>
               </div>
             ) : (
               <div>
                 <ButtonLink variant="primary" href={`${base}/overview`}>
-                  Go to overview
+                  {ob.goOverview}
                 </ButtonLink>
               </div>
             )}

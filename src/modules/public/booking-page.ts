@@ -11,6 +11,8 @@ export type TemplateKey = 'barber' | 'wellness' | 'consult' | 'fitness' | 'servi
 
 export interface PublicPage {
   tenantId: string;
+  /** Display language: the visitor's explicit choice, else the business's page language. */
+  locale: Locale;
   slug: string;
   name: string;
   timezone: string;
@@ -47,6 +49,8 @@ export interface PublicPage {
 
 export { summarizeHours } from './booking-page-pure';
 import { summarizeHours } from './booking-page-pure';
+import { DEFAULT_LOCALE, type Locale, toLocale } from '@/i18n/config';
+import { getChosenLocale } from '@/i18n/server';
 
 export async function loadPublicPage(
   slug: string,
@@ -63,6 +67,7 @@ export async function loadPublicPage(
       timezone: true,
       currency: true,
       country: true,
+      locale: true,
       status: true,
       profile: true,
       policy: {
@@ -116,8 +121,11 @@ export async function loadPublicPage(
     }),
   ]);
 
+  const locale = (await getChosenLocale()) ?? toLocale(t.locale) ?? DEFAULT_LOCALE;
+
   return {
     tenantId: t.id,
+    locale,
     slug: t.slug,
     name: t.name,
     timezone: t.timezone,
@@ -137,7 +145,7 @@ export async function loadPublicPage(
             .split(/\n|·/)
             .map((s) => s.trim())
             .filter(Boolean)
-        : summarizeHours(rules),
+        : summarizeHours(rules, locale),
       content: readPageContent(t.profile.pageContent),
     },
     policy: t.policy,

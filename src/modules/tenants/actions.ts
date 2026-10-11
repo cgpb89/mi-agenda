@@ -13,6 +13,8 @@ import { generateToken } from '@/lib/security/tokens';
 import { emailSchema, parseInput, uuidSchema } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
 import { INVITE_TTL_MS, inviteTokenHash } from './invitations';
+import { msg } from '@/i18n/message-ref';
+import { getI18n } from '@/i18n/server';
 
 const inviteSchema = z.object({ email: emailSchema, role: z.enum(['MANAGER', 'STAFF']) });
 
@@ -33,8 +35,8 @@ export async function inviteMemberAction(
         select: { id: true },
       });
       if (member)
-        throw new AppError('CONFLICT', 'That person is already on the team.', {
-          fieldErrors: { email: 'Already on the team' },
+        throw new AppError('CONFLICT', msg('alreadyOnTeam'), {
+          fieldErrors: { email: msg('alreadyOnTeamField') },
         });
       // Supersede earlier pending invites for the same email.
       await tx.invitation.updateMany({
@@ -65,10 +67,16 @@ export async function inviteMemberAction(
       );
     });
     const link = `${getEnv().APP_URL}/invite?token=${encodeURIComponent(token)}`;
+    const { t } = await getI18n();
     const mail = await sendMail({
       to: input.email,
-      subject: `You're invited to ${ctx.tenantName} on Tempo`,
-      text: `${ctx.user.name} invited you to join ${ctx.tenantName} on Tempo as ${input.role === 'MANAGER' ? 'a manager' : 'staff'}.\n\nAccept within 7 days:\n${link}\n\nIf you weren't expecting this, you can ignore this email.`,
+      subject: t.emails.inviteSubject({ business: ctx.tenantName }),
+      text: t.emails.inviteBody({
+        inviter: ctx.user.name,
+        business: ctx.tenantName,
+        role: input.role,
+        link,
+      }),
     });
     revalidatePath(`/app/${tenantSlug}/settings`);
     return { emailed: mail.sent };
@@ -87,7 +95,7 @@ export async function revokeInvitationAction(
         where: { id: invId, tenantId: ctx.tenantId, acceptedAt: null, revokedAt: null },
         data: { revokedAt: new Date() },
       });
-      if (res.count !== 1) throw new AppError('NOT_FOUND', 'Invitation not found.');
+      if (res.count !== 1) throw new AppError('NOT_FOUND', msg('invitationNotFound'));
       await audit(
         {
           tenantId: ctx.tenantId,
@@ -123,7 +131,7 @@ export async function updateMemberAction(
       const m = await tx.membership.findFirst({
         where: { id: input.membershipId, tenantId: ctx.tenantId },
       });
-      if (!m) throw new AppError('NOT_FOUND', 'Member not found.');
+      if (!m) throw new AppError('NOT_FOUND', msg('memberNotFound'));
       const losingOwner =
         m.role === 'OWNER' &&
         m.status === 'ACTIVE' &&
@@ -132,8 +140,7 @@ export async function updateMemberAction(
         const owners = await tx.membership.count({
           where: { tenantId: ctx.tenantId, role: 'OWNER', status: 'ACTIVE' },
         });
-        if (owners <= 1)
-          throw new AppError('POLICY', 'A business needs at least one active owner.');
+        if (owners <= 1) throw new AppError('POLICY', msg('needsOwner'));
       }
       await tx.membership.update({
         where: { id: m.id },

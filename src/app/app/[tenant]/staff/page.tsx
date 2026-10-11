@@ -3,8 +3,12 @@ import { getDb } from '@/lib/db/client';
 import { requireTenantPage } from '@/lib/auth/authorize';
 import { daysAgo, now } from '@/lib/time';
 import { StaffView } from '@/components/features/staff/StaffView';
+import { getI18n } from '@/i18n/server';
 
-export const metadata: Metadata = { title: 'Staff' };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.app.nav.staff };
+}
 
 export default async function StaffPage({ params }: { params: Promise<{ tenant: string }> }) {
   const { tenant } = await params;

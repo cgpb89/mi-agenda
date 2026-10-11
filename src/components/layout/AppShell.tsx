@@ -20,6 +20,8 @@ import {
 } from '@/components/features/appointments/NewAppointmentModal';
 import { AppointmentDrawer } from '@/components/features/appointments/AppointmentDrawer';
 import styles from './AppShell.module.scss';
+import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
+import { useI18n } from '@/i18n/client';
 
 export interface ShellService {
   id: string;
@@ -104,6 +106,7 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
     [data, openNewAppointment],
   );
   const current = data.memberships.find((m) => m.slug === data.tenant.slug);
+  const { t } = useI18n();
 
   return (
     <Ctx.Provider value={ctx}>
@@ -111,16 +114,16 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
         <div className={styles.root}>
           <aside
             className={[styles.side, navOpen && styles.sideOpen].filter(Boolean).join(' ')}
-            aria-label="Sidebar"
+            aria-label={t.app.sidebar}
           >
             <div className={styles.brandRow}>
-              <Link href="/" className={styles.logo}>
+              <Link href="/" className={styles.logo} aria-label={t.common.homeLabel}>
                 tempo<span>.</span>
               </Link>
               <button
                 type="button"
                 className={styles.closeNav}
-                aria-label="Close menu"
+                aria-label={t.app.closeMenu}
                 onClick={() => setNavOpen(false)}
               >
                 ×
@@ -163,7 +166,7 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
               ) : null}
             </div>
 
-            <nav aria-label="Main" className={styles.nav}>
+            <nav aria-label={t.app.mainNav} className={styles.nav}>
               {data.nav.map((n) => {
                 const on = pathname === n.href || pathname.startsWith(`${n.href}/`);
                 return (
@@ -186,18 +189,21 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
                 target="_blank"
                 rel="noopener"
               >
-                View booking page ↗
+                {t.app.viewBookingPage}
               </a>
               {data.user.isPlatformAdmin ? (
                 <Link className={styles.footLink} href="/super-admin">
-                  Platform admin ↗
+                  {t.app.platformAdmin}
                 </Link>
               ) : null}
-              <form action={logoutAction}>
-                <button type="submit" className={styles.footLink}>
-                  Sign out
-                </button>
-              </form>
+              <div className={styles.footRow}>
+                <form action={logoutAction}>
+                  <button type="submit" className={styles.footLink}>
+                    {t.app.signOut}
+                  </button>
+                </form>
+                <LocaleSwitcher />
+              </div>
               <div className={styles.user}>
                 <span className={styles.userAvatar} aria-hidden="true">
                   {data.user.initials}
@@ -244,9 +250,15 @@ export function PageHeader({
   hideNew?: boolean;
 }) {
   const { data, openNav, openNewAppointment } = useShell();
+  const { t } = useI18n();
   return (
     <header className={styles.header}>
-      <button type="button" className={styles.menuButton} aria-label="Open menu" onClick={openNav}>
+      <button
+        type="button"
+        className={styles.menuButton}
+        aria-label={t.app.openMenu}
+        onClick={openNav}
+      >
         ☰
       </button>
       <div className={styles.titleBlock}>
@@ -271,7 +283,7 @@ export function PageHeader({
             whiteSpace: 'nowrap',
           }}
         >
-          + New appointment
+          {t.app.newAppointment}
         </button>
       ) : null}
     </header>

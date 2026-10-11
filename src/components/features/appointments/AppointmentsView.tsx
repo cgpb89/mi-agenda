@@ -6,9 +6,10 @@ import { useEffect, useState } from 'react';
 import { PageContent, PageHeader, useShell } from '@/components/layout/AppShell';
 import { Segmented } from '@/components/ui/Segmented';
 import { StatusPill } from '@/components/ui/StatusPill';
-import t from '@/components/ui/Table.module.scss';
+import tbl from '@/components/ui/Table.module.scss';
 import { fmtDay, fmtTime, moneyFmt } from '@/components/features/shared/format';
 import { useOpenAppointment } from './AppointmentDrawer';
+import { useI18n } from '@/i18n/client';
 
 type Status = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED' | 'NO_SHOW';
 
@@ -27,14 +28,13 @@ export interface ApptRowView {
   collectedMinor: number;
 }
 
-const SOURCE = { ONLINE: 'Online', PHONE: 'Phone', WALK_IN: 'Walk-in' } as const;
-const CHIPS: [Status | null, string][] = [
-  [null, 'All'],
-  ['PENDING', 'Pending'],
-  ['CONFIRMED', 'Confirmed'],
-  ['COMPLETED', 'Completed'],
-  ['CANCELLED', 'Cancelled'],
-  ['NO_SHOW', 'No-show'],
+const CHIPS: (Status | null)[] = [
+  null,
+  'PENDING',
+  'CONFIRMED',
+  'COMPLETED',
+  'CANCELLED',
+  'NO_SHOW',
 ];
 
 export function AppointmentsView({
@@ -66,6 +66,9 @@ export function AppointmentsView({
   const router = useRouter();
   const openAppt = useOpenAppointment();
   const [q, setQ] = useState(filters.q);
+  const { t, locale } = useI18n();
+  const al = t.appointments.list;
+  const money = (minor: number, currency: string) => moneyFmt(minor, currency, locale);
 
   const href = (patch: Record<string, string | null>) => {
     const p = new URLSearchParams();
@@ -96,34 +99,33 @@ export function AppointmentsView({
   return (
     <>
       <PageHeader
-        title="Appointments"
-        sub={`${data.tenant.name} · ${tz.split('/').pop()?.replace(/_/g, ' ')} time`}
+        title={t.app.nav.appointments}
+        sub={al.sub({
+          business: data.tenant.name,
+          zone: tz.split('/').pop()?.replace(/_/g, ' ') ?? tz,
+        })}
       />
       <PageContent>
-        <div className={t.toolbar}>
+        <div className={tbl.toolbar}>
           <input
-            className={t.search}
+            className={tbl.search}
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Search customer, service or ID"
-            aria-label="Search appointments"
+            placeholder={al.search}
+            aria-label={al.searchLabel}
           />
           <Segmented
-            label="When"
-            items={[
-              ['upcoming', 'Upcoming'],
-              ['past', 'Past'],
-              ['all', 'All'],
-            ].map(([k, l]) => ({
-              key: k!,
-              label: l,
+            label={al.when}
+            items={(['upcoming', 'past', 'all'] as const).map((k) => ({
+              key: k,
+              label: al.scopes[k],
               selected: filters.scope === k,
-              href: href({ when: k === 'upcoming' ? null : k!, limit: null }),
+              href: href({ when: k === 'upcoming' ? null : k, limit: null }),
             }))}
           />
           <select
-            className={t.select}
-            aria-label="Staff"
+            className={tbl.select}
+            aria-label={al.staff}
             value={filters.staffId ?? 'all'}
             onChange={(e) =>
               router.replace(
@@ -132,7 +134,7 @@ export function AppointmentsView({
               )
             }
           >
-            <option value="all">All staff</option>
+            <option value="all">{al.allStaff}</option>
             {staff.map((s) => (
               <option key={s.id} value={s.id}>
                 {s.name}
@@ -140,40 +142,40 @@ export function AppointmentsView({
             ))}
           </select>
         </div>
-        <div className={t.chips}>
-          {CHIPS.map(([k, label]) => (
+        <div className={tbl.chips}>
+          {CHIPS.map((k) => (
             <Link
-              key={label}
+              key={k ?? 'all'}
               scroll={false}
               href={href({ status: k, limit: null })}
               aria-current={filters.status === k ? 'true' : undefined}
-              className={[t.chip, filters.status === k && t.chipOn].filter(Boolean).join(' ')}
+              className={[tbl.chip, filters.status === k && tbl.chipOn].filter(Boolean).join(' ')}
             >
-              {label} <span>{k ? (counts[k] ?? 0) : allCount}</span>
+              {k ? t.common.status[k] : al.all} <span>{k ? (counts[k] ?? 0) : allCount}</span>
             </Link>
           ))}
         </div>
-        <div className={t.wrap}>
-          <table className={t.table} style={{ minWidth: 940 }}>
+        <div className={tbl.wrap}>
+          <table className={tbl.table} style={{ minWidth: 940 }}>
             <thead>
               <tr>
-                <th>ID</th>
-                <th>Customer</th>
-                <th>Service</th>
-                <th>Staff</th>
-                <th>Date &amp; time</th>
-                <th>Duration</th>
-                <th className={t.right}>Price</th>
-                <th>Status</th>
-                <th>Source</th>
-                {showPayments ? <th>Payment</th> : null}
+                <th>{al.cols.id}</th>
+                <th>{al.cols.customer}</th>
+                <th>{al.cols.service}</th>
+                <th>{al.cols.staff}</th>
+                <th>{al.cols.when}</th>
+                <th>{al.cols.duration}</th>
+                <th className={tbl.right}>{al.cols.price}</th>
+                <th>{al.cols.status}</th>
+                <th>{al.cols.source}</th>
+                {showPayments ? <th>{al.cols.payment}</th> : null}
               </tr>
             </thead>
             <tbody>
               {rows.map((r) => (
                 <tr
                   key={r.id}
-                  className={t.clickable}
+                  className={tbl.clickable}
                   tabIndex={0}
                   onClick={() => openAppt(r.id)}
                   onKeyDown={(e) => {
@@ -183,28 +185,33 @@ export function AppointmentsView({
                     }
                   }}
                 >
-                  <td className={t.mono}>{r.ref}</td>
-                  <td className={t.strong}>{r.customer}</td>
+                  <td className={tbl.mono}>{r.ref}</td>
+                  <td className={tbl.strong}>{r.customer}</td>
                   <td>{r.service}</td>
                   <td>{r.staff}</td>
-                  <td className={t.nowrap}>
-                    {fmtDay(r.startAt, tz)} · {fmtTime(r.startAt, tz)}
+                  <td className={tbl.nowrap}>
+                    {fmtDay(r.startAt, tz, locale)} · {fmtTime(r.startAt, tz, locale)}
                   </td>
-                  <td>{r.durationMin} min</td>
-                  <td className={t.right}>
-                    {r.priceMinor === 0 ? 'Free' : moneyFmt(r.priceMinor, r.currency)}
+                  <td>
+                    {r.durationMin} {t.appointments.min}
+                  </td>
+                  <td className={tbl.right}>
+                    {r.priceMinor === 0 ? t.appointments.free : money(r.priceMinor, r.currency)}
                   </td>
                   <td>
                     <StatusPill status={r.status} size="sm" />
                   </td>
-                  <td className={t.muted}>{SOURCE[r.source]}</td>
+                  <td className={tbl.muted}>{al.source[r.source]}</td>
                   {showPayments ? (
-                    <td className={r.collectedMinor > 0 ? undefined : t.faint}>
+                    <td className={r.collectedMinor > 0 ? undefined : tbl.faint}>
                       {r.collectedMinor <= 0
-                        ? 'Not recorded'
+                        ? al.notRecorded
                         : r.collectedMinor >= r.priceMinor
-                          ? `${moneyFmt(r.collectedMinor, r.currency)} collected`
-                          : `${moneyFmt(r.collectedMinor, r.currency)} of ${moneyFmt(r.priceMinor, r.currency)}`}
+                          ? al.collected({ amount: money(r.collectedMinor, r.currency) })
+                          : al.partOf({
+                              amount: money(r.collectedMinor, r.currency),
+                              total: money(r.priceMinor, r.currency),
+                            })}
                     </td>
                   ) : null}
                 </tr>
@@ -212,26 +219,24 @@ export function AppointmentsView({
             </tbody>
           </table>
           {rows.length === 0 ? (
-            <div className={t.empty}>
-              No appointments match these filters.{' '}
-              <Link className={t.linkBtn} href={base} scroll={false} onClick={() => setQ('')}>
-                Clear filters
+            <div className={tbl.empty}>
+              {al.noMatch}{' '}
+              <Link className={tbl.linkBtn} href={base} scroll={false} onClick={() => setQ('')}>
+                {al.clearFilters}
               </Link>
             </div>
           ) : null}
         </div>
-        <div className={t.footer}>
-          <span>
-            Showing {rows.length} of {total} · Payment shows money recorded as collected
-          </span>
+        <div className={tbl.footer}>
+          <span>{al.showing({ n: rows.length, total })}</span>
           {hasMore ? (
             <Link
-              className={t.chip}
+              className={tbl.chip}
               style={{ padding: '8px 14px', borderRadius: 8, fontSize: 13 }}
               href={href({ limit: String(filters.limit + 30) })}
               scroll={false}
             >
-              Show 30 more
+              {al.showMore}
             </Link>
           ) : null}
         </div>

@@ -6,8 +6,10 @@ import { signupAction, type FormState } from '@/app/(auth)/actions';
 import { Button } from '@/components/ui/Button';
 import { Field, FormMessage, Input, Select, formStyles } from '@/components/ui/Form';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
-import { CATEGORY_OPTIONS } from '@/components/features/shared/categories';
+import { CATEGORY_VALUES } from '@/components/features/shared/categories';
 import styles from './Auth.module.scss';
+import { useI18n } from '@/i18n/client';
+import { countryName } from '@/i18n/format';
 
 function slugify(input: string): string {
   return input
@@ -38,6 +40,8 @@ export function SignupForm() {
   const [slug, setSlug] = useState(v.slug ?? '');
   const [slugTouched, setSlugTouched] = useState(Boolean(v.slug));
   const tzRef = useRef<HTMLSelectElement>(null);
+  const { t, locale } = useI18n();
+  const s = t.auth.signup;
 
   // Pre-select the browser's time zone after hydration (DOM update, no re-render).
   useEffect(() => {
@@ -68,7 +72,7 @@ export function SignupForm() {
       {state.error ? <FormMessage kind="error">{state.error.message}</FormMessage> : null}
 
       <div className={formStyles.grid2}>
-        <Field label="Your name" error={fe.name}>
+        <Field label={t.auth.yourName} error={fe.name}>
           {(p) => (
             <Input
               {...p}
@@ -76,11 +80,11 @@ export function SignupForm() {
               autoComplete="name"
               required
               defaultValue={v.name ?? ''}
-              placeholder="Marcus Reed"
+              placeholder={s.namePlaceholder}
             />
           )}
         </Field>
-        <Field label="Email" error={fe.email}>
+        <Field label={t.auth.email} error={fe.email}>
           {(p) => (
             <Input
               {...p}
@@ -93,7 +97,7 @@ export function SignupForm() {
           )}
         </Field>
       </div>
-      <Field label="Password" hint="At least 10 characters" error={fe.password}>
+      <Field label={t.auth.password} hint={t.auth.atLeast10} error={fe.password}>
         {(p) => (
           <Input
             {...p}
@@ -107,15 +111,15 @@ export function SignupForm() {
       </Field>
 
       <div className={styles.section}>
-        <span className={styles.legend}>Your business</span>
-        <Field label="Business name" error={fe.businessName}>
+        <span className={styles.legend}>{s.yourBusiness}</span>
+        <Field label={s.businessName} error={fe.businessName}>
           {(p) => (
             <Input
               {...p}
               name="businessName"
               required
               value={business}
-              placeholder="Northside Barber Co."
+              placeholder={s.businessPlaceholder}
               onChange={(e) => {
                 setBusiness(e.target.value);
                 if (!slugTouched) setSlug(slugify(e.target.value));
@@ -123,14 +127,14 @@ export function SignupForm() {
             />
           )}
         </Field>
-        <Field label="Booking page address" error={fe.slug}>
+        <Field label={s.slug} error={fe.slug}>
           {(p) => (
             <Input
               {...p}
               name="slug"
               required
               value={slug}
-              placeholder="northside-barber"
+              placeholder={s.slugPlaceholder}
               onChange={(e) => {
                 setSlugTouched(true);
                 setSlug(e.target.value.toLowerCase());
@@ -138,32 +142,32 @@ export function SignupForm() {
             />
           )}
         </Field>
-        <span className={styles.slugPreview}>tempo/book/{slug || 'your-business'}</span>
+        <span className={styles.slugPreview}>tempo/book/{slug || s.slugFallback}</span>
         <div className={formStyles.grid2}>
-          <Field label="Type of business" error={fe.category}>
+          <Field label={s.category} error={fe.category}>
             {(p) => (
               <Select {...p} name="category" defaultValue={v.category ?? 'BARBER'}>
-                {CATEGORY_OPTIONS.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
+                {CATEGORY_VALUES.map((c) => (
+                  <option key={c} value={c}>
+                    {t.common.categories[c]}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
-          <Field label="Country" error={fe.country}>
+          <Field label={s.country} error={fe.country}>
             {(p) => (
               <Select {...p} name="country" defaultValue={v.country ?? 'US'}>
                 {PHONE_COUNTRIES.map((c) => (
                   <option key={c.code} value={c.code}>
-                    {c.name}
+                    {countryName(c.code, locale, c.name)}
                   </option>
                 ))}
               </Select>
             )}
           </Field>
         </div>
-        <Field label="Time zone" hint="Your hours and appointments use this" error={fe.timezone}>
+        <Field label={s.timezone} hint={s.timezoneHint} error={fe.timezone}>
           {(p) => (
             <Select
               {...p}
@@ -182,11 +186,11 @@ export function SignupForm() {
       </div>
 
       <Button type="submit" variant="primary" size="lg" block disabled={pending}>
-        {pending ? 'Creating…' : 'Create your booking page'}
+        {pending ? s.submitting : s.submit}
       </Button>
       <div className={styles.footer}>
         <span>
-          Already have an account? <Link href="/login">Sign in</Link>
+          {s.haveAccount} <Link href="/login">{s.signIn}</Link>
         </span>
       </div>
     </form>
