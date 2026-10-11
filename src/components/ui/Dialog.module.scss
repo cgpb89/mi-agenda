@@ -8,6 +8,12 @@
   max-height: 100dvh;
   overflow: visible;
 
+  // The variants below set `display: flex`, which would override the browser's
+  // `dialog:not([open]) { display: none }` and leave a closed dialog on screen.
+  &:not([open]) {
+    display: none;
+  }
+
   &::backdrop {
     background: rgba(28, 26, 23, 0.28);
   }
