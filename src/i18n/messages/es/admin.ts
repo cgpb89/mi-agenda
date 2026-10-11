@@ -117,6 +117,23 @@ export const admin: Messages['admin'] = {
     unlimited: 'Ilimitados',
     subscription: 'SUSCRIPCIÓN',
     changePlan: 'Cambiar plan',
+    access: 'Acceso',
+    accessTrial: ({ date, n }) =>
+      `Prueba gratis hasta el ${date} · ${n === 1 ? 'queda 1 día' : `quedan ${n} días`}`,
+    accessPaid: ({ date, n }) =>
+      `Pagado hasta el ${date} · ${n === 1 ? 'queda 1 día' : `quedan ${n} días`}`,
+    accessClosed: ({ date, deleteOn }) =>
+      `Cerrado desde el ${date} (sin pago). Se elimina el ${deleteOn} si no se registra un pago.`,
+    payMonth: 'Registrar pago · 1 mes',
+    payYear: 'Registrar pago · 1 año',
+    paymentNote:
+      'Registra pagos recibidos fuera de la app (SINPE Móvil, transferencia). Se conserva el tiempo restante; un negocio cerrado se reabre desde hoy.',
+    paymentTitle: ({ months }) =>
+      months === 12 ? '¿Registrar un pago de 1 año?' : '¿Registrar un pago de 1 mes?',
+    paymentBody: ({ name, from, to }) => `El acceso de ${name} pasa del ${from} al ${to}.`,
+    paymentCta: 'Registrar pago',
+    paymentRef: 'Referencia del pago (p. ej. número de SINPE)',
+    toastPayment: ({ date }) => `Pago registrado · acceso hasta el ${date}`,
     planNote:
       'Los precios de los planes son provisorios hasta el lanzamiento. Los planes son solo etiquetas; en esta versión no se aplican límites.',
     bookingPage: 'PÁGINA DE RESERVAS',

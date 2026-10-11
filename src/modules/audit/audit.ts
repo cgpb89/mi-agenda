@@ -20,6 +20,8 @@ export type AuditAction =
   | 'tenant.suspended'
   | 'tenant.reactivated'
   | 'tenant.plan_changed'
+  | 'tenant.payment_recorded'
+  | 'tenant.deleted'
   | 'membership.role_changed'
   | 'membership.invited'
   | 'membership.invitation_revoked'

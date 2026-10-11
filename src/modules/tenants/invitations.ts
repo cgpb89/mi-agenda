@@ -5,6 +5,7 @@ import { withTransaction, type Tx } from '@/lib/db/tx';
 import { hashPassword } from '@/lib/auth/password';
 import { hmacHex } from '@/lib/security/tokens';
 import { audit } from '@/modules/audit/audit';
+import { isClosed } from '@/modules/billing/access';
 import { msg } from '@/i18n/message-ref';
 
 export const INVITE_TTL_MS = 7 * 24 * 3600 * 1000;
@@ -16,10 +17,13 @@ export function inviteTokenHash(token: string): string {
 export async function findValidInvitation(tx: Tx, token: string) {
   const inv = await tx.invitation.findUnique({
     where: { tokenHash: inviteTokenHash(token) },
-    include: { tenant: { select: { id: true, name: true, slug: true, status: true } } },
+    include: {
+      tenant: { select: { id: true, name: true, slug: true, status: true, accessUntil: true } },
+    },
   });
   if (!inv || inv.acceptedAt || inv.revokedAt || inv.expiresAt <= new Date()) return null;
   if (inv.tenant.status !== 'ACTIVE' && inv.tenant.status !== 'TRIAL') return null;
+  if (isClosed(inv.tenant.accessUntil)) return null;
   return inv;
 }
 

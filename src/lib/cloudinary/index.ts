@@ -114,3 +114,23 @@ export async function deleteImage(publicId: string): Promise<void> {
     });
   }
 }
+
+/** Delete every image under `prefix` (a deleted store's folder). Best effort. */
+export async function deleteImagesByPrefix(prefix: string): Promise<void> {
+  try {
+    const { cloudName, apiKey, apiSecret } = config();
+    const url = `${API}/${cloudName}/resources/image/upload?prefix=${encodeURIComponent(prefix)}`;
+    const res = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${apiKey}:${apiSecret}`).toString('base64')}`,
+      },
+    });
+    if (!res.ok) throw new Error(`status ${res.status}`);
+  } catch (err) {
+    logger.error('cloudinary prefix delete failed', {
+      prefix,
+      error: err instanceof Error ? err : String(err),
+    });
+  }
+}

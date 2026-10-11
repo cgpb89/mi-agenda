@@ -22,6 +22,7 @@ import { AppointmentDrawer } from '@/components/features/appointments/Appointmen
 import styles from './AppShell.module.scss';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useI18n } from '@/i18n/client';
+import { RENEWAL_REMINDER_DAYS } from '@/modules/billing/access';
 
 export interface ShellService {
   id: string;
@@ -52,6 +53,13 @@ export interface ShellData {
   user: { name: string; initials: string; roleLabel: string; isPlatformAdmin: boolean };
   nav: { key: string; label: string; href: string }[];
   booking: { services: ShellService[]; staff: ShellStaff[]; defaultStaffId: string | null } | null;
+  /** Trial / paid period. Dates are pre-formatted in the business's timezone. */
+  billing: {
+    phase: 'trial' | 'paid' | 'closed';
+    daysLeft: number;
+    accessUntil: string;
+    supportEmail: string | null;
+  };
 }
 
 interface ShellCtx {
@@ -219,7 +227,10 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
             <div className={styles.overlay} onClick={() => setNavOpen(false)} aria-hidden="true" />
           ) : null}
 
-          <main className={styles.main}>{children}</main>
+          <main className={styles.main}>
+            <AccessBanner billing={data.billing} />
+            {children}
+          </main>
         </div>
         <Suspense fallback={null}>
           <AppointmentDrawer />
@@ -234,6 +245,38 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
         ) : null}
       </ToastProvider>
     </Ctx.Provider>
+  );
+}
+
+/**
+ * Trial countdown (always during the trial) and renewal reminder (last days of
+ * a paid period). A closed store gets the full "closed" screen instead.
+ */
+function AccessBanner({ billing }: { billing: ShellData['billing'] }) {
+  const { t } = useI18n();
+  const b = t.app.billing;
+  const show =
+    billing.phase === 'trial' ||
+    (billing.phase === 'paid' && billing.daysLeft <= RENEWAL_REMINDER_DAYS);
+  if (!show) return null;
+  const urgent = billing.daysLeft <= RENEWAL_REMINDER_DAYS;
+  return (
+    <div
+      className={[styles.access, urgent && styles.accessUrgent].filter(Boolean).join(' ')}
+      role="status"
+    >
+      <strong>
+        {billing.phase === 'trial'
+          ? b.trialDays({ n: billing.daysLeft })
+          : b.renewDays({ n: billing.daysLeft })}
+      </strong>
+      <span>
+        {billing.phase === 'trial'
+          ? b.trialEnds({ date: billing.accessUntil })
+          : b.renewEnds({ date: billing.accessUntil })}
+      </span>
+      {billing.supportEmail ? <a href={`mailto:${billing.supportEmail}`}>{b.contact}</a> : null}
+    </div>
   );
 }
 

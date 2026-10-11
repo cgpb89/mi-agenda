@@ -234,6 +234,9 @@ model Tenant {
   currency    String           @default("USD") @db.Char(3)
   /// ISO-3166-1 alpha-2, default country for phone parsing
   country     String           @default("US") @db.Char(2)
+  /// End of the free trial or of the last paid period. After it the store is
+  /// closed; one month later it is deleted (see modules/billing/access.ts).
+  accessUntil DateTime         @default(dbgenerated("(now() + '1 mon'::interval)")) @map("access_until") @db.Timestamptz(3)
   suspendedAt DateTime?        @map("suspended_at") @db.Timestamptz(3)
   createdAt   DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
@@ -253,6 +256,7 @@ model Tenant {
   auditEvents  AuditLog[]
 
   @@index([status])
+  @@index([accessUntil])
   @@map("tenants")
   @@schema("app")
 }

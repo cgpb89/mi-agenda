@@ -3,6 +3,9 @@ import { requireTenantPage } from '@/lib/auth/authorize';
 import { can } from '@/lib/auth/permissions';
 import { AppShell, type ShellData } from '@/components/layout/AppShell';
 import { todayIn } from '@/modules/scheduling/time';
+import { StoreClosed } from '@/components/features/billing/StoreClosed';
+import { getEnv } from '@/lib/env';
+import { accessState } from '@/modules/billing/access';
 import { getI18n } from '@/i18n/server';
 
 function initials(name: string): string {
@@ -26,7 +29,12 @@ export default async function TenantLayout({
 }) {
   const { tenant: slug } = await params;
   const ctx = await requireTenantPage(slug);
-  const { t } = await getI18n();
+  const { t, intl } = await getI18n();
+  const access = accessState(ctx);
+  const closed = access.phase === 'closed';
+  const fmtDate = (d: Date) =>
+    new Intl.DateTimeFormat(intl, { dateStyle: 'long', timeZone: ctx.timezone }).format(d);
+  const supportEmail = getEnv().SUPPORT_EMAIL || null;
   const db = getDb();
 
   const [memberships, profile, services, staff] = await Promise.all([
@@ -117,7 +125,10 @@ export default async function TenantLayout({
       .filter((n) => can(ctx.role, n.perm))
       .map((n) => ({ key: n.key, label: t.app.nav[n.key], href: `${base}/${n.key}` })),
     booking:
-      can(ctx.role, 'appointments.create') && services.length > 0 && staffForBooking.length > 0
+      !closed &&
+      can(ctx.role, 'appointments.create') &&
+      services.length > 0 &&
+      staffForBooking.length > 0
         ? {
             services,
             staff: staffForBooking.map((s) => ({
@@ -128,7 +139,27 @@ export default async function TenantLayout({
             defaultStaffId: ctx.staffId ?? staffForBooking[0]?.id ?? null,
           }
         : null,
+    billing: {
+      phase: access.phase,
+      daysLeft: access.daysLeft,
+      accessUntil: fmtDate(access.accessUntil),
+      supportEmail,
+    },
   };
 
-  return <AppShell data={data}>{children}</AppShell>;
+  return (
+    <AppShell data={data}>
+      {closed ? (
+        <StoreClosed
+          t={t.app.billing}
+          closedOn={fmtDate(access.accessUntil)}
+          deleteOn={fmtDate(access.deleteOn)}
+          daysUntilDeletion={access.daysUntilDeletion}
+          supportEmail={supportEmail}
+        />
+      ) : (
+        children
+      )}
+    </AppShell>
+  );
 }

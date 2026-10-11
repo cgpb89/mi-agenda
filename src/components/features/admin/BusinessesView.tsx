@@ -13,7 +13,12 @@ import {
   categoryLabel,
   templateLabel,
 } from '@/components/features/shared/categories';
-import { changePlanAction, setTenantStatusAction } from '@/modules/platform/actions';
+import {
+  changePlanAction,
+  recordPaymentAction,
+  setTenantStatusAction,
+} from '@/modules/platform/actions';
+import { accessState, extendAccess } from '@/modules/billing/access';
 import { PLANS, type PlanKey } from '@/modules/platform/constants';
 import type { TenantRow } from '@/modules/platform/service';
 import { AdminHeader } from './AdminShell';
@@ -36,7 +41,11 @@ function ago(iso: string | null, bz: Messages['admin']['businesses']) {
 }
 
 type Confirm =
-  { kind: 'suspend' } | { kind: 'reactivate' } | { kind: 'plan'; plan: PlanKey } | null;
+  | { kind: 'suspend' }
+  | { kind: 'reactivate' }
+  | { kind: 'plan'; plan: PlanKey }
+  | { kind: 'payment'; months: 1 | 12 }
+  | null;
 
 export function BusinessesView({
   tenants,
@@ -92,7 +101,9 @@ export function BusinessesView({
       const res =
         confirm.kind === 'plan'
           ? await changePlanAction({ tenantId: b.id, plan: confirm.plan, reason })
-          : await setTenantStatusAction({ tenantId: b.id, action: confirm.kind, reason });
+          : confirm.kind === 'payment'
+            ? await recordPaymentAction({ tenantId: b.id, months: confirm.months, reason })
+            : await setTenantStatusAction({ tenantId: b.id, action: confirm.kind, reason });
       if (!res.ok) {
         setError(res.error.fieldErrors?.reason ?? res.error.message);
         return;
@@ -100,9 +111,16 @@ export function BusinessesView({
       toast(
         confirm.kind === 'plan'
           ? bz.toastPlan({ plan: planLabel(confirm.plan) })
-          : confirm.kind === 'suspend'
-            ? bz.toastSuspended({ name: b.name })
-            : bz.toastReactivated({ name: b.name }),
+          : confirm.kind === 'payment'
+            ? bz.toastPayment({
+                date: fmtDate(
+                  extendAccess(new Date(b.accessUntil), confirm.months).toISOString(),
+                  intl,
+                ),
+              })
+            : confirm.kind === 'suspend'
+              ? bz.toastSuspended({ name: b.name })
+              : bz.toastReactivated({ name: b.name }),
       );
       setConfirm(null);
       setReason('');
@@ -111,6 +129,7 @@ export function BusinessesView({
   }
 
   const seats = b ? PLANS[b.plan].staffSeats : null;
+  const access = b ? accessState({ status: b.status, accessUntil: new Date(b.accessUntil) }) : null;
   const confirmCopy =
     b && confirm
       ? confirm.kind === 'suspend'
@@ -125,15 +144,28 @@ export function BusinessesView({
               body: bz.reactivateBody,
               cta: bz.reactivateCta,
             }
-          : {
-              title: bz.planTitle({ plan: planLabel(confirm.plan) }),
-              body: bz.planBody({
-                name: b.name,
-                from: planLabel(b.plan),
-                to: planLabel(confirm.plan),
-              }),
-              cta: bz.planCta,
-            }
+          : confirm.kind === 'payment'
+            ? {
+                title: bz.paymentTitle({ months: confirm.months }),
+                body: bz.paymentBody({
+                  name: b.name,
+                  from: fmtDate(b.accessUntil, intl),
+                  to: fmtDate(
+                    extendAccess(new Date(b.accessUntil), confirm.months).toISOString(),
+                    intl,
+                  ),
+                }),
+                cta: bz.paymentCta,
+              }
+            : {
+                title: bz.planTitle({ plan: planLabel(confirm.plan) }),
+                body: bz.planBody({
+                  name: b.name,
+                  from: planLabel(b.plan),
+                  to: planLabel(confirm.plan),
+                }),
+                cta: bz.planCta,
+              }
       : null;
 
   return (
@@ -348,6 +380,33 @@ export function BusinessesView({
               <span className={s.muted}>{bz.planNote}</span>
             </div>
             <div className={s.box}>
+              <span className={s.boxTitle}>{bz.access}</span>
+              <span style={{ fontWeight: 600 }}>
+                {access!.phase === 'closed'
+                  ? bz.accessClosed({
+                      date: fmtDate(b.accessUntil, intl),
+                      deleteOn: fmtDate(access!.deleteOn.toISOString(), intl),
+                    })
+                  : (access!.phase === 'trial' ? bz.accessTrial : bz.accessPaid)({
+                      date: fmtDate(b.accessUntil, intl),
+                      n: access!.daysLeft,
+                    })}
+              </span>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setConfirm({ kind: 'payment', months: 1 })}
+                >
+                  {bz.payMonth}
+                </Button>
+                <Button size="sm" onClick={() => setConfirm({ kind: 'payment', months: 12 })}>
+                  {bz.payYear}
+                </Button>
+              </div>
+              <span className={s.muted}>{bz.paymentNote}</span>
+            </div>
+            <div className={s.box}>
               <span className={s.boxTitle}>{bz.bookingPage}</span>
               <span style={{ fontWeight: 600 }}>
                 {bz.templateLine({
@@ -386,7 +445,7 @@ export function BusinessesView({
           <>
             <Button onClick={() => setConfirm(null)}>{bz.cancel}</Button>
             <Button
-              variant="dangerSolid"
+              variant={confirm?.kind === 'payment' ? 'primary' : 'dangerSolid'}
               disabled={pending || reason.trim().length < 3}
               onClick={run}
             >
@@ -397,7 +456,10 @@ export function BusinessesView({
       >
         <p>{confirmCopy?.body}</p>
         <div style={{ marginTop: 12 }}>
-          <Field label={bz.reason} error={error ?? undefined}>
+          <Field
+            label={confirm?.kind === 'payment' ? bz.paymentRef : bz.reason}
+            error={error ?? undefined}
+          >
             {(p) => (
               <Input
                 {...p}

@@ -1,5 +1,6 @@
 import 'server-only';
 import { getDb } from '@/lib/db/client';
+import { isClosed } from '@/modules/billing/access';
 import { cloudName, imageUrl } from '@/lib/cloudinary';
 import { isCloudinaryConfigured } from '@/lib/env';
 import {
@@ -108,6 +109,7 @@ export async function loadPublicPage(
       country: true,
       locale: true,
       status: true,
+      accessUntil: true,
       profile: true,
       policy: {
         select: {
@@ -121,6 +123,8 @@ export async function loadPublicPage(
   });
   if (!t || !t.profile || !t.policy) return null;
   if (t.status !== 'ACTIVE' && t.status !== 'TRIAL') return null;
+  // Closed (trial or paid period over): offline for everyone, owners included.
+  if (isClosed(t.accessUntil)) return null;
   const published = t.profile.pageStatus === 'PUBLISHED';
   if (!published) {
     // Draft preview only for members of this tenant.

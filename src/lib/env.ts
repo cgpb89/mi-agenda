@@ -57,6 +57,10 @@ const schema = z
       .or(z.literal('')),
     CLOUDINARY_API_KEY: z.string().optional(),
     CLOUDINARY_API_SECRET: z.string().optional(),
+    // Shown to business owners as "contact us to pay" (trial banner, closed screen).
+    SUPPORT_EMAIL: z.email().optional().or(z.literal('')),
+    // Vercel Cron sends "Authorization: Bearer <CRON_SECRET>" to /api/cron/*.
+    CRON_SECRET: z.string().min(16).optional().or(z.literal('')),
   })
   .superRefine((env, ctx) => {
     // The Postgres URLs must belong to the same Supabase project as the API URL.

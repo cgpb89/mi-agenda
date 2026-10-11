@@ -121,6 +121,24 @@ export const admin = {
     unlimited: 'Unlimited',
     subscription: 'SUBSCRIPTION',
     changePlan: 'Change plan',
+    access: 'Access',
+    accessTrial: ({ date, n }: { date: string; n: number }) =>
+      `Free trial until ${date} · ${n === 1 ? '1 day' : `${n} days`} left`,
+    accessPaid: ({ date, n }: { date: string; n: number }) =>
+      `Paid until ${date} · ${n === 1 ? '1 day' : `${n} days`} left`,
+    accessClosed: ({ date, deleteOn }: { date: string; deleteOn: string }) =>
+      `Closed since ${date} (unpaid). Deleted on ${deleteOn} unless a payment is recorded.`,
+    payMonth: 'Record payment · 1 month',
+    payYear: 'Record payment · 1 year',
+    paymentNote:
+      'Record payments received outside the app (SINPE Móvil, transfer). Time left is kept; a closed business reopens from today.',
+    paymentTitle: ({ months }: { months: number }): string =>
+      months === 12 ? 'Record a 1-year payment?' : 'Record a 1-month payment?',
+    paymentBody: ({ name, from, to }: { name: string; from: string; to: string }) =>
+      `${name}'s access moves from ${from} to ${to}.`,
+    paymentCta: 'Record payment',
+    paymentRef: 'Payment reference (e.g. SINPE number)',
+    toastPayment: ({ date }: { date: string }) => `Payment recorded · access until ${date}`,
     planNote:
       'Plan prices are placeholders until launch. Plans are labels only; limits are not enforced in this release.',
     bookingPage: 'BOOKING PAGE',

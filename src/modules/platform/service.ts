@@ -14,6 +14,8 @@ export interface TenantRow {
   status: string;
   plan: keyof typeof PLANS;
   createdAt: string;
+  /** End of the trial / paid period (ISO). */
+  accessUntil: string;
   owner: string;
   pageStatus: string;
   template: string;
@@ -36,6 +38,7 @@ export async function listTenants(): Promise<TenantRow[]> {
         status: true,
         plan: true,
         createdAt: true,
+        accessUntil: true,
         profile: { select: { pageStatus: true, template: true } },
         memberships: {
           where: { role: 'OWNER' },
@@ -69,6 +72,7 @@ export async function listTenants(): Promise<TenantRow[]> {
       status: t.status,
       plan: t.plan,
       createdAt: t.createdAt.toISOString(),
+      accessUntil: t.accessUntil.toISOString(),
       owner: t.memberships[0]?.user.name ?? '—',
       pageStatus: t.profile?.pageStatus ?? 'DRAFT',
       template: t.profile?.template ?? 'SERVICES',

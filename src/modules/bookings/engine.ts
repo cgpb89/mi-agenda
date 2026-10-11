@@ -23,6 +23,7 @@ import {
   confirmationCode,
   wouldExceedPhoneLimit,
 } from './rules';
+import { isClosed } from '@/modules/billing/access';
 import { msg } from '@/i18n/message-ref';
 
 /**
@@ -118,6 +119,7 @@ interface TenantBits {
   currency: string;
   country: string;
   status: string;
+  accessUntil: Date;
   pageStatus: string | null;
   policy: {
     maxActiveAppointmentsPerPhone: number;
@@ -138,6 +140,7 @@ async function loadTenant(tx: Tx, tenantId: string): Promise<TenantBits> {
       currency: true,
       country: true,
       status: true,
+      accessUntil: true,
       profile: { select: { pageStatus: true } },
       policy: true,
     },
@@ -149,6 +152,7 @@ async function loadTenant(tx: Tx, tenantId: string): Promise<TenantBits> {
     currency: t.currency,
     country: t.country,
     status: t.status,
+    accessUntil: t.accessUntil,
     pageStatus: t.profile?.pageStatus ?? null,
     policy: t.policy,
   };
@@ -181,6 +185,8 @@ function toPolicyInput(p: TenantBits['policy']): PolicyInput {
 function assertBookableTenant(t: TenantBits, mode: BookingMode) {
   if (t.status !== 'ACTIVE' && t.status !== 'TRIAL')
     throw new AppError('NOT_FOUND', msg('businessNotFound'));
+  // Trial or paid period over: the store is closed until it pays.
+  if (isClosed(t.accessUntil)) throw new AppError('NOT_FOUND', msg('businessNotFound'));
   if (mode === 'public' && t.pageStatus !== 'PUBLISHED')
     throw new AppError('NOT_FOUND', msg('businessNotFound'));
 }

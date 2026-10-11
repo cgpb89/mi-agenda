@@ -5,6 +5,7 @@ import { getDb } from '@/lib/db/client';
 import { AppError } from '@/lib/errors';
 import { getSessionUser, type SessionUser } from './session';
 import { can, type MembershipRole, type Permission } from './permissions';
+import { isClosed } from '@/modules/billing/access';
 import { msg } from '@/i18n/message-ref';
 
 /**
@@ -20,6 +21,9 @@ export interface TenantContext {
   currency: string;
   country: string;
   locale: string;
+  /** Tenant status (TRIAL / ACTIVE) and end of the trial or paid period. */
+  status: string;
+  accessUntil: Date;
   role: MembershipRole;
   userId: string;
   /** Staff profile of the current user in this tenant, if any. */
@@ -67,6 +71,8 @@ export const getTenantContext = cache(async (tenantSlug: string): Promise<Tenant
     currency: t.currency,
     country: t.country,
     locale: t.locale,
+    status: t.status,
+    accessUntil: t.accessUntil,
     role: membership.role,
     userId: user.userId,
     staffId: staff?.id ?? null,
@@ -74,13 +80,17 @@ export const getTenantContext = cache(async (tenantSlug: string): Promise<Tenant
   };
 });
 
-/** For server actions / route handlers: throws AppError on failure. */
+/**
+ * For server actions / route handlers: throws AppError on failure. A closed
+ * store (trial or paid period over) can't change anything until it pays.
+ */
 export async function requireTenant(
   tenantSlug: string,
   permission: Permission = 'dashboard.view',
 ): Promise<TenantContext> {
   const ctx = await getTenantContext(tenantSlug);
   assertCan(ctx, permission);
+  if (isClosed(ctx.accessUntil)) throw new AppError('POLICY', msg('storeClosed'));
   return ctx;
 }
 
@@ -112,7 +122,11 @@ export async function requireTenantPage(
   permission: Permission = 'dashboard.view',
 ): Promise<TenantContext> {
   try {
-    return await requireTenant(tenantSlug, permission);
+    // Closed stores still render pages: the tenant layout swaps in the
+    // "store closed" screen, and every action stays blocked by requireTenant.
+    const ctx = await getTenantContext(tenantSlug);
+    assertCan(ctx, permission);
+    return ctx;
   } catch (err) {
     if (err instanceof AppError) {
       if (err.code === 'UNAUTHENTICATED')

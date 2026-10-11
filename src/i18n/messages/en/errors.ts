@@ -150,6 +150,9 @@ export const errors = {
   photosUnavailable: 'Photo uploads are not available right now.',
   photoMissing: "We couldn't find that upload. Please try again.",
 
+  // Billing
+  storeClosed: 'This business is closed until its plan is paid.',
+
   // Platform admin
   alreadySuspended: 'Already suspended.',
   notSuspended: 'This business is not suspended.',

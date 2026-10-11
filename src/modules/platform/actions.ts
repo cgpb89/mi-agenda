@@ -8,6 +8,7 @@ import { revokeAllSessions } from '@/lib/auth/session';
 import { withTransaction } from '@/lib/db/tx';
 import { parseInput, uuidSchema } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
+import { extendAccess } from '@/modules/billing/access';
 import { msg } from '@/i18n/message-ref';
 
 /*
@@ -115,6 +116,63 @@ export async function changePlanAction(raw: unknown): Promise<ActionResult<{ pla
     });
     revalidatePath('/super-admin', 'layout');
     return { plan: input.plan };
+  });
+}
+
+const paymentSchema = z.object({
+  tenantId: uuidSchema,
+  months: z.union([z.literal(1), z.literal(12)]),
+  /** Payment reference, e.g. a SINPE Móvil or transfer number. */
+  reason,
+});
+
+/**
+ * Record a plan payment received outside the app (SINPE, transfer…). Extends
+ * the store's access by 1 or 12 months — from today if it was already closed —
+ * which reopens a closed store and ends a trial.
+ */
+export async function recordPaymentAction(
+  raw: unknown,
+): Promise<ActionResult<{ accessUntil: string }>> {
+  return runAction('platform.recordPayment', async () => {
+    const admin = await requirePlatformAdmin();
+    const input = parseInput(paymentSchema, raw);
+    const accessUntil = await withTransaction(async (tx) => {
+      const t = await tx.tenant.findUnique({
+        where: { id: input.tenantId },
+        select: { id: true, name: true, status: true, accessUntil: true },
+      });
+      if (!t) throw new AppError('NOT_FOUND', msg('businessNotFound'));
+      const next = extendAccess(t.accessUntil, input.months);
+      await tx.tenant.update({
+        where: { id: t.id },
+        data: {
+          accessUntil: next,
+          ...(t.status === 'TRIAL' ? { status: 'ACTIVE' as const } : {}),
+        },
+      });
+      await audit(
+        {
+          tenantId: t.id,
+          actorUserId: admin.userId,
+          actorType: 'user',
+          action: 'tenant.payment_recorded',
+          targetType: 'tenant',
+          targetId: t.id,
+          metadata: {
+            months: input.months,
+            from: t.accessUntil.toISOString(),
+            to: next.toISOString(),
+            reference: input.reason,
+            name: t.name,
+          },
+        },
+        tx,
+      );
+      return next;
+    });
+    revalidatePath('/super-admin', 'layout');
+    return { accessUntil: accessUntil.toISOString() };
   });
 }
 

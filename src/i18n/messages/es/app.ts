@@ -9,6 +9,22 @@ export const app: Messages['app'] = {
   platformAdmin: 'Administración de la plataforma ↗',
   signOut: 'Cerrar sesión',
   newAppointment: '+ Nueva cita',
+  billing: {
+    trialDays: ({ n }) =>
+      n === 1 ? 'Prueba gratis: queda 1 día' : `Prueba gratis: quedan ${n} días`,
+    trialEnds: ({ date }) =>
+      `Tu prueba termina el ${date}. Elige un plan para mantener tu página de reservas en línea.`,
+    renewDays: ({ n }) => (n === 1 ? 'Tu plan vence en 1 día' : `Tu plan vence en ${n} días`),
+    renewEnds: ({ date }) =>
+      `Renueva antes del ${date} para mantener tu página de reservas en línea.`,
+    contact: 'Contáctanos para pagar',
+    closedTitle: 'Tu negocio está cerrado',
+    closedBody: ({ date }) =>
+      `Tu prueba o período pagado terminó el ${date}. Tu página de reservas está fuera de línea y los clientes no pueden reservar.`,
+    closedDeletion: ({ date, n }) =>
+      `Paga antes del ${date} para reabrirlo con todo tal como lo dejaste. Después de esa fecha, el negocio y todos sus datos (citas, clientes, servicios) se eliminan permanentemente. ${n === 1 ? 'Queda 1 día.' : `Quedan ${n} días.`}`,
+    closedHow: 'Para pagar tu plan y reabrir de inmediato, contáctanos.',
+  },
   titles: {
     availability: 'Disponibilidad y horarios',
     customer: 'Cliente',

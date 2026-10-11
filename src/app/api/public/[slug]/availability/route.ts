@@ -8,6 +8,7 @@ import { daySlots } from '@/modules/scheduling/availability';
 import { loadScheduleData } from '@/modules/scheduling/load';
 import { LOCAL_DATE_RE, addDays, daysBetween, todayIn } from '@/modules/scheduling/time';
 import { errorResponse, ok } from '@/modules/public/http';
+import { isClosed } from '@/modules/billing/access';
 import { msg } from '@/i18n/message-ref';
 
 const DAYS = 14;
@@ -35,6 +36,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
         id: true,
         timezone: true,
         status: true,
+        accessUntil: true,
         profile: { select: { pageStatus: true } },
         policy: true,
       },
@@ -43,7 +45,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ slug
       !tenant ||
       !tenant.policy ||
       tenant.profile?.pageStatus !== 'PUBLISHED' ||
-      (tenant.status !== 'ACTIVE' && tenant.status !== 'TRIAL')
+      (tenant.status !== 'ACTIVE' && tenant.status !== 'TRIAL') ||
+      isClosed(tenant.accessUntil)
     ) {
       throw new AppError('NOT_FOUND', msg('notFound'));
     }

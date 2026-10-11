@@ -39,6 +39,8 @@ export const settings: Messages['settings'] = {
     'tenant.suspended': 'Negocio suspendido por Tempo',
     'tenant.reactivated': 'Negocio reactivado por Tempo',
     'tenant.plan_changed': 'Plan modificado',
+    'tenant.payment_recorded': 'Pago del plan registrado',
+    'tenant.deleted': 'Negocio eliminado (sin pago)',
   },
   actorCustomer: 'Cliente',
   actorSystem: 'Sistema',
