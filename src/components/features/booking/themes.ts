@@ -36,7 +36,7 @@ const ARCHIVO = "var(--font-archivo), 'Archivo', sans-serif";
 const SCHIBSTED = "var(--font-schibsted), 'Schibsted Grotesk', sans-serif";
 
 /** Overrides for the glass style: translucent surfaces over the page backdrop. */
-const GLASS: Partial<Record<TemplateKey, Partial<FlowTheme>>> = {
+const GLASS: Partial<Record<TemplateKey, Partial<FlowTheme> & { shadow: string }>> = {
   barber: {
     surface: 'rgba(28, 23, 19, 0.42)',
     line: 'rgba(243, 236, 226, 0.16)',
@@ -45,11 +45,30 @@ const GLASS: Partial<Record<TemplateKey, Partial<FlowTheme>>> = {
     sel: 'rgba(214, 161, 92, 0.2)',
     radius: '10px',
     panelRadius: '22px',
+    shadow: 'rgba(0, 0, 0, 0.7)',
+  },
+  wellness: {
+    surface: 'rgba(255, 252, 247, 0.55)',
+    line: 'rgba(127, 101, 69, 0.18)',
+    field: 'rgba(255, 255, 255, 0.65)',
+    slotOff: 'rgba(255, 255, 255, 0.45)',
+    sel: 'rgba(241, 232, 218, 0.8)',
+    shadow: 'rgba(58, 49, 40, 0.3)',
   },
 };
 
 export function flowTheme(template: TemplateKey, glass = false): FlowTheme {
-  return glass ? { ...THEMES[template], ...GLASS[template] } : THEMES[template];
+  if (!glass || !GLASS[template]) return THEMES[template];
+  const { shadow: _shadow, ...overrides } = GLASS[template];
+  return { ...THEMES[template], ...overrides };
+}
+
+/** CSS vars for the glass panel: drop-shadow colour and the opaque fallback surface. */
+export function glassVars(template: TemplateKey): Record<string, string> {
+  return {
+    '--bf-glass-shadow': GLASS[template]?.shadow ?? 'rgba(0, 0, 0, 0.5)',
+    '--bf-solid': THEMES[template].surface,
+  };
 }
 
 export const THEMES: Record<TemplateKey, FlowTheme> = {

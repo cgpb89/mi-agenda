@@ -11,7 +11,7 @@ import { Switch } from '@/components/ui/Switch';
 import { useToast } from '@/components/ui/Toast';
 import { saveBookingPageAction, setPageStatusAction } from '@/modules/businesses/actions';
 import { PhotoManager, type EditorPhoto } from './PhotoManager';
-import type { PageContent as Content } from '@/modules/businesses/page-content';
+import { GLASS_TEMPLATES, type PageContent as Content } from '@/modules/businesses/page-content';
 import { useI18n } from '@/i18n/client';
 import { LOCALES, LOCALE_NAMES, type Locale } from '@/i18n/config';
 
@@ -241,7 +241,7 @@ export function BookingPageEditor({
             })}
           </div>
           <span style={{ fontSize: 12, color: '#6b6358' }}>{bp.templateNote}</span>
-          {form.template === 'BARBER' ? (
+          {GLASS_TEMPLATES.includes(form.template) ? (
             <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
               <Switch
                 checked={c.style === 'glass'}

@@ -2,7 +2,11 @@ import 'server-only';
 import { getDb } from '@/lib/db/client';
 import { cloudName, imageUrl } from '@/lib/cloudinary';
 import { isCloudinaryConfigured } from '@/lib/env';
-import { readPageContent, type PageContent } from '@/modules/businesses/page-content';
+import {
+  GLASS_TEMPLATES,
+  readPageContent,
+  type PageContent,
+} from '@/modules/businesses/page-content';
 import { readPhotos } from '@/modules/businesses/photos';
 
 /**
@@ -22,7 +26,7 @@ export interface PublicPage {
   currency: string;
   country: string;
   template: TemplateKey;
-  /** Glass style chosen in the editor (only the Barber template supports it). */
+  /** Glass style chosen in the editor (on templates that support it). */
   glass: boolean;
   published: boolean;
   profile: {
@@ -168,7 +172,7 @@ export async function loadPublicPage(
     currency: t.currency,
     country: t.country,
     template: t.profile.template.toLowerCase() as TemplateKey,
-    glass: t.profile.template === 'BARBER' && content.style === 'glass',
+    glass: GLASS_TEMPLATES.includes(t.profile.template) && content.style === 'glass',
     published,
     profile: {
       displayName: t.profile.displayName,

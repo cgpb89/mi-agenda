@@ -94,6 +94,17 @@ function Lines({ lines }: { lines: (string | null | undefined)[] }) {
   );
 }
 
+/** Glass style: a blurred copy of the cover photo (or the class's gradient) behind the panels. */
+function GlassBackdrop({ className, cover }: { className?: string; cover?: PublicPhoto }) {
+  return (
+    <div
+      className={className}
+      aria-hidden="true"
+      style={cover ? ({ '--backdrop': `url("${cover.blurSrc}")` } as CSSProperties) : undefined}
+    />
+  );
+}
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/);
   return (
@@ -110,14 +121,7 @@ export function BarberTemplate({ page, flow }: TemplateProps) {
   const words = p.displayName.split(/\s+/);
   return (
     <div className={[s.barber, page.glass && s.bGlass].filter(Boolean).join(' ')}>
-      {page.glass ? (
-        // Glass style: a blurred version of the cover (or a warm gradient) behind the panels.
-        <div
-          className={s.bBackdrop}
-          aria-hidden="true"
-          style={cover ? ({ '--backdrop': `url("${cover.blurSrc}")` } as CSSProperties) : undefined}
-        />
-      ) : null}
+      {page.glass ? <GlassBackdrop className={s.bBackdrop} cover={cover} /> : null}
       <div className={s.bHead}>
         <span className={s.bLogo}>{words[0]}</span>
         <nav className={s.bNav} aria-label={tp.pageNav}>
@@ -220,7 +224,8 @@ export function WellnessTemplate({ page, flow }: TemplateProps) {
           .slice(0, 3)
           .map((x) => ({ title: x.name, body: x.description ?? tp.minutes({ n: x.durationMin }) }));
   return (
-    <div className={s.wellness}>
+    <div className={[s.wellness, page.glass && s.wGlass].filter(Boolean).join(' ')}>
+      {page.glass ? <GlassBackdrop className={s.wBackdrop} cover={cover} /> : null}
       <div className={s.wHead}>
         <span className={s.wLogo}>{p.displayName}</span>
         {p.tagline ? <span className={s.wTag}>{p.tagline}</span> : null}

@@ -203,23 +203,36 @@
   }
 }
 
-// Barber · glass style (editor switch): frosted panels over a blurred cover
-// photo, or a warm gradient when there's no photo.
-@mixin glass-panel($alpha: 0.38) {
-  background: rgba(28, 23, 19, $alpha);
+// Glass style (editor switch, Barber and Wellness): frosted panels over a
+// blurred cover photo, or a gradient in the template's colours without one.
+// $tint is the panel colour (rgb triplet), $solid the opaque fallback.
+@mixin glass-panel($tint, $alpha, $edge, $highlight, $shadow, $solid) {
+  background: rgba($tint, $alpha);
   backdrop-filter: blur(18px) saturate(140%);
   -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border: 1px solid rgba(243, 236, 226, 0.14);
+  border: 1px solid $edge;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
-    0 24px 48px -28px rgba(0, 0, 0, 0.7);
+    inset 0 1px 0 $highlight,
+    0 24px 48px -28px $shadow;
   // No backdrop blur, or the visitor asked for less transparency: stay legible.
   @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
-    background: rgba(28, 23, 19, 0.92);
+    background: rgba($tint, 0.94);
   }
   @media (prefers-reduced-transparency: reduce) {
-    background: #1f1a16;
+    background: $solid;
   }
+}
+
+// Barber: smoky dark glass.
+@mixin glass-panel-dark($alpha: 0.38) {
+  @include glass-panel(
+    rgb(28, 23, 19),
+    $alpha,
+    rgba(243, 236, 226, 0.14),
+    rgba(255, 255, 255, 0.06),
+    rgba(0, 0, 0, 0.7),
+    #1f1a16
+  );
 }
 
 .bGlass {
@@ -242,7 +255,7 @@
     border-bottom: 0;
   }
   .bHeroText {
-    @include glass-panel;
+    @include glass-panel-dark;
     border-radius: 24px;
   }
   .bPhoto {
@@ -256,12 +269,12 @@
     padding-right: var(--glass-edge);
   }
   .bCol > div {
-    @include glass-panel;
+    @include glass-panel-dark;
     border-radius: 22px;
     padding: clamp(18px, 3cqw, 28px);
   }
   .bVisit {
-    @include glass-panel(0.32);
+    @include glass-panel-dark(0.32);
     border-radius: 24px;
     margin: 0 var(--glass-edge) var(--glass-edge);
   }
@@ -425,6 +438,79 @@
   font-size: 15px;
   line-height: 1.8;
   color: #5d5248;
+}
+
+// Wellness · glass style: airy, milky glass over a softly washed-out cover photo,
+// or a sand / sage / blush gradient without one.
+@mixin glass-panel-light($alpha: 0.5) {
+  @include glass-panel(
+    rgb(255, 252, 247),
+    $alpha,
+    rgba(255, 255, 255, 0.65),
+    rgba(255, 255, 255, 0.75),
+    rgba(58, 49, 40, 0.28),
+    #fbf8f2
+  );
+}
+
+.wGlass {
+  --glass-gap: clamp(12px, 2cqw, 18px);
+  --glass-edge: clamp(14px, 4cqw, 44px);
+  position: relative;
+  isolation: isolate;
+  background: #efe8dc;
+
+  .wArch {
+    box-shadow: 0 30px 60px -32px rgba(58, 49, 40, 0.45);
+  }
+  .wCats {
+    gap: var(--glass-gap);
+    background: none;
+    border: 0;
+    padding: 0 var(--glass-edge);
+  }
+  .wCat {
+    @include glass-panel-light;
+    border-radius: 24px;
+  }
+  .wGallery {
+    gap: var(--glass-gap);
+    background: none;
+    border: 0;
+    padding: var(--glass-gap) var(--glass-edge) 0;
+    > div {
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 24px 48px -30px rgba(58, 49, 40, 0.4);
+    }
+  }
+  .wInfo {
+    gap: var(--glass-gap);
+    padding: 0 var(--glass-edge) var(--glass-edge);
+    > div {
+      @include glass-panel-light(0.55);
+      border-radius: 24px;
+      padding: clamp(22px, 3cqw, 32px);
+    }
+  }
+}
+
+.wBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(244, 239, 230, 0.45),
+      rgba(244, 239, 230, 0.72) 50%,
+      rgba(244, 239, 230, 0.88)
+    ),
+    var(--backdrop, none) center / cover no-repeat,
+    radial-gradient(circle at 14% 8%, rgba(201, 170, 132, 0.55), transparent 45%),
+    radial-gradient(circle at 86% 30%, rgba(164, 182, 152, 0.5), transparent 50%),
+    radial-gradient(circle at 28% 88%, rgba(226, 186, 170, 0.45), transparent 50%),
+    #f4efe6;
 }
 
 // ── 3. Consult ───────────────────────────────────────────────────────────────

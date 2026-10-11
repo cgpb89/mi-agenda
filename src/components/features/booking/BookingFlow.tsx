@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
-import { flowTheme, type TemplateKey } from './themes';
+import { flowTheme, glassVars, type TemplateKey } from './themes';
 import { demoAvailability, type DemoBusiness } from '@/components/features/landing/demo-data';
 import styles from './BookingFlow.module.scss';
 import { LOCALE_HEADER } from '@/i18n/config';
@@ -45,7 +45,7 @@ export interface ExistingBooking {
 interface Props {
   slug: string;
   template: TemplateKey;
-  /** Translucent "glass" surfaces (Barber template only). */
+  /** Translucent "glass" surfaces (templates in GLASS_TEMPLATES). */
   glass?: boolean;
   businessName: string;
   timezone: string;
@@ -510,6 +510,7 @@ export function BookingFlow(props: Props) {
     '--bf-field': t.field,
     '--bf-error': t.error,
     '--bf-sel': t.sel,
+    ...(props.glass ? glassVars(props.template) : {}),
   } as CSSProperties;
 
   const noticeLabel =
