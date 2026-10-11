@@ -27,7 +27,7 @@ export const pageContentSchema = z.object({
 });
 
 /** Templates that offer the glass style. */
-export const GLASS_TEMPLATES: readonly string[] = ['BARBER', 'WELLNESS'];
+export const GLASS_TEMPLATES: readonly string[] = ['BARBER', 'WELLNESS', 'CONSULT'];
 
 export type PageContent = z.infer<typeof pageContentSchema>;
 

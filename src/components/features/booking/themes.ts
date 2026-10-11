@@ -55,6 +55,16 @@ const GLASS: Partial<Record<TemplateKey, Partial<FlowTheme> & { shadow: string }
     sel: 'rgba(241, 232, 218, 0.8)',
     shadow: 'rgba(58, 49, 40, 0.3)',
   },
+  consult: {
+    surface: 'rgba(255, 255, 255, 0.6)',
+    line: 'rgba(20, 35, 58, 0.12)',
+    field: 'rgba(255, 255, 255, 0.75)',
+    slotOff: 'rgba(255, 255, 255, 0.5)',
+    sel: 'rgba(234, 241, 252, 0.85)',
+    radius: '10px',
+    panelRadius: '18px',
+    shadow: 'rgba(20, 35, 58, 0.25)',
+  },
 };
 
 export function flowTheme(template: TemplateKey, glass = false): FlowTheme {

@@ -291,6 +291,7 @@ export function WellnessTemplate({ page, flow }: TemplateProps) {
 // ── 3. Health & consultation ─────────────────────────────────────────────────
 export function ConsultTemplate({ page, flow }: TemplateProps) {
   const { tp } = copyFor(page);
+  const cover = page.photos[0];
   const p = page.profile;
   const c = p.content;
   const cards =
@@ -303,7 +304,8 @@ export function ConsultTemplate({ page, flow }: TemplateProps) {
         ];
   const policy = c.notes?.length ? c.notes : [page.policy.policyText, tp.contactOnly];
   return (
-    <div className={s.consult}>
+    <div className={[s.consult, page.glass && s.cGlass].filter(Boolean).join(' ')}>
+      {page.glass ? <GlassBackdrop className={s.cBackdrop} cover={cover} /> : null}
       <div className={s.cTop}>
         <div className={s.cBrand}>
           <span className={s.cTile} aria-hidden="true">

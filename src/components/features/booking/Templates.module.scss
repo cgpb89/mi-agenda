@@ -203,7 +203,7 @@
   }
 }
 
-// Glass style (editor switch, Barber and Wellness): frosted panels over a
+// Glass style (editor switch; see GLASS_TEMPLATES): frosted panels over a
 // blurred cover photo, or a gradient in the template's colours without one.
 // $tint is the panel colour (rgb triplet), $solid the opaque fallback.
 @mixin glass-panel($tint, $alpha, $edge, $highlight, $shadow, $solid) {
@@ -652,6 +652,66 @@
     line-height: 1.7;
     color: #3d4d63;
   }
+}
+
+// Consult · glass style: crisp, cool "clinic glass" over a washed-out photo, or
+// a soft blue / teal / lavender gradient without one.
+@mixin glass-panel-cool($alpha: 0.58) {
+  @include glass-panel(
+    rgb(255, 255, 255),
+    $alpha,
+    rgba(255, 255, 255, 0.75),
+    rgba(255, 255, 255, 0.9),
+    rgba(20, 35, 58, 0.22),
+    #fff
+  );
+}
+
+.cGlass {
+  position: relative;
+  isolation: isolate;
+  background: #eef3f9;
+
+  .cTop {
+    @include glass-panel-cool(0.55);
+    border-width: 0 0 1px;
+    border-color: rgba(20, 35, 58, 0.08);
+    box-shadow: none;
+  }
+  .cCard,
+  .cPerson,
+  .cPolicy {
+    @include glass-panel-cool;
+    border-radius: 18px;
+  }
+  .cCard {
+    padding: 16px;
+  }
+  .cAvatar {
+    background: rgba(230, 237, 246, 0.8);
+  }
+  .cGallery > div {
+    border-radius: 18px;
+    box-shadow: 0 24px 48px -30px rgba(20, 35, 58, 0.35);
+  }
+}
+
+.cBackdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(246, 248, 251, 0.55),
+      rgba(246, 248, 251, 0.78) 50%,
+      rgba(246, 248, 251, 0.9)
+    ),
+    var(--backdrop, none) center / cover no-repeat,
+    radial-gradient(circle at 10% 6%, rgba(31, 95, 191, 0.28), transparent 45%),
+    radial-gradient(circle at 90% 28%, rgba(56, 170, 170, 0.24), transparent 50%),
+    radial-gradient(circle at 30% 90%, rgba(140, 130, 220, 0.22), transparent 50%),
+    #f6f8fb;
 }
 
 // ── 4. Fitness ───────────────────────────────────────────────────────────────
