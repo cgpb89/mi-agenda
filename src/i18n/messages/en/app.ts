@@ -35,6 +35,11 @@ export const app = {
     notConfigured: 'Payment details will appear here soon. Contact support to pay your plan.',
     seeBilling: 'Plan & billing',
   },
+  support: {
+    banner: ({ business }: { business: string }) => `Support mode · ${business}`,
+    note: 'You are acting as the owner. Changes are saved for real.',
+    exit: 'Exit support mode',
+  },
   tour: {
     next: 'Next',
     back: 'Back',

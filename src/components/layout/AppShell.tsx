@@ -14,6 +14,7 @@ import {
   type ReactNode,
 } from 'react';
 import { logoutAction } from '@/app/(auth)/actions';
+import { stopSupportAction } from '@/modules/platform/actions';
 import { ToastProvider } from '@/components/ui/Toast';
 import {
   NewAppointmentModal,
@@ -67,6 +68,8 @@ export interface ShellData {
     /** Link to the owner billing page (owners only). */
     billingHref: string | null;
   };
+  /** Set while a platform admin is in support mode on this store. */
+  support: { business: string } | null;
   /** Guided setup tour for this user's role, and where they left it. */
   tour: { id: TourId; role: MembershipRole; step: number; done: boolean };
 }
@@ -265,6 +268,15 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
           ) : null}
 
           <main className={styles.main}>
+            {data.support ? (
+              <div className={styles.support} role="status">
+                <strong>{t.app.support.banner({ business: data.support.business })}</strong>
+                <span>{t.app.support.note}</span>
+                <form action={stopSupportAction}>
+                  <button type="submit">{t.app.support.exit}</button>
+                </form>
+              </div>
+            ) : null}
             <AccessBanner billing={data.billing} />
             {children}
           </main>

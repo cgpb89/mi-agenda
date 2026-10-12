@@ -42,6 +42,8 @@ export const settings: Messages['settings'] = {
     'tenant.payment_recorded': 'Pago del plan registrado',
     'plan.updated': 'Configuración de plan modificada',
     'platform.settings_updated': 'Datos de pago y soporte modificados',
+    'platform.support_started': 'Modo soporte iniciado',
+    'platform.support_ended': 'Modo soporte finalizado',
     'tenant.deleted': 'Negocio eliminado (sin pago)',
   },
   actorCustomer: 'Cliente',

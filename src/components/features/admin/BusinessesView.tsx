@@ -17,6 +17,7 @@ import {
   changePlanAction,
   recordPaymentAction,
   setTenantStatusAction,
+  startSupportAction,
 } from '@/modules/platform/actions';
 import { accessState, extendAccess } from '@/modules/billing/access';
 import { PLAN_KEYS, PLAN_LABELS, type PlanKey } from '@/modules/platform/constants';
@@ -379,6 +380,18 @@ export function BusinessesView({
               </div>
               <span className={s.muted}>{bz.planNote}</span>
             </div>
+            {b.status === 'ACTIVE' || b.status === 'TRIAL' ? (
+              <div className={s.box}>
+                <span className={s.boxTitle}>{bz.supportTitle}</span>
+                <form action={startSupportAction}>
+                  <input type="hidden" name="tenantId" value={b.id} />
+                  <Button type="submit" variant="primary" size="sm">
+                    {bz.supportEnter}
+                  </Button>
+                </form>
+                <span className={s.muted}>{bz.supportNote}</span>
+              </div>
+            ) : null}
             <div className={s.box}>
               <span className={s.boxTitle}>{bz.access}</span>
               <span style={{ fontWeight: 600 }}>

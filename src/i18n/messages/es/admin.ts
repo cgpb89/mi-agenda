@@ -117,6 +117,10 @@ export const admin: Messages['admin'] = {
     unlimited: 'Ilimitados',
     subscription: 'SUSCRIPCIÓN',
     changePlan: 'Cambiar plan',
+    supportTitle: 'Soporte',
+    supportEnter: 'Entrar como soporte',
+    supportNote:
+      'Abre el panel de este negocio como su dueño para configurar o cambiar lo que necesite. Cada cambio queda registrado con tu nombre.',
     access: 'Acceso',
     accessTrial: ({ date, n }) =>
       `Prueba gratis hasta el ${date} · ${n === 1 ? 'queda 1 día' : `quedan ${n} días`}`,
@@ -140,7 +144,7 @@ export const admin: Messages['admin'] = {
     templateLine: ({ page, template }) => `${page} · plantilla ${template}`,
     openPublic: 'Abrir página pública →',
     privacy:
-      'Los nombres, contactos y notas de los clientes pertenecen al negocio y están ocultos para los administradores de la plataforma. Está previsto un acceso de soporte mediante una sesión aprobada por el propietario.',
+      'Los nombres, contactos y notas de los clientes pertenecen al negocio y no se muestran en esta pantalla. El modo soporte da acceso completo para ayudar al negocio; úsalo solo para eso, y cada visita queda registrada en el registro de la plataforma.',
     cancel: 'Cancelar',
     reason: 'Motivo (se guarda en el registro de auditoría)',
     required: 'Obligatorio',

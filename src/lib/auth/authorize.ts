@@ -28,6 +28,8 @@ export interface TenantContext {
   /** Subscription plan; what it includes comes from modules/plans. */
   plan: PlanKey;
   role: MembershipRole;
+  /** A platform admin acting on this store in support mode (owner permissions). */
+  support: boolean;
   userId: string;
   /** Staff profile of the current user in this tenant, if any. */
   staffId: string | null;
@@ -60,7 +62,35 @@ export const getTenantContext = cache(async (tenantSlug: string): Promise<Tenant
       tenant: true,
     },
   });
-  if (!membership) throw new AppError('NOT_FOUND', msg('businessNotFound'));
+  if (!membership) {
+    // Platform-admin support mode: act on the store as its owner. Only the store
+    // selected for this admin session, and only while the user is still an admin.
+    if (user.platformRole === 'ADMIN' && user.supportTenantId) {
+      const t = await getDb().tenant.findFirst({
+        where: { id: user.supportTenantId, slug: tenantSlug, status: { in: ['TRIAL', 'ACTIVE'] } },
+      });
+      if (t) {
+        return {
+          tenantId: t.id,
+          tenantSlug: t.slug,
+          tenantName: t.name,
+          timezone: t.timezone,
+          currency: t.currency,
+          country: t.country,
+          locale: t.locale,
+          status: t.status,
+          accessUntil: t.accessUntil,
+          plan: t.plan,
+          role: 'OWNER',
+          support: true,
+          userId: user.userId,
+          staffId: null,
+          user,
+        };
+      }
+    }
+    throw new AppError('NOT_FOUND', msg('businessNotFound'));
+  }
   const staff = await getDb().staff.findFirst({
     where: { tenantId: membership.tenantId, userId: user.userId },
     select: { id: true },
@@ -78,6 +108,7 @@ export const getTenantContext = cache(async (tenantSlug: string): Promise<Tenant
     accessUntil: t.accessUntil,
     plan: t.plan,
     role: membership.role,
+    support: false,
     userId: user.userId,
     staffId: staff?.id ?? null,
     user,

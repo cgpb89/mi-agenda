@@ -121,6 +121,10 @@ export const admin = {
     unlimited: 'Unlimited',
     subscription: 'SUBSCRIPTION',
     changePlan: 'Change plan',
+    supportTitle: 'Support',
+    supportEnter: 'Open as support',
+    supportNote:
+      "Opens this business's dashboard as its owner so you can configure or change anything. Every change is recorded under your name.",
     access: 'Access',
     accessTrial: ({ date, n }: { date: string; n: number }) =>
       `Free trial until ${date} · ${n === 1 ? '1 day' : `${n} days`} left`,
@@ -146,7 +150,7 @@ export const admin = {
       `${page} · ${template} template`,
     openPublic: 'Open public page →',
     privacy:
-      'Customer names, contacts and notes belong to the business and are hidden from platform admins. Support access through an owner-approved session is planned.',
+      "Customer names, contacts and notes belong to the business and aren't shown on this screen. Support mode gives full access to help the business; use it only for that, and every visit is recorded in the platform log.",
     cancel: 'Cancel',
     reason: 'Reason, saved to the audit log',
     required: 'Required',

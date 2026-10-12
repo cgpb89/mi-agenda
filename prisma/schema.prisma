@@ -189,16 +189,19 @@ model User {
 }
 
 model Session {
-  id         String   @id @default(uuid()) @db.Uuid
-  userId     String   @map("user_id") @db.Uuid
+  id              String   @id @default(uuid()) @db.Uuid
+  userId          String   @map("user_id") @db.Uuid
   /// HMAC-SHA256 of the opaque bearer token. The raw token is never stored.
-  tokenHash  String   @unique @map("token_hash") @db.VarChar(64)
-  userAgent  String?  @map("user_agent") @db.VarChar(256)
-  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
-  lastUsedAt DateTime @default(now()) @map("last_used_at") @db.Timestamptz(3)
-  expiresAt  DateTime @map("expires_at") @db.Timestamptz(3)
+  tokenHash       String   @unique @map("token_hash") @db.VarChar(64)
+  userAgent       String?  @map("user_agent") @db.VarChar(256)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  lastUsedAt      DateTime @default(now()) @map("last_used_at") @db.Timestamptz(3)
+  expiresAt       DateTime @map("expires_at") @db.Timestamptz(3)
+  /// Platform-admin support mode: the store this session is acting on (null = off).
+  supportTenantId String?  @map("support_tenant_id") @db.Uuid
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  supportTenant Tenant? @relation(fields: [supportTenantId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([expiresAt])
@@ -250,20 +253,21 @@ model Tenant {
   createdAt          DateTime         @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt          DateTime         @updatedAt @map("updated_at") @db.Timestamptz(3)
 
-  memberships  Membership[]
-  invitations  Invitation[]
-  profile      BusinessProfile?
-  policy       BookingPolicy?
-  services     Service[]
-  staff        Staff[]
-  staffService StaffService[]
-  rules        AvailabilityRule[]
-  exceptions   AvailabilityException[]
-  customers    Customer[]
-  appointments Appointment[]
-  payments     PaymentRecord[]
-  auditEvents  AuditLog[]
-  waitlist     WaitlistEntry[]
+  memberships     Membership[]
+  invitations     Invitation[]
+  profile         BusinessProfile?
+  policy          BookingPolicy?
+  services        Service[]
+  staff           Staff[]
+  staffService    StaffService[]
+  rules           AvailabilityRule[]
+  exceptions      AvailabilityException[]
+  customers       Customer[]
+  appointments    Appointment[]
+  payments        PaymentRecord[]
+  auditEvents     AuditLog[]
+  waitlist        WaitlistEntry[]
+  supportSessions Session[]
 
   @@index([status])
   @@index([accessUntil])

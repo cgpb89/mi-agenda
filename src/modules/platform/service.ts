@@ -144,6 +144,8 @@ const PLATFORM_ACTIONS = [
   'feature_flag.toggled',
   'plan.updated',
   'platform.settings_updated',
+  'platform.support_started',
+  'platform.support_ended',
   'tenant.payment_recorded',
   'tenant.deleted',
   'platform.admin_granted',

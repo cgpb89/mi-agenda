@@ -36,6 +36,11 @@ export const app: Messages['app'] = {
     notConfigured: 'Pronto verás aquí los datos de pago. Contacta a soporte para pagar tu plan.',
     seeBilling: 'Plan y facturación',
   },
+  support: {
+    banner: ({ business }) => `Modo soporte · ${business}`,
+    note: 'Estás actuando como el dueño. Los cambios se guardan de verdad.',
+    exit: 'Salir del modo soporte',
+  },
   tour: {
     next: 'Siguiente',
     back: 'Atrás',

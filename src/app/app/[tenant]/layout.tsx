@@ -155,8 +155,14 @@ export default async function TenantLayout({
       supportEmail,
       billingHref: can(ctx.role, 'billing.view') ? `${base}/billing` : null,
     },
-    // No tour on the closed screen; it resumes once the store reopens.
-    tour: { id: tourId, role: ctx.role, step: tourState.step, done: closed || tourState.done },
+    support: ctx.support ? { business: ctx.tenantName } : null,
+    // No tour on the closed screen (resumes once reopened) or in support mode.
+    tour: {
+      id: tourId,
+      role: ctx.role,
+      step: tourState.step,
+      done: closed || ctx.support || tourState.done,
+    },
   };
 
   return (

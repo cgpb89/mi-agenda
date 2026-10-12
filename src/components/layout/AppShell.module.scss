@@ -377,3 +377,38 @@
     color: inherit;
   }
 }
+
+// Platform-admin support mode: always visible so it's never forgotten.
+.support {
+  position: sticky;
+  top: 0;
+  z-index: calc(#{$z-header} + 1);
+  padding: 10px $page-pad;
+  background: #5b21b6;
+  color: #fff;
+  font-size: 13px;
+  display: flex;
+  gap: 6px 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  span {
+    opacity: 0.85;
+  }
+  form {
+    margin-left: auto;
+  }
+  button {
+    appearance: none;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    background: transparent;
+    color: #fff;
+    border-radius: 8px;
+    padding: 6px 12px;
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+  }
+}

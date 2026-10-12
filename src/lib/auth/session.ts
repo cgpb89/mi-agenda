@@ -75,6 +75,8 @@ export interface SessionUser {
   email: string;
   name: string;
   platformRole: 'NONE' | 'ADMIN';
+  /** Platform admins in support mode: the store this session acts on. */
+  supportTenantId: string | null;
 }
 
 /** Validate the request's session cookie. Memoised per request. */
@@ -112,6 +114,7 @@ export async function validateSessionToken(token: string): Promise<SessionUser |
     email: session.user.email,
     name: session.user.name,
     platformRole: session.user.platformRole,
+    supportTenantId: session.user.platformRole === 'ADMIN' ? session.supportTenantId : null,
   };
 }
 

@@ -43,6 +43,8 @@ export const settings = {
     'tenant.payment_recorded': 'Plan payment recorded',
     'plan.updated': 'Plan settings changed',
     'platform.settings_updated': 'Payment and support settings changed',
+    'platform.support_started': 'Support mode started',
+    'platform.support_ended': 'Support mode ended',
     'tenant.deleted': 'Business deleted (unpaid)',
   } as Record<string, string>,
   actorCustomer: 'Customer',

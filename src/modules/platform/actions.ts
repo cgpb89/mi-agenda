@@ -1,10 +1,12 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import { redirect } from 'next/navigation';
 import { z } from 'zod';
 import { AppError, runAction, type ActionResult } from '@/lib/errors';
 import { requirePlatformAdmin } from '@/lib/auth/authorize';
 import { revokeAllSessions } from '@/lib/auth/session';
+import { getDb } from '@/lib/db/client';
 import { withTransaction } from '@/lib/db/tx';
 import { parseInput, uuidSchema } from '@/lib/validation';
 import { audit } from '@/modules/audit/audit';
@@ -412,4 +414,49 @@ export async function toggleFlagAction(raw: unknown): Promise<ActionResult<undef
     revalidatePath('/super-admin', 'layout');
     return undefined;
   });
+}
+
+/**
+ * Support mode: open a store's dashboard as its owner to help configure it.
+ * Bound to this admin's session; audited on the platform log only.
+ */
+export async function startSupportAction(formData: FormData): Promise<void> {
+  const admin = await requirePlatformAdmin();
+  const tenantId = parseInput(uuidSchema, formData.get('tenantId'));
+  const t = await getDb().tenant.findFirst({
+    where: { id: tenantId, status: { in: ['TRIAL', 'ACTIVE'] } },
+    select: { id: true, slug: true, name: true },
+  });
+  if (!t) throw new AppError('NOT_FOUND', msg('businessNotFound'));
+  await getDb().session.update({
+    where: { id: admin.sessionId },
+    data: { supportTenantId: t.id },
+  });
+  await audit({
+    actorUserId: admin.userId,
+    actorType: 'user',
+    action: 'platform.support_started',
+    targetType: 'tenant',
+    targetId: t.id,
+    metadata: { slug: t.slug, name: t.name },
+  });
+  redirect(`/app/${t.slug}/overview`);
+}
+
+export async function stopSupportAction(): Promise<void> {
+  const admin = await requirePlatformAdmin();
+  if (admin.supportTenantId) {
+    await getDb().session.update({
+      where: { id: admin.sessionId },
+      data: { supportTenantId: null },
+    });
+    await audit({
+      actorUserId: admin.userId,
+      actorType: 'user',
+      action: 'platform.support_ended',
+      targetType: 'tenant',
+      targetId: admin.supportTenantId,
+    });
+  }
+  redirect('/super-admin/businesses');
 }
