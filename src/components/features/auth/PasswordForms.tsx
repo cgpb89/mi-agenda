@@ -37,7 +37,7 @@ export function ForgotPasswordForm() {
           />
         )}
       </Field>
-      <Button type="submit" variant="primary" size="lg" block disabled={pending}>
+      <Button loading={pending} type="submit" variant="primary" size="lg" block disabled={pending}>
         {pending ? t.auth.forgot.submitting : t.auth.forgot.submit}
       </Button>
       <div className={styles.footer}>
@@ -74,7 +74,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
           <Input {...p} name="confirm" type="password" autoComplete="new-password" required />
         )}
       </Field>
-      <Button type="submit" variant="primary" size="lg" block disabled={pending}>
+      <Button loading={pending} type="submit" variant="primary" size="lg" block disabled={pending}>
         {pending ? t.auth.reset.submitting : t.auth.reset.submit}
       </Button>
     </form>

@@ -197,6 +197,7 @@ export function StaffView({
         footer={
           <>
             <Button
+              loading={pending}
               variant="primary"
               disabled={pending || !draft?.displayName.trim()}
               onClick={save}

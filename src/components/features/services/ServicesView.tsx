@@ -302,7 +302,7 @@ export function ServicesView({
         footer={
           draft ? (
             <>
-              <Button variant="primary" disabled={bad || pending} onClick={save}>
+              <Button loading={pending} variant="primary" disabled={bad || pending} onClick={save}>
                 {pending ? sv.saving : sv.save}
               </Button>
               {draft.id ? (

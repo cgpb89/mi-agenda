@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
 import { flowTheme, glassVars, type TemplateKey } from './themes';
+import { Spinner } from '@/components/ui/Spinner';
 import {
   DEPOSIT_REFERENCE,
   depositFor,
@@ -1192,6 +1193,7 @@ export function BookingFlow(props: Props) {
                 setStep(step + 1);
               }}
             >
+              {step === 4 && submitting ? <Spinner size={14} /> : null}
               {step === 4
                 ? submitting
                   ? f.confirming

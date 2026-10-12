@@ -1,6 +1,6 @@
 'use client';
 
-import Link from 'next/link';
+import Link, { useLinkStatus } from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
   Suspense,
@@ -22,6 +22,7 @@ import {
 import { AppointmentDrawer } from '@/components/features/appointments/AppointmentDrawer';
 import styles from './AppShell.module.scss';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
+import { Spinner } from '@/components/ui/Spinner';
 import { useI18n } from '@/i18n/client';
 import { RENEWAL_REMINDER_DAYS } from '@/modules/billing/access';
 import { TourGuide } from '@/components/features/tour/TourGuide';
@@ -85,6 +86,12 @@ export function useShell(): ShellCtx {
 }
 
 const noopSubscribe = () => () => {};
+
+/** Spinner inside a nav link while its page is loading. */
+function LinkPending() {
+  const { pending } = useLinkStatus();
+  return pending ? <Spinner size={12} /> : null;
+}
 
 export function AppShell({ data, children }: { data: ShellData; children: ReactNode }) {
   const pathname = usePathname();
@@ -204,6 +211,7 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
                     className={[styles.navItem, on && styles.navItemOn].filter(Boolean).join(' ')}
                   >
                     {n.label}
+                    <LinkPending />
                   </Link>
                 );
               })}

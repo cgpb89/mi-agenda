@@ -180,7 +180,7 @@ export function PlansEditor({ initial }: { initial: PlanSettings[] }) {
       <span className={s.muted}>{pl.downgradeNote}</span>
       {error ? <FormMessage kind="error">{error}</FormMessage> : null}
       <div>
-        <Button variant="primary" disabled={pending || !dirty} onClick={save}>
+        <Button loading={pending} variant="primary" disabled={pending || !dirty} onClick={save}>
           {pending ? pl.saving : pl.save}
         </Button>
       </div>

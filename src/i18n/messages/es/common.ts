@@ -4,6 +4,7 @@ export const common: Messages['common'] = {
   language: 'Idioma',
   today: 'Hoy',
   close: 'Cerrar',
+  loading: 'Cargando…',
   tomorrow: 'Mañana',
   categories: {
     BARBER: 'Barbería y peluquería',

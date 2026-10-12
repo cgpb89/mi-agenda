@@ -737,7 +737,7 @@ export function AvailabilityView({
             >
               {av.discard}
             </button>
-            <Button variant="accent" disabled={invalid || pending} onClick={save}>
+            <Button loading={pending} variant="accent" disabled={invalid || pending} onClick={save}>
               {pending ? av.saving : av.save}
             </Button>
           </div>

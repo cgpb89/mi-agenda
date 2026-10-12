@@ -36,7 +36,7 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
           <Input {...p} name="password" type="password" autoComplete="current-password" required />
         )}
       </Field>
-      <Button type="submit" variant="primary" size="lg" block disabled={pending}>
+      <Button loading={pending} type="submit" variant="primary" size="lg" block disabled={pending}>
         {pending ? t.auth.login.submitting : t.auth.login.submit}
       </Button>
       <div className={styles.footer}>

@@ -160,6 +160,7 @@ export function BrandCard({
               </span>
             ) : null}
             <Button
+              loading={busy}
               size="sm"
               variant="primary"
               disabled={busy || pending}

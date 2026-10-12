@@ -536,7 +536,12 @@ export function BookingPageEditor({
             >
               {bp.discard}
             </button>
-            <Button variant="accent" disabled={pending || !form.displayName.trim()} onClick={save}>
+            <Button
+              variant="accent"
+              loading={pending}
+              disabled={!form.displayName.trim()}
+              onClick={save}
+            >
               {bp.save}
             </Button>
           </div>

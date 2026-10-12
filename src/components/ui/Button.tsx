@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import type { ComponentProps } from 'react';
 import styles from './Button.module.scss';
+import { Spinner } from './Spinner';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'dangerSolid' | 'accent' | 'link';
 
@@ -35,14 +36,26 @@ export function Button({
   block,
   className,
   type = 'button',
+  loading,
+  disabled,
+  children,
   ...rest
-}: CommonProps & ComponentProps<'button'>) {
+}: CommonProps &
+  ComponentProps<'button'> & {
+    /** Shows a spinner, disables the button and marks it busy while an action runs. */
+    loading?: boolean;
+  }) {
   return (
     <button
       type={type}
       className={buttonClass({ variant, size, pill, block }, className)}
+      disabled={disabled || loading}
+      aria-busy={loading || undefined}
       {...rest}
-    />
+    >
+      {loading ? <Spinner /> : null}
+      {children}
+    </button>
   );
 }
 

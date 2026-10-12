@@ -507,6 +507,10 @@
 .next {
   min-width: 120px;
   padding: 11px 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
 .hp {

@@ -286,7 +286,7 @@ export function SettingsView(props: {
               <div>
                 <Button
                   variant="primary"
-                  disabled={pending}
+                  loading={pending}
                   onClick={() =>
                     run(
                       'policy',

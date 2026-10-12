@@ -185,7 +185,7 @@ export function SignupForm() {
         </Field>
       </div>
 
-      <Button type="submit" variant="primary" size="lg" block disabled={pending}>
+      <Button loading={pending} type="submit" variant="primary" size="lg" block disabled={pending}>
         {pending ? s.submitting : s.submit}
       </Button>
       <div className={styles.footer}>

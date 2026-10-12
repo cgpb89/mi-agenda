@@ -94,6 +94,7 @@ export function PhotoManager({
       action={
         enabled ? (
           <Button
+            loading={uploading}
             variant="primary"
             size="sm"
             disabled={busy || full}

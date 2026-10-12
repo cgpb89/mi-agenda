@@ -2,6 +2,7 @@ export const common = {
   language: 'Language',
   today: 'Today',
   close: 'Close',
+  loading: 'Loading…',
   tomorrow: 'Tomorrow',
   categories: {
     BARBER: 'Barber & hair',

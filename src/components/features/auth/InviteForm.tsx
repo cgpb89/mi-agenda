@@ -41,7 +41,7 @@ export function InviteForm({ token, signedIn }: { token: string; signedIn: boole
           </Field>
         </>
       )}
-      <Button type="submit" variant="primary" size="lg" block disabled={pending}>
+      <Button loading={pending} type="submit" variant="primary" size="lg" block disabled={pending}>
         {pending ? t.auth.invite.submitting : t.auth.invite.submit}
       </Button>
     </form>

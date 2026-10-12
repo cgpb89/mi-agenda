@@ -165,7 +165,12 @@ export function NewAppointmentModal({
       footer={
         <>
           <Button onClick={onClose}>{c.cancel}</Button>
-          <Button variant="primary" onClick={submit} disabled={invalid || pending}>
+          <Button
+            loading={pending}
+            variant="primary"
+            onClick={submit}
+            disabled={invalid || pending}
+          >
             {pending ? c.creating : c.create}
           </Button>
         </>
