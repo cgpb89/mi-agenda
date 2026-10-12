@@ -5,6 +5,7 @@ import { acceptInviteAction } from '@/app/(auth)/invite/actions';
 import type { FormState } from '@/app/(auth)/actions';
 import { Button } from '@/components/ui/Button';
 import { Field, FormMessage, Input } from '@/components/ui/Form';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import styles from './Auth.module.scss';
 import { useI18n } from '@/i18n/client';
 
@@ -30,13 +31,7 @@ export function InviteForm({ token, signedIn }: { token: string; signedIn: boole
           </Field>
           <Field label={t.auth.invite.choosePassword} hint={t.auth.atLeast10} error={fe.password}>
             {(p) => (
-              <Input
-                {...p}
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                minLength={10}
-              />
+              <PasswordInput {...p} name="password" autoComplete="new-password" minLength={10} />
             )}
           </Field>
         </>

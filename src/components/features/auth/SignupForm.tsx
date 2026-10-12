@@ -5,6 +5,7 @@ import { useActionState, useEffect, useMemo, useRef, useState } from 'react';
 import { signupAction, type FormState } from '@/app/(auth)/actions';
 import { Button } from '@/components/ui/Button';
 import { Field, FormMessage, Input, Select, formStyles } from '@/components/ui/Form';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import { PHONE_COUNTRIES } from '@/lib/phone/countries';
 import { CATEGORY_VALUES } from '@/components/features/shared/categories';
 import styles from './Auth.module.scss';
@@ -99,10 +100,9 @@ export function SignupForm() {
       </div>
       <Field label={t.auth.password} hint={t.auth.atLeast10} error={fe.password}>
         {(p) => (
-          <Input
+          <PasswordInput
             {...p}
             name="password"
-            type="password"
             autoComplete="new-password"
             required
             minLength={10}

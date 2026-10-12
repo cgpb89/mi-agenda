@@ -3,6 +3,8 @@ export const common = {
   today: 'Today',
   close: 'Close',
   loading: 'Loading…',
+  showPassword: 'Show password',
+  hidePassword: 'Hide password',
   tomorrow: 'Tomorrow',
   categories: {
     BARBER: 'Barber & hair',

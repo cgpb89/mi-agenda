@@ -5,6 +5,7 @@ import { useActionState } from 'react';
 import { forgotPasswordAction, resetPasswordAction, type FormState } from '@/app/(auth)/actions';
 import { Button } from '@/components/ui/Button';
 import { Field, FormMessage, Input } from '@/components/ui/Form';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import styles from './Auth.module.scss';
 import { useI18n } from '@/i18n/client';
 
@@ -59,10 +60,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
       <input type="hidden" name="token" value={token} />
       <Field label={t.auth.reset.newPassword} hint={t.auth.atLeast10} error={fe.password}>
         {(p) => (
-          <Input
+          <PasswordInput
             {...p}
             name="password"
-            type="password"
             autoComplete="new-password"
             required
             minLength={10}
@@ -70,9 +70,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
         )}
       </Field>
       <Field label={t.auth.reset.confirm} error={fe.confirm}>
-        {(p) => (
-          <Input {...p} name="confirm" type="password" autoComplete="new-password" required />
-        )}
+        {(p) => <PasswordInput {...p} name="confirm" autoComplete="new-password" required />}
       </Field>
       <Button loading={pending} type="submit" variant="primary" size="lg" block disabled={pending}>
         {pending ? t.auth.reset.submitting : t.auth.reset.submit}

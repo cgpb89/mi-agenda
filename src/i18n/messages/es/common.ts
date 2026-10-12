@@ -5,6 +5,8 @@ export const common: Messages['common'] = {
   today: 'Hoy',
   close: 'Cerrar',
   loading: 'Cargando…',
+  showPassword: 'Mostrar contraseña',
+  hidePassword: 'Ocultar contraseña',
   tomorrow: 'Mañana',
   categories: {
     BARBER: 'Barbería y peluquería',

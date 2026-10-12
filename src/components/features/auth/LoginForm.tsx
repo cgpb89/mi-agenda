@@ -5,6 +5,7 @@ import { useActionState } from 'react';
 import { loginAction, type FormState } from '@/app/(auth)/actions';
 import { Button } from '@/components/ui/Button';
 import { Field, FormMessage, Input } from '@/components/ui/Form';
+import { PasswordInput } from '@/components/ui/PasswordInput';
 import styles from './Auth.module.scss';
 import { useI18n } from '@/i18n/client';
 
@@ -32,9 +33,7 @@ export function LoginForm({ next, notice }: { next?: string; notice?: string }) 
         )}
       </Field>
       <Field label={t.auth.password} error={fe.password}>
-        {(p) => (
-          <Input {...p} name="password" type="password" autoComplete="current-password" required />
-        )}
+        {(p) => <PasswordInput {...p} name="password" autoComplete="current-password" required />}
       </Field>
       <Button loading={pending} type="submit" variant="primary" size="lg" block disabled={pending}>
         {pending ? t.auth.login.submitting : t.auth.login.submit}
