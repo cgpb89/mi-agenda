@@ -95,6 +95,7 @@ export function StaffView({
             {st.intro} <Link href={`/app/${slug}/settings#team`}>{st.settingsLink}</Link>.
           </span>
           <Button
+            data-tour="staff-add"
             variant="primary"
             onClick={() =>
               setDraft({

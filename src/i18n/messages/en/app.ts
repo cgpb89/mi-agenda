@@ -35,6 +35,71 @@ export const app = {
     notConfigured: 'Payment details will appear here soon. Contact support to pay your plan.',
     seeBilling: 'Plan & billing',
   },
+  tour: {
+    next: 'Next',
+    back: 'Back',
+    skip: 'Skip guide',
+    finish: 'Finish',
+    goTo: ({ page }: { page: string }) => `Go to ${page}`,
+    stepOf: ({ n, total }: { n: number; total: number }) => `${n} of ${total}`,
+    replay: 'Setup guide',
+    label: 'Setup guide',
+    steps: {
+      welcome: [
+        "Welcome! Let's set up your business",
+        'This short guide walks you through everything you need to start taking bookings online. You can skip it and replay it any time from "Setup guide" in the sidebar.',
+      ],
+      sidebar: [
+        'Your menu',
+        'Everything lives here: your calendar, appointments, services, team, booking page and settings.',
+      ],
+      services: [
+        '1. Create your services',
+        'Add what you offer with its duration and price. Customers choose from this list when they book.',
+      ],
+      staff: [
+        '2. Add your team',
+        'Each person gets their own calendar; choose which services they offer. To give someone a login, invite them from Settings.',
+      ],
+      hours: [
+        '3. Set your hours',
+        "Choose the days and hours you're open. Customers can only book inside these times.",
+      ],
+      template: [
+        "4. Choose your page's style",
+        'Pick the template that fits your business. You can change it any time without losing anything.',
+      ],
+      brand: [
+        'Make it yours',
+        'Add your brand color and logo so the page looks like your business (Growth plan and up).',
+      ],
+      photos: ['Photos', 'Upload photos of your place or your work. The first one is the cover.'],
+      publish: [
+        '5. Publish your page',
+        'When your services and hours are ready, publish the page and share the link on WhatsApp, Instagram or Google.',
+      ],
+      newAppointment: [
+        'Bookings by phone or walk-in',
+        'Someone called or came by? Add the appointment here and it shows up in your calendar.',
+      ],
+      policy: [
+        'Booking rules',
+        'Set how late customers can cancel, whether you confirm bookings yourself and, if you want, a SINPE Móvil deposit to cut no-shows.',
+      ],
+      billing: ['Your plan', 'See your plan, what it includes and how to pay it by SINPE Móvil.'],
+      done: [
+        "You're all set!",
+        'You can start taking bookings. Replay this guide any time from "Setup guide" in the sidebar.',
+      ],
+      staffWelcome: ['Welcome!', "Here's a quick look at where you'll work every day."],
+      staffCalendar: ['Your calendar', 'Your appointments, by day. Tap one to see the details.'],
+      staffAppointments: [
+        'Your appointments',
+        'Open an appointment to confirm it, mark it done or record a payment.',
+      ],
+      staffDone: ["That's it!", 'Replay this guide any time from "Setup guide" in the sidebar.'],
+    } as Record<string, [string, string]>,
+  },
   plans: {
     availableFrom: ({ plan }: { plan: string }) => `Available on the ${plan} plan`,
     upgradeBody: 'Upgrade your plan to unlock this and more.',

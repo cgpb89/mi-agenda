@@ -36,6 +36,74 @@ export const app: Messages['app'] = {
     notConfigured: 'Pronto verás aquí los datos de pago. Contacta a soporte para pagar tu plan.',
     seeBilling: 'Plan y facturación',
   },
+  tour: {
+    next: 'Siguiente',
+    back: 'Atrás',
+    skip: 'Saltar guía',
+    finish: 'Terminar',
+    goTo: ({ page }) => `Ir a ${page}`,
+    stepOf: ({ n, total }) => `${n} de ${total}`,
+    replay: 'Guía de inicio',
+    label: 'Guía de inicio',
+    steps: {
+      welcome: [
+        '¡Bienvenido! Configuremos tu negocio',
+        'Esta guía corta te lleva por todo lo necesario para empezar a recibir reservas en línea. Puedes saltarla y verla de nuevo cuando quieras desde "Guía de inicio" en el menú.',
+      ],
+      sidebar: [
+        'Tu menú',
+        'Aquí está todo: tu agenda, citas, servicios, equipo, página de reservas y configuración.',
+      ],
+      services: [
+        '1. Crea tus servicios',
+        'Agrega lo que ofreces con su duración y precio. Los clientes eligen de esta lista al reservar.',
+      ],
+      staff: [
+        '2. Agrega a tu equipo',
+        'Cada persona tiene su propia agenda; elige qué servicios ofrece. Para darle acceso, invítala desde Configuración.',
+      ],
+      hours: [
+        '3. Define tu horario',
+        'Elige los días y horas en que atiendes. Los clientes solo pueden reservar dentro de ese horario.',
+      ],
+      template: [
+        '4. Elige el estilo de tu página',
+        'Escoge la plantilla que va con tu negocio. Puedes cambiarla cuando quieras sin perder nada.',
+      ],
+      brand: [
+        'Hazla tuya',
+        'Agrega tu color y tu logo para que la página se vea como tu negocio (plan Growth en adelante).',
+      ],
+      photos: ['Fotos', 'Sube fotos de tu local o de tu trabajo. La primera es la portada.'],
+      publish: [
+        '5. Publica tu página',
+        'Cuando tus servicios y horario estén listos, publica la página y comparte el enlace por WhatsApp, Instagram o Google.',
+      ],
+      newAppointment: [
+        'Citas por teléfono o en persona',
+        '¿Alguien llamó o llegó al local? Agrega la cita aquí y aparece en tu agenda.',
+      ],
+      policy: [
+        'Reglas de reserva',
+        'Define hasta cuándo pueden cancelar, si confirmas tú las citas y, si quieres, un depósito por SINPE Móvil para reducir las ausencias.',
+      ],
+      billing: ['Tu plan', 'Mira tu plan, lo que incluye y cómo pagarlo por SINPE Móvil.'],
+      done: [
+        '¡Todo listo!',
+        'Ya puedes recibir reservas. Vuelve a ver esta guía cuando quieras desde "Guía de inicio" en el menú.',
+      ],
+      staffWelcome: ['¡Bienvenido!', 'Un vistazo rápido a dónde vas a trabajar cada día.'],
+      staffCalendar: ['Tu agenda', 'Tus citas por día. Toca una para ver los detalles.'],
+      staffAppointments: [
+        'Tus citas',
+        'Abre una cita para confirmarla, marcarla como completada o registrar un pago.',
+      ],
+      staffDone: [
+        '¡Eso es todo!',
+        'Vuelve a ver esta guía cuando quieras desde "Guía de inicio" en el menú.',
+      ],
+    },
+  },
   plans: {
     availableFrom: ({ plan }) => `Disponible en el plan ${plan}`,
     upgradeBody: 'Mejora tu plan para desbloquear esta y otras funciones.',

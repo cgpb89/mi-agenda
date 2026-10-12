@@ -89,6 +89,7 @@ export function PhotoManager({
 
   return (
     <Card
+      tourId="bp-photos"
       title={bp.photos}
       action={
         enabled ? (

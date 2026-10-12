@@ -173,6 +173,7 @@ export function BookingPageEditor({
       </PageHeader>
       <PageContent>
         <Card
+          tourId="bp-status"
           title={bp.status}
           action={
             <StatusPill
@@ -210,7 +211,7 @@ export function BookingPageEditor({
           </div>
         </Card>
 
-        <Card title={bp.template}>
+        <Card title={bp.template} tourId="bp-template">
           <div
             style={{
               display: 'grid',

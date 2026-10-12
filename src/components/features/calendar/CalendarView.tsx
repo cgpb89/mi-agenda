@@ -313,7 +313,7 @@ export function CalendarView({
               </span>
               {shell.data.booking ? <span className={styles.hint}>{cal.clickToBook}</span> : null}
             </div>
-            <div className={styles.gridWrap}>
+            <div className={styles.gridWrap} data-tour="calendar-grid">
               <div style={{ minWidth: minW }}>
                 <div className={styles.head} style={{ gridTemplateColumns: cols }}>
                   <span />

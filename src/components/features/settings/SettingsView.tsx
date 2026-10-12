@@ -126,7 +126,7 @@ export function SettingsView(props: {
             alignItems: 'start',
           }}
         >
-          <Card title={se.policy}>
+          <Card title={se.policy} tourId="settings-policy">
             {errors.policy ? <FormMessage kind="error">{errors.policy}</FormMessage> : null}
             <Field label={se.perPhone} hint={se.perPhoneHint}>
               {(p) => (

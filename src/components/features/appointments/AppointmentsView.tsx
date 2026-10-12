@@ -157,7 +157,7 @@ export function AppointmentsView({
             </Link>
           ))}
         </div>
-        <div className={tbl.wrap}>
+        <div data-tour="appointments-list" className={tbl.wrap}>
           <table className={tbl.table} style={{ minWidth: 940 }}>
             <thead>
               <tr>

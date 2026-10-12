@@ -6,6 +6,7 @@ import { todayIn } from '@/modules/scheduling/time';
 import { StoreClosed } from '@/components/features/billing/StoreClosed';
 import { PayInstructions } from '@/components/features/billing/PayInstructions';
 import { getPlatformSettings } from '@/modules/platform/settings';
+import { readTourProgress, tourFor } from '@/modules/tour/steps';
 import { accessState } from '@/modules/billing/access';
 import { getI18n } from '@/i18n/server';
 
@@ -35,7 +36,12 @@ export default async function TenantLayout({
   const closed = access.phase === 'closed';
   const fmtDate = (d: Date) =>
     new Intl.DateTimeFormat(intl, { dateStyle: 'long', timeZone: ctx.timezone }).format(d);
-  const platform = await getPlatformSettings();
+  const [platform, me] = await Promise.all([
+    getPlatformSettings(),
+    getDb().user.findUnique({ where: { id: ctx.userId }, select: { tourProgress: true } }),
+  ]);
+  const tourId = tourFor(ctx.role);
+  const tourState = readTourProgress(me?.tourProgress)[tourId] ?? { step: 0, done: false };
   const supportEmail = platform.supportEmail;
   const db = getDb();
 
@@ -149,6 +155,8 @@ export default async function TenantLayout({
       supportEmail,
       billingHref: can(ctx.role, 'billing.view') ? `${base}/billing` : null,
     },
+    // No tour on the closed screen; it resumes once the store reopens.
+    tour: { id: tourId, role: ctx.role, step: tourState.step, done: closed || tourState.done },
   };
 
   return (

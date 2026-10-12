@@ -54,7 +54,7 @@ export default async function BillingPage({ params }: { params: Promise<{ tenant
             alignItems: 'start',
           }}
         >
-          <Card title={b.yourPlan}>
+          <Card title={b.yourPlan} tourId="billing-plan">
             <span style={{ fontSize: 24, fontWeight: 800 }}>{planName(ctx.plan)}</span>
             <span
               style={{ fontWeight: 600, color: access.phase === 'closed' ? '#b3261e' : undefined }}

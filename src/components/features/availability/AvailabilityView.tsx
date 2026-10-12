@@ -431,7 +431,7 @@ export function AvailabilityView({
           </Card>
 
           <div className={styles.side}>
-            <Card title={av.rules}>
+            <Card title={av.rules} tourId="availability-hours">
               <div className={styles.rulesGrid}>
                 <Field label={av.slotInterval}>
                   {(p) => (

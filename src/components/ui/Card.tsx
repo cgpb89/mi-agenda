@@ -10,12 +10,15 @@ export function Card({
   children,
   flush,
   className,
+  tourId,
 }: {
   title?: ReactNode;
   action?: { href: string; label: string } | ReactNode;
   children: ReactNode;
   flush?: boolean;
   className?: string;
+  /** Anchor for the in-app guided tour (rendered as data-tour). */
+  tourId?: string;
 }) {
   const actionNode =
     action && typeof action === 'object' && 'href' in action ? (
@@ -26,7 +29,7 @@ export function Card({
       action
     );
   return (
-    <section className={[styles.card, className].filter(Boolean).join(' ')}>
+    <section className={[styles.card, className].filter(Boolean).join(' ')} data-tour={tourId}>
       {title ? (
         <div className={styles.head}>
           <h2 className={styles.title}>{title}</h2>

@@ -58,7 +58,7 @@ export function BrandCard({
 
   if (locked) {
     return (
-      <Card title={bp.brand}>
+      <Card title={bp.brand} tourId="bp-brand">
         <UpgradeCard plan={locked.plan} body={bp.brandBody} />
       </Card>
     );
@@ -105,7 +105,7 @@ export function BrandCard({
   }
 
   return (
-    <Card title={bp.brand}>
+    <Card title={bp.brand} tourId="bp-brand">
       <span style={{ fontSize: 13, color: '#5d564b' }}>{bp.brandBody}</span>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>

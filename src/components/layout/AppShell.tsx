@@ -10,6 +10,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from 'react';
 import { logoutAction } from '@/app/(auth)/actions';
@@ -23,6 +24,9 @@ import styles from './AppShell.module.scss';
 import { LocaleSwitcher } from '@/components/ui/LocaleSwitcher';
 import { useI18n } from '@/i18n/client';
 import { RENEWAL_REMINDER_DAYS } from '@/modules/billing/access';
+import { TourGuide } from '@/components/features/tour/TourGuide';
+import type { MembershipRole } from '@/lib/auth/permissions';
+import { stepsFor, type TourId } from '@/modules/tour/steps';
 
 export interface ShellService {
   id: string;
@@ -62,6 +66,8 @@ export interface ShellData {
     /** Link to the owner billing page (owners only). */
     billingHref: string | null;
   };
+  /** Guided setup tour for this user's role, and where they left it. */
+  tour: { id: TourId; role: MembershipRole; step: number; done: boolean };
 }
 
 interface ShellCtx {
@@ -78,6 +84,8 @@ export function useShell(): ShellCtx {
   return v;
 }
 
+const noopSubscribe = () => () => {};
+
 export function AppShell({ data, children }: { data: ShellData; children: ReactNode }) {
   const pathname = usePathname();
   const [navOpen, setNavOpen] = useState(false);
@@ -87,6 +95,15 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
     prefill?: NewAppointmentPrefill;
     n: number;
   }>({ open: false, n: 0 });
+
+  // Guided tour: starts by itself until finished or skipped; replayable from the sidebar.
+  const [tour, setTour] = useState({ open: !data.tour.done, start: data.tour.step, n: 0 });
+  // The tour renders into document.body, so only on the client.
+  const mounted = useSyncExternalStore(
+    noopSubscribe,
+    () => true,
+    () => false,
+  );
 
   // Navigating closes the drawer and the business menu (state derived during render).
   const [lastPath, setLastPath] = useState(pathname);
@@ -176,7 +193,7 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
               ) : null}
             </div>
 
-            <nav aria-label={t.app.mainNav} className={styles.nav}>
+            <nav aria-label={t.app.mainNav} className={styles.nav} data-tour="sidebar">
               {data.nav.map((n) => {
                 const on = pathname === n.href || pathname.startsWith(`${n.href}/`);
                 return (
@@ -206,6 +223,16 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
                   {t.app.platformAdmin}
                 </Link>
               ) : null}
+              <button
+                type="button"
+                className={styles.footLink}
+                onClick={() => {
+                  setNavOpen(false);
+                  setTour((s) => ({ open: true, start: 0, n: s.n + 1 }));
+                }}
+              >
+                {t.app.tour.replay}
+              </button>
               <div className={styles.footRow}>
                 <form action={logoutAction}>
                   <button type="submit" className={styles.footLink}>
@@ -237,9 +264,19 @@ export function AppShell({ data, children }: { data: ShellData; children: ReactN
         <Suspense fallback={null}>
           <AppointmentDrawer />
         </Suspense>
+        {mounted && tour.open ? (
+          <TourGuide
+            key={`tour-${tour.n}`}
+            tour={data.tour.id}
+            steps={stepsFor(data.tour.id, data.tour.role)}
+            slug={data.tenant.slug}
+            initialStep={tour.start}
+            onClose={() => setTour((s) => ({ ...s, open: false }))}
+          />
+        ) : null}
         {data.booking ? (
           <NewAppointmentModal
-            key={newAppt.n}
+            key={`appt-${newAppt.n}`}
             open={newAppt.open}
             prefill={newAppt.prefill}
             onClose={() => setNewAppt((s) => ({ ...s, open: false }))}
@@ -317,6 +354,7 @@ export function PageHeader({
       {children}
       {data.booking && !hideNew ? (
         <button
+          data-tour="new-appointment"
           type="button"
           onClick={() => openNewAppointment()}
           style={{

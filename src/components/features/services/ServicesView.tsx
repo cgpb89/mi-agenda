@@ -195,7 +195,7 @@ export function ServicesView({
           <span style={{ color: '#5d564b' }}>
             {sv.summary({ active, inactive: services.length - active, currency })}
           </span>
-          <Button variant="primary" onClick={() => setDraft(blank())}>
+          <Button variant="primary" data-tour="services-add" onClick={() => setDraft(blank())}>
             {sv.add}
           </Button>
         </div>
