@@ -246,6 +246,7 @@ export async function requestPasswordReset(email: string): Promise<void> {
   const link = `${getEnv().APP_URL}/reset-password?token=${encodeURIComponent(token)}`;
   const { t } = await getI18n();
   await sendMail({
+    kind: 'auth',
     to: user.email,
     subject: t.emails.resetSubject,
     text: t.emails.resetBody({ link }),

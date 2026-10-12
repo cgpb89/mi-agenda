@@ -69,6 +69,7 @@ export async function inviteMemberAction(
     const link = `${getEnv().APP_URL}/invite?token=${encodeURIComponent(token)}`;
     const { t } = await getI18n();
     const mail = await sendMail({
+      kind: 'auth',
       to: input.email,
       subject: t.emails.inviteSubject({ business: ctx.tenantName }),
       text: t.emails.inviteBody({

@@ -48,6 +48,13 @@ const schema = z
     EMAIL_SERVER_PORT: z.coerce.number().int().positive().default(587),
     EMAIL_SERVER_USER: z.string().optional(),
     EMAIL_SERVER_PASSWORD: z.string().optional(),
+    // Resend (https://resend.com): when set, email goes through Resend's SMTP and
+    // EMAIL_SERVER_* are not needed. EMAIL_FROM defaults to Resend's test sender.
+    RESEND_API_KEY: z.string().optional(),
+    // Customer/owner notification emails (reminders, confirmations, waitlist,
+    // deposits, billing warnings). Off by default: only auth emails (password
+    // reset, invitations) are sent until this is "true".
+    EMAIL_NOTIFICATIONS: boolish,
     LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
     // Cloudinary stores booking-page photos. Optional: without it, uploads are off.
     CLOUDINARY_CLOUD_NAME: z
@@ -126,5 +133,5 @@ export function isCloudinaryConfigured(env: Env = getEnv()): boolean {
 }
 
 export function isEmailConfigured(env: Env = getEnv()): boolean {
-  return Boolean(env.EMAIL_FROM && env.EMAIL_SERVER_HOST);
+  return Boolean(env.RESEND_API_KEY || (env.EMAIL_FROM && env.EMAIL_SERVER_HOST));
 }

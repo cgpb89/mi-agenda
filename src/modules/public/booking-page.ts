@@ -2,7 +2,8 @@ import 'server-only';
 import { getDb } from '@/lib/db/client';
 import { isClosed } from '@/modules/billing/access';
 import { cloudName, imageUrl } from '@/lib/cloudinary';
-import { getEnv, isCloudinaryConfigured, isEmailConfigured } from '@/lib/env';
+import { isCloudinaryConfigured } from '@/lib/env';
+import { canSendNotifications } from '@/lib/mail';
 import {
   GLASS_TEMPLATES,
   readPageContent,
@@ -217,8 +218,7 @@ export async function loadPublicPage(
       GLASS_TEMPLATES.includes(t.profile.template) &&
       content.style === 'glass',
     hideBranding: hasFeature(plan, 'hideBranding'),
-    waitlist:
-      hasFeature(plan, 'waitlist') && (isEmailConfigured() || getEnv().NODE_ENV !== 'production'),
+    waitlist: hasFeature(plan, 'waitlist') && canSendNotifications(),
     brand: hasFeature(plan, 'brandColors') ? publicBrand(content.accent, t.profile.logo) : null,
     published,
     profile: {

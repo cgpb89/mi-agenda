@@ -1,8 +1,8 @@
 import 'server-only';
 import { DateTime } from 'luxon';
 import { getDb } from '@/lib/db/client';
-import { getEnv, isEmailConfigured } from '@/lib/env';
-import { sendMail } from '@/lib/mail';
+import { getEnv } from '@/lib/env';
+import { canSendNotifications, sendMail } from '@/lib/mail';
 import { logger } from '@/lib/observability/logger';
 import { DEFAULT_LOCALE, INTL_LOCALE, toLocale } from '@/i18n/config';
 import { i18nFor } from '@/i18n/server';
@@ -20,9 +20,9 @@ const CLAIM_COLUMN = {
  * sending, so retries never send it twice. Best effort: failures are logged.
  */
 export async function sendOwnerNotices(now: Date = new Date()): Promise<number> {
-  // In production without SMTP nothing would be delivered: keep the notices
-  // unclaimed so they go out once email is configured.
-  if (!isEmailConfigured() && getEnv().NODE_ENV === 'production') return 0;
+  // Notifications paused or no email: keep the notices unclaimed so they go
+  // out once notifications are switched on.
+  if (!canSendNotifications()) return 0;
   const db = getDb();
   const horizon = DateTime.fromJSDate(now)
     .plus({ days: NOTICE_DAYS + 1 })

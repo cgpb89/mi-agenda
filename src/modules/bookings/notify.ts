@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import { getDb } from '@/lib/db/client';
 import { getEnv } from '@/lib/env';
 import { formatPrice } from '@/i18n/format';
-import { sendMail } from '@/lib/mail';
+import { canSendNotifications, sendMail } from '@/lib/mail';
 import { logger } from '@/lib/observability/logger';
 import { generateToken } from '@/lib/security/tokens';
 import { DEFAULT_LOCALE, INTL_LOCALE, toLocale } from '@/i18n/config';
@@ -51,6 +51,8 @@ function context(a: NonNullable<Awaited<ReturnType<typeof load>>>) {
 
 /** "Your appointment is confirmed", with a fresh manage link (token rotated). */
 export async function sendConfirmedEmail(appointmentId: string): Promise<void> {
+  // Paused: don't rotate the manage token either (the customer's link keeps working).
+  if (!canSendNotifications()) return;
   try {
     const a = await load(appointmentId);
     if (!a?.contactEmail) return;
@@ -86,6 +88,7 @@ export async function sendDepositFailedEmail(
   appointmentId: string,
   expired: boolean,
 ): Promise<void> {
+  if (!canSendNotifications()) return;
   try {
     const a = await load(appointmentId);
     if (!a?.contactEmail) return;

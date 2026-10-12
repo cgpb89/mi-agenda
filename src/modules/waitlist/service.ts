@@ -3,7 +3,7 @@ import { DateTime } from 'luxon';
 import { getDb } from '@/lib/db/client';
 import { getEnv } from '@/lib/env';
 import { AppError } from '@/lib/errors';
-import { sendMail } from '@/lib/mail';
+import { canSendNotifications, sendMail } from '@/lib/mail';
 import { logger } from '@/lib/observability/logger';
 import { isClosed } from '@/modules/billing/access';
 import { hasFeature } from '@/modules/plans/features';
@@ -95,6 +95,8 @@ export async function joinWaitlist(input: {
  * has an open time. Best effort: never throws.
  */
 export async function notifyWaitlist(tenantId: string, date: string): Promise<number> {
+  // Paused: leave entries untouched so they're notified once email is on.
+  if (!canSendNotifications()) return 0;
   try {
     const db = getDb();
     const t = await waitlistTenant(tenantId);

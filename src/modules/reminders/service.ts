@@ -1,8 +1,8 @@
 import 'server-only';
 import { DateTime } from 'luxon';
 import { getDb } from '@/lib/db/client';
-import { getEnv, isEmailConfigured } from '@/lib/env';
-import { sendMail } from '@/lib/mail';
+import { getEnv } from '@/lib/env';
+import { canSendNotifications, sendMail } from '@/lib/mail';
 import { logger } from '@/lib/observability/logger';
 import { generateToken } from '@/lib/security/tokens';
 import { manageTokenHash } from '@/modules/bookings/engine';
@@ -21,8 +21,8 @@ const BATCH = 200;
  * manage link (the token is rotated; the old link stops working).
  */
 export async function sendDueReminders(now: Date = new Date()): Promise<number> {
-  // In production without SMTP nothing would be delivered: don't claim.
-  if (!isEmailConfigured() && getEnv().NODE_ENV === 'production') return 0;
+  // Notifications paused or no email: don't claim, so nothing is marked as sent.
+  if (!canSendNotifications()) return 0;
   const plans = (await getPlanCatalog())
     .filter((p) => p.features.includes('emailReminders'))
     .map((p) => p.plan);
